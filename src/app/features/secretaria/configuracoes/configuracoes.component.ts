@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ConfigService } from '@services/config.service';
-import { BolsaService, BolsaRow } from '@services/bolsa.service';
 
 @Component({
   selector: 'app-configuracoes',
@@ -13,126 +12,175 @@ import { BolsaService, BolsaRow } from '@services/bolsa.service';
   styleUrls: ['./configuracoes.component.css'],
 })
 export class ConfiguracoesComponent implements OnInit {
-  // Campus
+  /* ================================================================
+   * CAMPUS
+   * ================================================================ */
   campus: any[] = [];
   novoCampus = '';
 
-  // Cursos
+  /* ================================================================
+   * CURSOS
+   * ================================================================ */
   cursos: any[] = [];
   novoCurso = '';
 
-  // ===== Atribuição (alunos) =====
-  bolsas: BolsaRow[] = [];
+  /* ================================================================
+   * TIPOS DE BOLSA
+   * ================================================================ */
+  tiposBolsa: any[] = [];
+  novoTipoBolsa = '';
+
+  /* ================================================================
+   * ALUNOS EM PROJETOS (APROVADOS)
+   * ================================================================ */
+  alunos: any[] = [];
   filtroBolsa = '';
-  carregandoBolsas = false;
-  erroBolsas: string | null = null;
 
-  // Form de criação de bolsa (POST /api/bolsas/)
-  formBolsa = { id_aluno: null as number | null, possui_bolsa: true };
-  feedbackBolsa: string | null = null;
+  // Modal de bolsas
+  modalBolsaAberto = false;
+  alunoSelecionado: any = null;
+  bolsaSelecionada: number | null = null;
 
-  constructor(private config: ConfigService, private bolsasApi: BolsaService) {}
+  constructor(private config: ConfigService) {}
 
   ngOnInit(): void {
     this.carregarCampus();
     this.carregarCursos();
-    this.carregarBolsas(); // <- carrega lista para popular o <select> e a tabela
+    this.carregarTiposBolsa();
+
+    /** 🔥 AGORA LISTA OS ALUNOS CADASTRADOS EM PROJETOS, NÃO MAIS INSCRIÇÕES */
+    this.carregarAlunosEmProjetos();
   }
 
-  // ---- Campus ----
+  /* ================================================================
+   * CAMPUS
+   * ================================================================ */
   carregarCampus() {
-    this.config.listarCampus().subscribe((res) => (this.campus = res.campus));
+    this.config.listarCampus().subscribe({
+      next: (res) => (this.campus = res),
+      error: () => (this.campus = []),
+    });
   }
+
   cadastrarCampus() {
     if (!this.novoCampus.trim()) return;
+
     this.config.criarCampus({ campus: this.novoCampus }).subscribe(() => {
       this.novoCampus = '';
       this.carregarCampus();
     });
   }
+
   excluirCampus(id: number) {
     if (!confirm('Confirma excluir este campus?')) return;
+
     this.config.excluirCampus(id).subscribe({
       next: () => this.carregarCampus(),
       error: () => alert('Falha ao excluir campus'),
     });
   }
 
-  // ---- Cursos ----
+  /* ================================================================
+   * CURSOS
+   * ================================================================ */
   carregarCursos() {
     this.config.listarCursos().subscribe((res) => (this.cursos = res.cursos));
   }
+
   cadastrarCurso() {
     if (!this.novoCurso.trim()) return;
+
     this.config.criarCurso({ nome: this.novoCurso }).subscribe(() => {
       this.novoCurso = '';
       this.carregarCursos();
     });
   }
+
   excluirCurso(id: number) {
     if (!confirm('Confirma excluir este curso?')) return;
+
     this.config.excluirCurso(id).subscribe({
       next: () => this.carregarCursos(),
       error: () => alert('Falha ao excluir curso'),
     });
   }
 
-  // ---- Bolsas: listar/filtrar/alternar ----
-  carregarBolsas() {
-    this.carregandoBolsas = true;
-    this.erroBolsas = null;
-    this.bolsasApi.listar().subscribe({
-      next: (rows) => {
-        this.bolsas = (rows ?? []).map((r) => ({
-          ...r,
-          nome_completo: this.properCase(r.nome_completo),
-        }));
-        this.carregandoBolsas = false;
-      },
-      error: () => {
-        this.erroBolsas = 'Falha ao carregar bolsas';
-        this.carregandoBolsas = false;
-      },
+  /* ================================================================
+   * TIPOS DE BOLSA
+   * ================================================================ */
+  carregarTiposBolsa() {
+    this.config.listarTiposBolsa().subscribe((res) => {
+      this.tiposBolsa = res;
     });
   }
 
-  cadastrarBolsaAluno() {
-    this.feedbackBolsa = null;
+  criarTipoBolsa() {
+    if (!this.novoTipoBolsa.trim()) return;
 
-    const id = this.formBolsa.id_aluno;
-    const flag = !!this.formBolsa.possui_bolsa;
+    this.config
+      .criarTipoBolsa({ tipo_bolsa: this.novoTipoBolsa })
+      .subscribe(() => {
+        this.novoTipoBolsa = '';
+        this.carregarTiposBolsa();
+      });
+  }
 
-    if (!id || id < 1) {
-      alert('Selecione um aluno válido.');
-      return;
-    }
+  excluirTipoBolsa(id: number) {
+    if (!confirm('Remover este tipo de bolsa?')) return;
 
-    this.bolsasApi.create(id, flag).subscribe({
-      next: () => {
-        this.feedbackBolsa = 'Bolsa criada com sucesso!';
-        this.carregarBolsas();
-        this.formBolsa = { id_aluno: null, possui_bolsa: true };
-        setTimeout(() => (this.feedbackBolsa = null), 3000);
-      },
-      error: (e) => {
-        const msg = e?.error?.detail || 'Falha ao criar registro de bolsa!';
-        alert(msg);
-      },
+    this.config.excluirTipoBolsa(id).subscribe(() => {
+      this.carregarTiposBolsa();
     });
   }
 
-  toggleBolsa(row: BolsaRow) {
-    const novo = !row.possui_bolsa;
-    const anterior = row.possui_bolsa;
-    row.possui_bolsa = novo; // otimista
-    this.bolsasApi.setStatus(row.id_aluno, novo).subscribe({
-      error: () => {
-        row.possui_bolsa = anterior; // rollback
-        alert('Não foi possível atualizar a bolsa deste aluno.');
-      },
+  /* ================================================================
+   * ALUNOS EM PROJETOS (APROVADOS)
+   * ================================================================ */
+  carregarAlunosEmProjetos() {
+    this.config.listarAlunosEmProjetos().subscribe({
+      next: (res) => (this.alunos = res.alunos),
+      error: () => (this.alunos = []),
     });
   }
 
+  /* ================================================================
+   * BOLSAS
+   * ================================================================ */
+  abrirSelecaoBolsa(aluno: any) {
+    this.alunoSelecionado = aluno;
+    this.modalBolsaAberto = true;
+  }
+
+  fecharModal() {
+    this.modalBolsaAberto = false;
+    this.bolsaSelecionada = null;
+  }
+
+  confirmarVinculo() {
+    if (!this.bolsaSelecionada) return;
+
+    this.config
+      .criarBolsaAluno({
+        id_aluno: this.alunoSelecionado.id_aluno,
+        id_tipo_bolsa: this.bolsaSelecionada,
+      })
+      .subscribe(() => {
+        this.fecharModal();
+        this.carregarAlunosEmProjetos();
+      });
+  }
+
+  removerBolsa(id_bolsa: number) {
+    if (!confirm('Remover esta bolsa?')) return;
+
+    this.config.removerBolsa(id_bolsa).subscribe(() => {
+      this.carregarAlunosEmProjetos();
+    });
+  }
+
+  /* ================================================================
+   * FILTRO
+   * ================================================================ */
   matchBolsa(term: string, ...vals: (string | number | undefined | null)[]) {
     const norm = (s: any) =>
       (s ?? '')
@@ -141,17 +189,10 @@ export class ConfiguracoesComponent implements OnInit {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .trim();
+
     const f = norm(term);
     if (!f) return true;
-    return vals.some((v) => norm(v).includes(f));
-  }
 
-  private properCase(value: string): string {
-    const lower = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di']);
-    return (value || '')
-      .toLowerCase()
-      .split(/\s+/)
-      .map((w, i) => (i > 0 && lower.has(w) ? w : w[0]?.toUpperCase() + w.slice(1)))
-      .join(' ');
+    return vals.some((v) => norm(v).includes(f));
   }
 }
