@@ -59,42 +59,39 @@
 
     <mat-tab label="Bolsas">
       <div class="form-section">
-        <h3>Cadastrar Bolsa</h3>
-        <form (ngSubmit)="cadastrarBolsaAluno()" class="crud-inline">
-          <select
-            [(ngModel)]="formBolsa.id_aluno"
-            name="idAluno"
+        <!-- ============================================= -->
+        <!--  TIPOS DE BOLSA (CADASTRO)                    -->
+        <!-- ============================================= -->
+        <h3>Cadastrar Tipo de Bolsa</h3>
+
+        <form (ngSubmit)="criarTipoBolsa()" class="crud-inline">
+          <input
+            type="text"
+            [(ngModel)]="novoTipoBolsa"
+            name="tipoBolsa"
+            placeholder="Ex: PIBIC, PIBITI, Voluntária..."
             required
-            title="Selecione o aluno"
-          >
-            <option [ngValue]="null" disabled selected>
-              Selecione um aluno
-            </option>
-            <option *ngFor="let a of bolsas" [ngValue]="a.id_aluno">
-              {{ a.nome_completo }} — {{ a.email }}
-            </option>
-          </select>
-
-          <label style="margin: 0 0.5rem">
-            <input
-              type="checkbox"
-              [(ngModel)]="formBolsa.possui_bolsa"
-              name="possuiBolsa"
-            />
-            Bolsista?
-          </label>
-
+          />
           <button type="submit">Salvar</button>
         </form>
 
-        <div *ngIf="feedbackBolsa" class="muted" style="margin-top: 0.5rem">
-          {{ feedbackBolsa }}
-        </div>
+        <h4>Tipos de Bolsa Cadastrados</h4>
+        <ul class="list">
+          <li *ngFor="let t of tiposBolsa">
+            <span>{{ t.tipo_bolsa }}</span>
+            <button class="danger" (click)="excluirTipoBolsa(t.id_tipo_bolsa)">
+              Excluir
+            </button>
+          </li>
+        </ul>
 
         <hr class="section-divider" />
 
-        <!-- ========== Atribuição para Alunos (deixa como está) ========== -->
-        <h3>Alunos (atribuição de bolsas)</h3>
+        <!-- ============================================= -->
+        <!--  ALUNOS – ATRIBUIÇÃO DE BOLSA                 -->
+        <!-- ============================================= -->
+        <h3>Atribuição de Bolsa para Alunos</h3>
+
         <div class="bolsas-filter">
           <input
             type="text"
@@ -103,43 +100,75 @@
           />
         </div>
 
-        <div *ngIf="carregandoBolsas" class="loading">Carregando...</div>
-        <div *ngIf="erroBolsas" class="error">{{ erroBolsas }}</div>
-
-        <table class="table table-bolsas" *ngIf="!carregandoBolsas">
+        <table class="table table-bolsas" *ngIf="alunos.length">
           <thead>
             <tr>
-              <th class="center">Aluno</th>
-              <th class="center">Email</th>
-              <th class="center">Bolsista</th>
+              <th>Aluno</th>
+              <th>Email</th>
+              <th>Bolsas Atuais</th>
+              <th>Ações</th>
             </tr>
           </thead>
+
           <tbody>
             <tr
-              *ngFor="let r of bolsas"
-              [hidden]="!matchBolsa(filtroBolsa, r.nome_completo, r.email)"
+              *ngFor="let a of alunos"
+              [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
             >
-              <td class="center">{{ r.nome_completo }}</td>
-              <td class="center">{{ r.email }}</td>
-              <td class="center">
-                <label class="switch" title="Alternar status de bolsa">
-                  <input
-                    type="checkbox"
-                    [checked]="r.possui_bolsa"
-                    (change)="toggleBolsa(r)"
-                    [attr.aria-label]="'Alternar bolsa de ' + r.nome_completo"
-                    role="switch"
-                  />
-                  <span class="slider"></span>
-                </label>
+              <td>{{ a.nome_completo }}</td>
+              <td>{{ a.email }}</td>
+
+              <!-- bolsas -->
+              <td>
+                <div *ngIf="a.bolsas?.length; else semBolsa">
+                  <span *ngFor="let b of a.bolsas" class="tag">
+                    {{ b.tipo_bolsa }}
+                    <button
+                      class="tag-remove"
+                      (click)="removerBolsa(b.id_bolsa)"
+                    >
+                      x
+                    </button>
+                  </span>
+                </div>
+
+                <ng-template #semBolsa>
+                  <span class="muted">Nenhuma bolsa</span>
+                </ng-template>
+              </td>
+
+              <td>
+                <button (click)="abrirSelecaoBolsa(a)">Vincular Bolsa</button>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
 
-        <p class="muted" *ngIf="!carregandoBolsas && bolsas.length === 0">
-          Nenhum registro de aluno encontrado.
-        </p>
+      <!-- ============================================= -->
+      <!--  MODAL SIMPLES PARA SELECIONAR BOLSA          -->
+      <!-- ============================================= -->
+      <div class="modal-backdrop" *ngIf="modalBolsaAberto">
+        <div class="modal">
+          <h3>Vincular Bolsa</h3>
+          <p>
+            Aluno: <strong>{{ alunoSelecionado?.nome_completo }}</strong>
+          </p>
+
+          <select [(ngModel)]="bolsaSelecionada" name="tiposBolsaSelect">
+            <option [ngValue]="null" disabled selected>
+              Selecione o tipo de bolsa
+            </option>
+            <option *ngFor="let t of tiposBolsa" [ngValue]="t.id_tipo_bolsa">
+              {{ t.tipo_bolsa }}
+            </option>
+          </select>
+
+          <div class="modal-actions">
+            <button (click)="confirmarVinculo()">Salvar</button>
+            <button class="danger" (click)="fecharModal()">Cancelar</button>
+          </div>
+        </div>
       </div>
     </mat-tab>
   </mat-tab-group>
