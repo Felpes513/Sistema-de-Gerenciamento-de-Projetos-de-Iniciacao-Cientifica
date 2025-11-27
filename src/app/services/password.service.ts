@@ -9,16 +9,23 @@ export class PasswordService {
 
   constructor(private http: HttpClient) {}
 
-  // Envia e-mail com link de redefinição
   forgotPassword(email: string): Observable<{ message?: string }> {
-    return this.http.post<{ message?: string }>(`${this.apiUrl}/forgot-password`, { email });
+    return this.http.post<{ message?: string }>(
+      `${this.apiUrl}/forgot-password`,
+      { email }
+    );
   }
 
-  // Confirma redefinição via token (fluxo do e-mail)
-  resetPassword(token: string, novaSenha: string): Observable<{ message?: string }> {
-    return this.http.post<{ message?: string }>(`${this.apiUrl}/reset-password`, {
-      token,
-      nova_senha: novaSenha,
-    });
+  resetPassword(
+    token: string,
+    novaSenha: string
+  ): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(
+      `${this.apiUrl}/reset-password`,
+      {
+        token,
+        nova_senha: novaSenha,
+      }
+    );
   }
 }

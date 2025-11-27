@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RegisterService } from '@services/cadastro.service';
 import { forkJoin } from 'rxjs';
+import { DialogService } from '@services/dialog.service';
 
 type Aba = 'APROVACoes' | 'INADIMPLENTES';
 type Tipo = 'ALUNOS' | 'ORIENTADORES';
@@ -37,7 +38,7 @@ export class CadastrosComponent implements OnInit {
     'di',
   ]);
 
-  constructor(private api: RegisterService) {}
+  constructor(private api: RegisterService, private dialog: DialogService) {}
 
   ngOnInit() {
     this.load();
@@ -121,26 +122,35 @@ export class CadastrosComponent implements OnInit {
       this.tipo === 'ALUNOS'
         ? this.api.aprovarAluno(id)
         : this.api.aprovarOrientador(id);
+
     call.subscribe({
-      next: () => this.load(),
-      error: () => alert('Erro ao aprovar'),
+      next: () => {
+        this.load();
+      },
+      error: () => {
+        this.dialog.alert('Erro ao aprovar', 'Erro');
+      },
     });
   }
 
-  reprovar(id: number) {
-    if (
-      !confirm(
-        'Confirmar reprovação? O usuário ficará inadimplente por 2 anos.'
-      )
-    )
-      return;
+  async reprovar(id: number) {
+    const confirmado = await this.dialog.confirm(
+      'Confirmar reprovação? O usuário ficará inadimplente por 2 anos.'
+    );
+    if (!confirmado) return;
+
     const call =
       this.tipo === 'ALUNOS'
         ? this.api.reprovarAluno(id)
         : this.api.reprovarOrientador(id);
+
     call.subscribe({
-      next: () => this.load(),
-      error: () => alert('Erro ao reprovar'),
+      next: () => {
+        this.load();
+      },
+      error: () => {
+        this.dialog.alert('Erro ao reprovar', 'Erro');
+      },
     });
   }
 

@@ -1,4 +1,5 @@
-import { BolsaService } from '@services/bolsa.service';
+// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\listagem-alunos\listagem-alunos.component.ts
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,21 +13,10 @@ import { finalize } from 'rxjs/operators';
 import { ProjetoService } from '@services/projeto.service';
 import { InscricoesService } from '@services/inscricoes.service';
 import { ProjetoInscricaoApi } from '@interfaces/projeto';
+import { AlunoSecretariaView } from '@interfaces/listagem-alunos';
 
 type Modo = 'SECRETARIA' | 'ORIENTADOR';
 
-interface AlunoSecretariaView {
-  idInscricao: number;
-  idAluno: number;
-  nome: string;
-  matricula: string;
-  email: string;
-  status: string;
-  possuiTrabalhoRemunerado: boolean;
-  documentoNotasUrl?: string | null;
-}
-
-/** Title Case consistente (sem depender de CSS/text-transform) */
 function toTitleCase(s: string = ''): string {
   return s
     .toLowerCase()
@@ -53,26 +43,21 @@ export class ListagemAlunosComponent implements OnInit {
   private _inscricoes: ProjetoInscricaoApi[] = [];
 
   alunosSecretaria: AlunoSecretariaView[] = [];
-
   aprovadas: ProjetoInscricaoApi[] = [];
   pendentesOuReprovadas: ProjetoInscricaoApi[] = [];
   selecionados = new Set<number>();
   limite = 4;
-
   bloqueado = false;
   bloqueadoEm?: string;
-
   loadingFlag = false;
   salvandoSelecao = false;
   sucessoSelecao = '';
   erroSalvarSelecao = '';
-
   bolsaMarcada = new Set<number>();
 
   constructor(
     private projetoService: ProjetoService,
     private inscricoesService: InscricoesService,
-    private bolsaService: BolsaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -84,6 +69,7 @@ export class ListagemAlunosComponent implements OnInit {
   private lockKey() {
     return `proj-lock:${this.projetoId}`;
   }
+
   private carregarLock() {
     try {
       const raw = localStorage.getItem(this.lockKey());
@@ -95,6 +81,7 @@ export class ListagemAlunosComponent implements OnInit {
       this.bloqueado = localStorage.getItem(this.lockKey()) === '1';
     }
   }
+
   private salvarLock() {
     const payload = { lock: true, ts: new Date().toISOString() };
     localStorage.setItem(this.lockKey(), JSON.stringify(payload));
@@ -118,21 +105,18 @@ export class ListagemAlunosComponent implements OnInit {
           next: (inscricoes) => {
             this._inscricoes = inscricoes ?? [];
 
-            // Aprovadas pela Secretaria (VALIDADO/APROVADO)
             this.aprovadas = this._inscricoes.filter(
               (i) =>
                 (i.status || '').toUpperCase() === 'VALIDADO' ||
                 (i.status || '').toUpperCase() === 'APROVADO'
             );
 
-            // Demais (exclui finalizados)
             this.pendentesOuReprovadas = this._inscricoes.filter(
               (i) =>
                 !this.aprovadas.includes(i) &&
                 (i.status || '').toUpperCase() !== 'CADASTRADO_FINAL'
             );
 
-            // Pré-seleciona finalizados
             const jaVinculados = this._inscricoes
               .filter(
                 (i) => (i.status || '').toUpperCase() === 'CADASTRADO_FINAL'
@@ -151,7 +135,6 @@ export class ListagemAlunosComponent implements OnInit {
       return;
     }
 
-    // ===== SECRETARIA =====
     this.projetoService
       .listarInscricoesPorProjeto(this.projetoId)
       .pipe(
@@ -173,20 +156,20 @@ export class ListagemAlunosComponent implements OnInit {
       });
   }
 
-  // ===== API p/ template =====
   loading() {
     return this.loadingFlag;
   }
+
   lista(): AlunoSecretariaView[] {
     return this.alunosSecretaria;
   }
+
   total() {
     return this.modo === 'SECRETARIA'
       ? this.alunosSecretaria.length
       : this.aprovadas.length + this.pendentesOuReprovadas.length;
   }
 
-  // ===== util ORIENTADOR =====
   alunoId(i: ProjetoInscricaoApi): number {
     return (
       i?.id_aluno ?? i?.aluno_id ?? i?.idAluno ?? i?.aluno?.id ?? i?.id ?? 0
@@ -233,7 +216,6 @@ export class ListagemAlunosComponent implements OnInit {
     this.toggleSelecionado(inscricao, !!target?.checked);
   }
 
-  /** Salvar: atualiza aprovados e EXCLUI as demais inscrições do aluno em outros projetos */
   salvarSelecao() {
     this.sucessoSelecao = '';
     this.erroSalvarSelecao = '';
@@ -275,7 +257,6 @@ export class ListagemAlunosComponent implements OnInit {
       return;
     }
 
-    // ===== SECRETARIA =====
     this.projetoService
       .updateAlunosProjeto({
         id_projeto: this.projetoId,
@@ -306,14 +287,6 @@ export class ListagemAlunosComponent implements OnInit {
 
     if (checked) this.bolsaMarcada.add(id);
     else this.bolsaMarcada.delete(id);
-
-    this.bolsaService.setStatus(id, checked).subscribe({
-      next: () => {},
-      error: () => {
-        if (checked) this.bolsaMarcada.delete(id);
-        else this.bolsaMarcada.add(id);
-      },
-    });
   }
 
   temBolsa(i: ProjetoInscricaoApi) {

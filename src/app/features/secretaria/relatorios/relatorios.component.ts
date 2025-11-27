@@ -7,6 +7,7 @@ import { RelatorioMensal, PendenciaMensal } from '@interfaces/relatorio';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { DialogService } from '@services/dialog.service';
 
 @Component({
   standalone: true,
@@ -18,6 +19,7 @@ import { Router } from '@angular/router';
 export class RelatoriosComponent implements OnInit {
   private relatorioService = inject(RelatorioService);
   private router = inject(Router);
+  private dialog = inject(DialogService);
 
   baixando = false;
   mes = this.toYYYYMM(new Date());
@@ -35,6 +37,7 @@ export class RelatoriosComponent implements OnInit {
     'e',
     'di',
   ]);
+
   private properCase(v: string): string {
     if (!v) return '';
     return v
@@ -100,7 +103,7 @@ export class RelatoriosComponent implements OnInit {
     });
   }
 
-  baixarAlunosXlsx() {
+  async baixarAlunosXlsx() {
     this.baixando = true;
     this.relatorioService.baixarRelatorioAlunos().subscribe({
       next: (res) => {
@@ -118,9 +121,12 @@ export class RelatoriosComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.baixando = false;
       },
-      error: () => {
-        alert('Não foi possível gerar o relatório de alunos.');
+      error: async () => {
         this.baixando = false;
+        await this.dialog.alert(
+          'Não foi possível gerar o relatório de alunos.',
+          'Erro'
+        );
       },
     });
   }

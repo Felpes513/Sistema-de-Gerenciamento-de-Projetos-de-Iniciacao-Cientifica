@@ -1,0 +1,51 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div
+      class="icon-wrapper"
+      [ngClass]="data.modo === 'alert' ? 'alert-icon' : 'confirm-icon'"
+    >
+      <svg
+        *ngIf="data.modo === 'alert'"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <svg
+        *ngIf="data.modo === 'confirm'"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M9 11l3 3L22 4"></path>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+      </svg>
+    </div>
+    <h2 class="dialog-title">{{ data.titulo }}</h2>
+  </div>
+
+  <div class="dialog-content">
+    <p class="dialog-message">{{ data.mensagem }}</p>
+  </div>
+
+  <div class="dialog-actions">
+    <button
+      *ngIf="data.modo === 'confirm'"
+      class="btn btn-secondary"
+      (click)="onClose()"
+      type="button"
+    >
+      Cancelar
+    </button>
+    <button class="btn btn-primary" (click)="onConfirm()" type="button">
+      OK
+    </button>
+  </div>
+</div>

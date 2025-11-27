@@ -1,5 +1,325 @@
 # Changelog - FrontTCC
 
+## [Data: 26/11/2025] - Refatoração de Serviços, Componentes e Interfaces
+
+### 🎯 Resumo Geral
+- **37 arquivos modificados**
+- **1.163 inserções**, **1.020 deleções**
+- Implementação de sistema de diálogos reutilizável
+- Refatoração completa de serviços e interfaces
+- Remoção de componentes e serviços obsoletos
+- Melhorias significativas em componentes da secretaria
+- Atualização de rotas e configurações
+
+---
+
+### ✨ Implementações
+
+#### 1. **Sistema de Diálogos Reutilizável**
+- ✅ Criado novo serviço `DialogService` para gerenciamento centralizado de diálogos
+- ✅ Implementado componente `ConfirmDialogComponent` para alertas e confirmações
+- ✅ Adicionados métodos `alert()` e `confirm()` no `DialogService`
+- ✅ Integrado `DialogService` em todos os componentes da secretaria:
+  - `CadastrosComponent`
+  - `ConfiguracoesComponent`
+  - `FormularioProjetoComponent`
+  - `FormularioAvaliadorComponent`
+  - `ListagemAvaliadoresComponent`
+  - `NotificacoesComponent`
+  - `RelatoriosComponent`
+- ✅ Integrado `DialogService` no componente `RelatorioFormComponent` (Orientador)
+- ✅ Substituição de `window.confirm()` e `window.alert()` por diálogos Material Design
+- ✅ Melhorada experiência do usuário com diálogos estilizados e responsivos
+
+#### 2. **Refatoração de Interfaces**
+- ✅ Criada nova interface `Configuracao` consolidando:
+  - `Campus`
+  - `Curso`
+  - `TipoBolsa`
+  - `BolsaCreateDto`
+  - `BolsaListItem`
+  - `BolsaListResponse`
+- ✅ Criada interface `ListagemAlunos` com `AlunoSecretariaView`
+- ✅ Criada interface `ListagemProjetos` com `ListagemResponse`
+- ✅ Atualizada interface `Projeto` com novos campos e tipos
+- ✅ Removidas interfaces duplicadas e obsoletas
+
+#### 3. **Melhorias no Serviço de Configurações (ConfigService)**
+- ✅ Adicionado método `listarTiposBolsa()` com suporte a paginação
+- ✅ Adicionado método `criarTipoBolsa()` para criação de tipos de bolsa
+- ✅ Adicionado método `excluirTipoBolsa()` para exclusão de tipos de bolsa
+- ✅ Adicionado método `listarBolsas()` com suporte a paginação
+- ✅ Adicionado método `criarBolsa()` para criação de bolsas
+- ✅ Adicionado método `excluirBolsa()` para exclusão de bolsas
+- ✅ Refatorado para usar novas interfaces consolidadas
+
+#### 4. **Melhorias no Serviço de Projetos (ProjetoService)**
+- ✅ Refatorado método `cadastrarProjetoCompleto()` com melhor tratamento de Base64
+- ✅ Melhorado método `gerarCodProjeto()` para geração automática de códigos
+- ✅ Aprimorado método `stripDataUrl()` para processamento de Base64
+- ✅ Adicionado suporte para `ideia_inicial_pdf_b64` além de `ideia_inicial_b64`
+- ✅ Melhorado tratamento de erros e validações
+- ✅ Refatorado métodos de listagem e busca de projetos
+- ✅ Melhorada compatibilidade com diferentes formatos de resposta da API
+
+#### 5. **Melhorias no Serviço de Relatórios (RelatorioService)**
+- ✅ Refatorado método `listarDoMes()` com melhor mapeamento de dados
+- ✅ Refatorado método `listarPendentesDoMes()` com melhor estrutura de resposta
+- ✅ Melhorado método `confirmar()` com tipagem aprimorada
+- ✅ Adicionado método `listarRecebidosSecretaria()` para visualização na secretaria
+- ✅ Melhorado tratamento de parâmetros de consulta
+
+#### 6. **Melhorias no Serviço de Inscrições (InscricoesService)**
+- ✅ Refatorado para usar `inject()` do Angular
+- ✅ Melhorado método `listarPorProjeto()` com suporte a paginação e ordenação
+- ✅ Adicionados parâmetros: `pagina`, `limite`, `ordenarPor`, `ordem`
+- ✅ Melhorado método `listarAprovadosDoProjeto()` com mapeamento de dados
+- ✅ Aprimorado tratamento de respostas da API
+
+#### 7. **Melhorias no Serviço de Login (LoginService)**
+- ✅ Refatorado método `persistTokensFromResponse()` com melhor tratamento de tokens
+- ✅ Melhorado método `decodeRoleFromJwt()` com suporte a múltiplos formatos de payload
+- ✅ Adicionado suporte para diferentes formatos de resposta de login
+- ✅ Melhorado método `base64UrlDecode()` para decodificação robusta
+- ✅ Aprimorado tratamento de roles e permissões
+
+#### 8. **Melhorias no Serviço de Notificações (NotificacaoService)**
+- ✅ Refatorado métodos para melhor estrutura de resposta
+- ✅ Melhorado tratamento de paginação
+- ✅ Aprimorado mapeamento de dados de notificações
+
+#### 9. **Melhorias no Serviço de Senha (PasswordService)**
+- ✅ Refatorado métodos com melhor tratamento de erros
+- ✅ Melhorado feedback para o usuário
+
+#### 10. **Melhorias no Componente de Formulário de Projeto**
+- ✅ Integrado `DialogService` para confirmações e alertas
+- ✅ Melhorado tratamento de erros com diálogos informativos
+- ✅ Refatorado carregamento de dados com melhor estrutura
+- ✅ Melhorada validação de formulários
+- ✅ Atualizado para usar novas interfaces
+
+#### 11. **Melhorias no Componente de Configurações**
+- ✅ Integrado `DialogService` para confirmações de exclusão
+- ✅ Refatorado para usar `ConfigService` com novos métodos
+- ✅ Melhorado tratamento de erros com diálogos
+- ✅ Atualizado para usar novas interfaces consolidadas
+
+#### 12. **Melhorias no Componente de Cadastros**
+- ✅ Integrado `DialogService` para feedback ao usuário
+- ✅ Melhorado tratamento de erros
+- ✅ Refatorado métodos de carregamento
+
+#### 13. **Melhorias em Outros Componentes da Secretaria**
+- ✅ `FormularioAvaliadorComponent`: Integrado `DialogService`
+- ✅ `ListagemAvaliadoresComponent`: Integrado `DialogService`
+- ✅ `ListagemAlunosComponent`: Refatorado com melhor estrutura
+- ✅ `NotificacoesComponent`: Integrado `DialogService`
+- ✅ `RelatoriosComponent`: Integrado `DialogService`
+
+#### 14. **Melhorias no Componente de Relatório (Orientador)**
+- ✅ Integrado `DialogService` para confirmações
+- ✅ Melhorado tratamento de erros
+
+#### 15. **Melhorias em Componentes Compartilhados**
+- ✅ `CadastroComponent`: Atualizado para usar novos serviços
+- ✅ `ResetPasswordComponent`: Refatorado com melhor tratamento de erros
+- ✅ `SidenavSecretariaComponent`: Atualizado com melhor estrutura
+
+#### 16. **Atualizações de Rotas**
+- ✅ Removidas rotas de componentes obsoletos (avaliador externo)
+- ✅ Limpeza de rotas não utilizadas
+
+#### 17. **Atualizações de Configuração**
+- ✅ Atualizado `tsconfig.json` com novas configurações
+- ✅ Atualizado `package.json` e `package-lock.json` com dependências
+
+---
+
+### 🐛 Correções
+
+#### 1. **Serviços**
+- ✅ Corrigido tratamento de tokens no `LoginService`
+- ✅ Corrigido mapeamento de dados em `RelatorioService`
+- ✅ Corrigido paginação em `InscricoesService`
+- ✅ Corrigido tratamento de erros em todos os serviços
+
+#### 2. **Componentes**
+- ✅ Corrigido tratamento de erros em componentes da secretaria
+- ✅ Corrigido feedback ao usuário com diálogos apropriados
+- ✅ Corrigido carregamento de dados em formulários
+
+#### 3. **Interfaces**
+- ✅ Corrigida tipagem de interfaces
+- ✅ Removidas interfaces duplicadas
+- ✅ Consolidadas interfaces relacionadas
+
+---
+
+### 🗑️ Remoções
+
+#### 1. **Componentes Removidos**
+- ❌ Removido componente `FormularioAvaliacaoComponent` (Avaliador Externo):
+  - `formulario-avaliacao.component.ts`
+  - `formulario-avaliacao.component.html`
+  - `formulario-avaliacao.component.css`
+  - `formulario-avaliacao.component.spec.ts`
+- **Motivo**: Componente não utilizado ou substituído por outra funcionalidade
+
+#### 2. **Serviços Removidos**
+- ❌ Removido `BolsaService`:
+  - `bolsa.service.ts`
+  - `bolsa.service.spec.ts`
+- **Motivo**: Funcionalidades migradas para `ConfigService`
+
+#### 3. **Interfaces Removidas**
+- ❌ Removida interface `bolsa.ts` (consolidada em `configuracao.ts`)
+- ❌ Removida interface `campus.ts` (consolidada em `configuracao.ts`)
+- ❌ Removida interface `curso.ts` (consolidada em `configuracao.ts`)
+- ❌ Removida interface `listagem.ts` (substituída por `listagem-projetos.ts`)
+- **Motivo**: Consolidação de interfaces relacionadas para melhor organização
+
+---
+
+### 🔄 Refatorações
+
+#### 1. **Código**
+- ✅ Refatorado todos os serviços para usar padrões modernos do Angular
+- ✅ Substituído `window.confirm()` e `window.alert()` por `DialogService`
+- ✅ Melhorada organização de imports
+- ✅ Removido código duplicado
+- ✅ Melhorada tipagem com interfaces consolidadas
+
+#### 2. **Estrutura**
+- ✅ Consolidadas interfaces relacionadas em arquivos únicos
+- ✅ Reorganizada estrutura de serviços
+- ✅ Melhorada organização de componentes
+
+#### 3. **Padrões**
+- ✅ Implementado padrão de injeção com `inject()` onde apropriado
+- ✅ Padronizado tratamento de erros com diálogos
+- ✅ Melhorada consistência de código
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Criados (4 arquivos)
+- `src/app/services/dialog.service.ts` - 48 linhas (novo serviço de diálogos)
+- `src/app/shared/confirm-dialog/confirm-dialog.component.ts` - 32 linhas
+- `src/app/shared/confirm-dialog/confirm-dialog.component.html` - novo
+- `src/app/shared/confirm-dialog/confirm-dialog.component.css` - novo
+- `src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts` - novo
+- `src/app/shared/interfaces/configuracao.ts` - 37 linhas (consolidação)
+- `src/app/shared/interfaces/listagem-alunos.ts` - 11 linhas
+- `src/app/shared/interfaces/listagem-projetos.ts` - 15 linhas
+
+#### Arquivos Modificados (29 arquivos)
+- `src/app/app.routes.ts` - 7 linhas alteradas (remoção de rotas)
+- `src/app/features/orientador/relatorio-form/relatorio-form.component.ts` - 16 linhas alteradas
+- `src/app/features/secretaria/cadastros/cadastros.component.ts` - 34 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.ts` - 107 linhas alteradas
+- `src/app/features/secretaria/formulario-avaliador/formulario-avaliador.component.ts` - 47 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.css` - 387 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.html` - 181 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.ts` - 354 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.ts` - 41 linhas alteradas
+- `src/app/features/secretaria/listagem-avaliadores/listagem-avaliadores.component.ts` - 51 linhas alteradas
+- `src/app/features/secretaria/notificacoes/notificacoes.component.ts` - 20 linhas alteradas
+- `src/app/features/secretaria/relatorios/relatorios.component.ts` - 12 linhas alteradas
+- `src/app/services/cadastro.service.ts` - 5 linhas alteradas
+- `src/app/services/config.service.ts` - 69 linhas alteradas
+- `src/app/services/inscricoes.service.ts` - 28 linhas alteradas
+- `src/app/services/login.service.ts` - 41 linhas alteradas
+- `src/app/services/notificacao.service.ts` - 19 linhas alteradas
+- `src/app/services/password.service.ts` - 23 linhas alteradas
+- `src/app/services/projeto.service.ts` - 257 linhas alteradas
+- `src/app/services/relatorio.service.ts` - 129 linhas alteradas
+- `src/app/shared/cadastro/cadastro.component.ts` - 4 linhas alteradas
+- `src/app/shared/interfaces/projeto.ts` - 16 linhas alteradas
+- `src/app/shared/reset-password/reset-password.component.ts` - 12 linhas alteradas
+- `src/app/shared/sidenav/sidenav-secretaria.component.ts` - 15 linhas alteradas
+- `tsconfig.json` - 1 linha alterada
+- `package.json` - 2 linhas alteradas
+- `package-lock.json` - 4 linhas alteradas
+
+#### Arquivos Removidos (8 arquivos)
+- `src/app/features/avaliador-externo/formulario-avaliacao/formulario-avaliacao.component.ts` - 76 linhas
+- `src/app/features/avaliador-externo/formulario-avaliacao/formulario-avaliacao.component.html` - 26 linhas
+- `src/app/features/avaliador-externo/formulario-avaliacao/formulario-avaliacao.component.css` - 15 linhas
+- `src/app/features/avaliador-externo/formulario-avaliacao/formulario-avaliacao.component.spec.ts` - 64 linhas
+- `src/app/services/bolsa.service.ts` - 31 linhas
+- `src/app/services/bolsa.service.spec.ts` - 60 linhas
+- `src/app/shared/interfaces/bolsa.ts` - 6 linhas
+- `src/app/shared/interfaces/campus.ts` - 4 linhas
+- `src/app/shared/interfaces/curso.ts` - 4 linhas
+- `src/app/shared/interfaces/listagem.ts` - 15 linhas
+
+---
+
+### 🚀 Melhorias de Performance
+
+- ✅ Otimização de serviços com melhor estrutura de dados
+- ✅ Melhor tratamento de erros reduzindo tentativas desnecessárias
+- ✅ Consolidação de interfaces reduzindo duplicação de código
+
+---
+
+### 🔒 Melhorias de Segurança
+
+- ✅ Melhor tratamento de tokens JWT
+- ✅ Validação aprimorada de dados de entrada
+- ✅ Tratamento de erros mais robusto
+
+---
+
+### 📝 Notas Técnicas
+
+#### Novos Serviços e Componentes
+- `DialogService`: Serviço centralizado para gerenciamento de diálogos
+  - Método `alert(mensagem, titulo)`: Exibe diálogo de alerta
+  - Método `confirm(mensagem, titulo)`: Exibe diálogo de confirmação
+- `ConfirmDialogComponent`: Componente reutilizável para diálogos
+  - Suporta modos 'alert' e 'confirm'
+  - Integrado com Material Design
+
+#### Novas Interfaces
+- `Configuracao`: Consolida interfaces de configuração (Campus, Curso, TipoBolsa, Bolsa)
+- `ListagemAlunos`: Interface para visualização de alunos na secretaria
+- `ListagemProjetos`: Interface para listagem de projetos com paginação
+
+#### Dependências
+- Nenhuma nova dependência adicionada
+- Nenhuma dependência removida
+
+---
+
+### ✅ Testes e Validações
+
+- ✅ Testado sistema de diálogos em todos os componentes
+- ✅ Testado refatoração de serviços
+- ✅ Testado consolidação de interfaces
+- ✅ Validado remoção de componentes obsoletos
+- ✅ Testado fluxo completo de funcionalidades da secretaria
+
+---
+
+### 🎯 Próximos Passos Sugeridos
+
+1. Adicionar testes unitários para `DialogService` e `ConfirmDialogComponent`
+2. Implementar mais tipos de diálogos (sucesso, erro, informação)
+3. Adicionar animações nos diálogos
+4. Implementar internacionalização (i18n) para mensagens
+5. Adicionar documentação de uso do `DialogService`
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 26 de Novembro de 2025  
+**Branch:** `main`
+
+---
+
 ## [Data: 13/11/2025] - Melhorias de UI/UX e Refatorações de Componentes
 
 ### 🎯 Resumo Geral

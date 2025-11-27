@@ -5,7 +5,8 @@ import { environment } from '@environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacaoService {
-  private readonly baseUrl = `${environment.apiBaseUrl}/notificacoes`;
+  private readonly apiUrl = environment.apiBaseUrl;
+  private readonly apiUrlNotificacoes = `${this.apiUrl}/notificacoes`;
 
   constructor(private http: HttpClient) {}
 
@@ -14,8 +15,9 @@ export class NotificacaoService {
       .set('destinatario', destinatario)
       .set('page', 1)
       .set('size', 1000);
+
     return this.http
-      .get<any>(this.baseUrl, { params })
+      .get<any>(this.apiUrlNotificacoes, { params })
       .pipe(map((res) => res.items ?? []));
   }
 
@@ -28,21 +30,18 @@ export class NotificacaoService {
       .set('destinatario', destinatario)
       .set('page', page)
       .set('size', size);
+
     return this.http.get<{
       items: any[];
       page: number;
       size: number;
       total: number;
-    }>(this.baseUrl, { params });
+    }>(this.apiUrlNotificacoes, { params });
   }
 
   marcarTodasComoLidas(dest: 'secretaria' | 'orientador' | 'aluno') {
-    return this.http.put(
-      `${environment.apiBaseUrl}/notificacoes/mark-all`,
-      null,
-      {
-        params: { destinatario: dest },
-      }
-    );
+    return this.http.put(`${this.apiUrlNotificacoes}/mark-all`, null, {
+      params: { destinatario: dest },
+    });
   }
 }

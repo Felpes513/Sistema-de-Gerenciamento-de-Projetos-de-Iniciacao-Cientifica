@@ -2,6 +2,10 @@
 import { Aluno } from '@interfaces/aluno';
 
 export type StatusProjeto = 'EM_EXECUCAO' | 'CONCLUIDO';
+export type StatusEnvio = 'ENVIADO' | 'NAO_ENVIADO';
+export type EtapaDocumento = 'IDEIA' | 'PARCIAL' | 'FINAL';
+
+
 
 /** DTO usado pelo endpoint POST /projetos/update-alunos */
 export interface UpdateProjetoAlunosDTO {
@@ -39,8 +43,9 @@ export interface ProjetoRequest {
   resumo: string;
   id_orientador: number;
   id_campus: number;
-  cod_projeto?: string; // <- incluir
-  ideia_inicial_b64?: string; // <- incluir (obrigatório no POST)
+  cod_projeto?: string; // código do projeto
+  ideia_inicial_b64?: string; // base64 do DOCX da ideia inicial
+  ideia_inicial_pdf_b64?: string; // base64 do PDF da ideia inicial
 }
 
 export interface ProjetoFormulario {
@@ -93,4 +98,11 @@ export interface ProjetoDetalhado {
   data_atualizacao?: string;
   status?: string;
   tipo_bolsa?: string | null;
+}
+
+export interface DocumentoHistorico {
+  etapa: EtapaDocumento;
+  status: StatusEnvio;
+  dataEnvio?: Date;
+  arquivos?: { docx?: { nome: string }; pdf?: { nome: string } };
 }

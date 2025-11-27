@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AvaliadorExterno } from '@interfaces/avaliador_externo';
 import { ProjetoService } from '@services/projeto.service';
+import { DialogService } from '@services/dialog.service';
 
 @Component({
   selector: 'app-formulario-avaliador',
@@ -26,7 +27,8 @@ export class FormularioAvaliadorComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private projetoService: ProjetoService
+    private projetoService: ProjetoService,
+    private dialog: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -45,9 +47,12 @@ export class FormularioAvaliadorComponent implements OnInit {
     }
   }
 
-  salvarAvaliador() {
+  async salvarAvaliador() {
     if (!this.avaliador.nome.trim() || !this.avaliador.email.trim()) {
-      alert('Preencha pelo menos Nome e E-mail.');
+      await this.dialog.alert(
+        'Preencha pelo menos Nome e E-mail.',
+        'Campos obrigatórios'
+      );
       return;
     }
 
@@ -66,14 +71,38 @@ export class FormularioAvaliadorComponent implements OnInit {
       });
 
     if (this.edicao && this.avaliador.id) {
-      this.projetoService.atualizarAvaliador(this.avaliador.id, payload).subscribe({
-        next: () => { alert('Avaliador atualizado com sucesso!'); goToList(); },
-        error: (err) => alert(`Erro: ${err.message || 'Falha ao atualizar'}`),
-      });
+      this.projetoService
+        .atualizarAvaliador(this.avaliador.id, payload)
+        .subscribe({
+          next: async () => {
+            await this.dialog.alert(
+              'Avaliador atualizado com sucesso!',
+              'Sucesso'
+            );
+            goToList();
+          },
+          error: async (err) => {
+            await this.dialog.alert(
+              `Erro: ${err?.message || 'Falha ao atualizar'}`,
+              'Erro'
+            );
+          },
+        });
     } else {
       this.projetoService.criarAvaliador(payload).subscribe({
-        next: () => { alert('Avaliador cadastrado com sucesso!'); goToList(); },
-        error: (err) => alert(`Erro: ${err.message || 'Falha ao cadastrar'}`),
+        next: async () => {
+          await this.dialog.alert(
+            'Avaliador cadastrado com sucesso!',
+            'Sucesso'
+          );
+          goToList();
+        },
+        error: async (err) => {
+          await this.dialog.alert(
+            `Erro: ${err?.message || 'Falha ao cadastrar'}`,
+            'Erro'
+          );
+        },
       });
     }
   }

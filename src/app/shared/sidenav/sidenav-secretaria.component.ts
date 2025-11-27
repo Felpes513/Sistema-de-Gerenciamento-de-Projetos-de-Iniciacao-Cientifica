@@ -12,7 +12,7 @@ import { Subscription, interval, of } from 'rxjs';
 import { catchError, startWith, switchMap } from 'rxjs/operators';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService, Role } from '@services/auth.service';
-import { ProjetoService } from '@services/projeto.service';
+import { NotificacaoService } from '@services/notificacao.service';
 
 @Component({
   selector: 'app-sidenav',
@@ -24,7 +24,7 @@ import { ProjetoService } from '@services/projeto.service';
 export class SidenavSecretariaComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private auth = inject(AuthService);
-  private projetoService = inject(ProjetoService);
+  private notificacaoService = inject(NotificacaoService);
 
   exibirBadgeNotificacao = false;
   private notifSub?: Subscription;
@@ -34,7 +34,6 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
   isOrientador = this.auth.hasRole('ORIENTADOR');
   isAluno = this.auth.hasRole('ALUNO');
 
-  // Mobile/menu state
   isMobile = false;
   isMenuOpen = true;
 
@@ -48,18 +47,18 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.updateLayout(); // define isMobile e isMenuOpen
+    this.updateLayout();
 
     if (this.isSecretaria) {
       this.notifSub = interval(30000)
         .pipe(
           startWith(0),
           switchMap(() =>
-            this.projetoService
+            this.notificacaoService
               .getNotificacoesPaginado('secretaria', 1, 10)
               .pipe(
                 catchError(() =>
-                  this.projetoService.getNotificacoes('secretaria')
+                  this.notificacaoService.getNotificacoes('secretaria')
                 ),
                 catchError(() => of([]))
               )
@@ -85,7 +84,6 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
 
   private updateLayout(): void {
     this.isMobile = window.matchMedia('(max-width: 768px)').matches;
-    // no desktop, mantém sempre aberto; no mobile, inicia fechado
     this.isMenuOpen = this.isMobile ? false : true;
   }
 
@@ -94,7 +92,6 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
   }
 
   onNavClick(): void {
-    // ao navegar no mobile, fecha o menu para liberar a tela
     if (this.isMobile) this.isMenuOpen = false;
   }
 
@@ -108,7 +105,7 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
   marcarNotificacoesComoLidas() {
     this.exibirBadgeNotificacao = false;
     if (this.isSecretaria) {
-      this.projetoService.marcarTodasComoLidas('secretaria').subscribe({
+      this.notificacaoService.marcarTodasComoLidas('secretaria').subscribe({
         error: () => {},
       });
     }

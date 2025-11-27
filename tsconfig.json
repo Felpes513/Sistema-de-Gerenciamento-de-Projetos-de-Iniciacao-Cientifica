@@ -29,6 +29,7 @@
       "@avaliador-externo/*": ["app/features/avaliador-externo/*"],
       "@shared/*": ["app/shared/*"],
       "@environments/*": ["environments/*"]
+      
     }
   },
   "angularCompilerOptions": {

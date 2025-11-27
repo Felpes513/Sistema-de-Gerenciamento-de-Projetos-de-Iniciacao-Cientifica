@@ -179,13 +179,6 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'avaliador-externo/avaliacao/:token',
-    loadComponent: () =>
-      import(
-        './features/avaliador-externo/formulario-avaliacao/formulario-avaliacao.component'
-      ).then((m) => m.FormularioAvaliacaoExternaComponent),
-  },
-  {
     path: 'aluno/reset-password',
     loadComponent: () =>
       import('./shared/reset-password/reset-password.component').then(

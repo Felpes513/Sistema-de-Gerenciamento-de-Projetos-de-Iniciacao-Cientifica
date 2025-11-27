@@ -16,17 +16,12 @@ type Perfil = 'aluno' | 'orientador' | 'secretaria';
 })
 export class ResetPasswordComponent {
   perfil: Perfil = 'aluno';
-
-  // modo 1 (solicitar link)
   email = '';
-
-  // modo 2 (definir senha)
   token: string | null = null;
   novaSenha = '';
   confirmacao = '';
   show1 = false;
   show2 = false;
-
   loading = false;
   okMsg = '';
   erro = '';
@@ -43,13 +38,12 @@ export class ResetPasswordComponent {
       route.snapshot.queryParamMap.get('perfil') || ''
     ).toLowerCase();
     const p = (dataPerfil || qpPerfil || 'aluno') as Perfil;
+
     if (p === 'orientador' || p === 'secretaria') this.perfil = p;
 
-    // Se tiver token na URL, entramos no modo "confirmar nova senha"
     this.token = route.snapshot.queryParamMap.get('token');
   }
 
-  // ----- Modo 1: solicitar link -----
   enviar() {
     this.resetMsgs();
     if (!this.email.trim()) {
@@ -69,13 +63,11 @@ export class ResetPasswordComponent {
     });
   }
 
-  // ----- Modo 2: salvar nova senha -----
   senhaConfere(): boolean {
     return !!this.novaSenha && this.novaSenha === this.confirmacao;
   }
 
   strongEnough(): boolean {
-    // regra mínima simples; ajuste se quiser força maior
     return this.novaSenha.length >= 8;
   }
 
@@ -94,8 +86,6 @@ export class ResetPasswordComponent {
       next: (r) => {
         this.okMsg = r?.message || 'Senha redefinida com sucesso.';
         this.loading = false;
-        // Opcional: após alguns segundos, ir para o login ou homepage
-        // this.router.navigate(['/login']); // se preferir ir ao login
       },
       error: (e) => {
         this.erro = e?.error?.detail || 'Não foi possível redefinir a senha.';

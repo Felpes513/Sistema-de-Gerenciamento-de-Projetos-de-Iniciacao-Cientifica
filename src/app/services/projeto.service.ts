@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, of, switchMap, map, catchError } from 'rxjs';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { switchMap, map, catchError } from 'rxjs/operators';
 import {
   ProjetoRequest,
   Projeto,
@@ -11,7 +12,7 @@ import {
   ProjetoInscricaoApi,
 } from '@interfaces/projeto';
 import { Orientador } from '@interfaces/orientador';
-import { Campus } from '@interfaces/campus';
+import { Campus } from '@interfaces/configuracao';
 import { AvaliadorExterno } from '@interfaces/avaliador_externo';
 import { ApiMensagem } from '@interfaces/api';
 import {
@@ -25,17 +26,15 @@ import { environment } from '@environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProjetoService {
-  private readonly apiBase = environment.apiBaseUrl;
-  private readonly apiUrlProjetos = `${this.apiBase}/projetos/`;
-  private readonly apiUrlOrientadores = `${this.apiBase}/orientadores`;
-  private readonly apiUrlCampus = `${this.apiBase}/campus`;
-  private readonly apiUrlInscricoes = `${this.apiBase}/inscricoes`;
-  private readonly apiUrlNotificacoes = `${this.apiBase}/notificacoes`;
-  private readonly apiUrlAvaliadoresExternos = `${this.apiBase}/avaliadores-externos/`;
+  private readonly apiUrl = environment.apiBaseUrl;
+  private readonly apiUrlProjetos = `${this.apiUrl}/projetos/`;
+  private readonly apiUrlOrientadores = `${this.apiUrl}/orientadores`;
+  private readonly apiUrlCampus = `${this.apiUrl}/campus`;
+  private readonly apiUrlInscricoes = `${this.apiUrl}/inscricoes`;
+  private readonly apiUrlAvaliadoresExternos = `${this.apiUrl}/avaliadores-externos/`;
 
   constructor(private http: HttpClient) {}
 
-  // ===== helpers para o POST /projetos
   private gerarCodProjeto(): string {
     const ano = new Date().getFullYear();
     const suf = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -50,6 +49,7 @@ export class ProjetoService {
     projeto: ProjetoCadastro & {
       cod_projeto?: string;
       ideia_inicial_b64?: string;
+      ideia_inicial_pdf_b64?: string;
     },
     id_orientador: number
   ): Observable<any> {
@@ -60,11 +60,13 @@ export class ProjetoService {
     }
 
     const cod = (projeto.cod_projeto || '').trim() || this.gerarCodProjeto();
-    const ideiaCrua = this.stripDataUrl(projeto.ideia_inicial_b64 || '');
+    const ideiaDocxCrua = this.stripDataUrl(projeto.ideia_inicial_b64 || '');
+    const ideiaPdfCrua = this.stripDataUrl(projeto.ideia_inicial_pdf_b64 || '');
 
-    if (!ideiaCrua) {
+    if (!ideiaDocxCrua || !ideiaPdfCrua) {
       return throwError(() => ({
-        message: 'Envie o documento inicial (.docx) em Base64.',
+        message:
+          'Envie o documento inicial (.docx) e o PDF em Base64 para cadastrar o projeto.',
       }));
     }
 
@@ -74,7 +76,8 @@ export class ProjetoService {
       id_orientador,
       id_campus: projeto.id_campus,
       cod_projeto: cod,
-      ideia_inicial_b64: ideiaCrua,
+      ideia_inicial_b64: ideiaDocxCrua,
+      ideia_inicial_pdf_b64: ideiaPdfCrua,
     };
 
     return this.http
@@ -94,6 +97,7 @@ export class ProjetoService {
           id_campus: formulario.id_campus,
           cod_projeto: 'P-' + new Date().getFullYear() + '-TEMP',
           ideia_inicial_b64: '',
+          ideia_inicial_pdf_b64: '',
         };
         return this.http
           .post(this.apiUrlProjetos, payload)
@@ -102,9 +106,18 @@ export class ProjetoService {
     );
   }
 
+  private extractProjetos(res: any): any[] {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.projetos)) return res.projetos;
+    if (Array.isArray(res?.items)) return res.items;
+    return [];
+  }
+
   listarProjetos(): Observable<Projeto[]> {
-    return this.http.get<{ projetos: any[] }>(this.apiUrlProjetos).pipe(
-      map((res) => (res.projetos || []).map((p) => this.normalizarProjeto(p))),
+    return this.http.get<any>(this.apiUrlProjetos).pipe(
+      map((res) =>
+        this.extractProjetos(res).map((p) => this.normalizarProjeto(p))
+      ),
       catchError(this.handleError)
     );
   }
@@ -146,10 +159,11 @@ export class ProjetoService {
   }
 
   getProjetoPorId(id: number) {
-    return this.http.get<{ projetos: any[] }>(this.apiUrlProjetos).pipe(
+    return this.http.get<any>(this.apiUrlProjetos).pipe(
       map((res) => {
-        const raw = (res.projetos || []).find(
-          (p) => Number(p.id_projeto ?? p.id) === Number(id)
+        const lista = this.extractProjetos(res);
+        const raw = lista.find(
+          (p: any) => Number(p.id_projeto ?? p.id) === Number(id)
         );
         if (!raw) throw { message: 'Projeto não encontrado', status: 404 };
         return this.normalizarProjetoDetalhado(raw);
@@ -179,6 +193,7 @@ export class ProjetoService {
           id_campus: formulario.id_campus,
           cod_projeto: (formulario as any).cod_projeto,
           ideia_inicial_b64: undefined as any,
+          ideia_inicial_pdf_b64: undefined as any,
         };
         Object.keys(payload).forEach(
           (k) => (payload as any)[k] === undefined && delete (payload as any)[k]
@@ -192,11 +207,10 @@ export class ProjetoService {
 
   listarProjetosRaw() {
     return this.http
-      .get<{ projetos: any[] }>(this.apiUrlProjetos)
-      .pipe(map((res) => res.projetos ?? []));
+      .get<any>(this.apiUrlProjetos)
+      .pipe(map((res) => this.extractProjetos(res)));
   }
 
-  /** Concluir projeto: tenta POST /concluir; se não existir, faz PATCH status=CONCLUIDO */
   concluirProjeto(id: number): Observable<{ mensagem: string }> {
     return this.http
       .post<{ mensagem: string }>(`${this.apiUrlProjetos}${id}/concluir`, {})
@@ -259,7 +273,7 @@ export class ProjetoService {
     idProjeto: number
   ): Observable<ProjetoInscricaoApi[]> {
     return this.http
-      .get<any[]>(`${this.apiBase}/projetos/${idProjeto}/inscricoes`)
+      .get<any[]>(`${this.apiUrl}/projetos/${idProjeto}/inscricoes`)
       .pipe(
         map(
           (items: any[]) =>
@@ -270,6 +284,7 @@ export class ProjetoService {
                 id: i.aluno?.id ?? i.id_aluno ?? 0,
                 nome: i.aluno?.nome ?? i.nome_aluno ?? '—',
                 email: i.aluno?.email ?? i.email ?? '—',
+                matricula: i.aluno?.matricula ?? i.matricula ?? undefined,
               },
               nome_aluno: i.nome_aluno ?? i.aluno?.nome ?? '—',
               email: i.email ?? i.aluno?.email ?? '—',
@@ -295,38 +310,6 @@ export class ProjetoService {
     return this.http
       .delete(`${this.apiUrlInscricoes}/${id}`)
       .pipe(catchError(this.handleError));
-  }
-
-  getNotificacoes(destinatario: string): Observable<any[]> {
-    return this.http.get<any[]>(
-      `${this.apiUrlNotificacoes}?destinatario=${encodeURIComponent(
-        destinatario
-      )}`
-    );
-  }
-
-  getNotificacoesPaginado(destinatario: string, page = 1, size = 20) {
-    return this.http.get<{
-      items: any[];
-      page: number;
-      size: number;
-      total: number;
-    }>(
-      `${this.apiUrlNotificacoes}?destinatario=${encodeURIComponent(
-        destinatario
-      )}&page=${page}&size=${size}`
-    );
-  }
-
-  marcarTodasComoLidas(destinatario: string) {
-    return this.http.post<{ updated: number }>(
-      `${
-        this.apiUrlNotificacoes
-      }/marcar-todas-como-lidas?destinatario=${encodeURIComponent(
-        destinatario
-      )}`,
-      {}
-    );
   }
 
   criarAvaliador(a: AvaliadorExterno): Observable<{ id_avaliador: number }> {
@@ -355,9 +338,11 @@ export class ProjetoService {
 
   listarProjetosDoOrientador() {
     return this.http
-      .get<{ projetos: any[] }>(`${this.apiUrlProjetos}me`)
+      .get<any>(`${this.apiUrlProjetos}me`)
       .pipe(
-        map((res) => (res.projetos || []).map((p) => this.normalizarProjeto(p)))
+        map((res) =>
+          this.extractProjetos(res).map((p) => this.normalizarProjeto(p))
+        )
       );
   }
 
@@ -391,45 +376,101 @@ export class ProjetoService {
       data_criacao: dados.data_criacao || '',
       data_atualizacao: dados.data_atualizacao || '',
       status: dados.status || '',
+      tipo_bolsa: dados.tipo_bolsa ?? null,
     };
   }
 
-  // ===== Uploads pós-cadastro
-  uploadDocx(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', arquivo);
-    return this.http.put(
-      `${this.apiUrlProjetos}${idProjeto}/docx/upload`,
-      formData
-    );
-  }
-
   downloadDocx(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/docx`, {
-      responseType: 'blob',
-    });
-  }
-
-  uploadPdf(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', arquivo);
-    return this.http.put(
-      `${this.apiUrlProjetos}${idProjeto}/pdf/upload`,
-      formData
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/ideia-inicial.docx`,
+      { responseType: 'blob' }
     );
   }
 
   downloadPdf(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/pdf`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/ideia-inicial.pdf`,
+      { responseType: 'blob' }
+    );
+  }
+
+  uploadMonografiaParcialDocx(
+    idProjeto: number,
+    arquivo: File
+  ): Observable<any> {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    return this.http
+      .put(
+        `${this.apiUrlProjetos}${idProjeto}/monografia-parcial/docx`,
+        formData
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  uploadMonografiaParcialPdf(
+    idProjeto: number,
+    arquivo: File
+  ): Observable<any> {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    return this.http
+      .put(
+        `${this.apiUrlProjetos}${idProjeto}/monografia-parcial/pdf`,
+        formData
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  uploadMonografiaFinalDocx(idProjeto: number, arquivo: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    return this.http
+      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-final/docx`, formData)
+      .pipe(catchError(this.handleError));
+  }
+
+  uploadMonografiaFinalPdf(idProjeto: number, arquivo: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    return this.http
+      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-final/pdf`, formData)
+      .pipe(catchError(this.handleError));
+  }
+
+  downloadMonografiaParcialDocx(idProjeto: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-parcial.docx`,
+      { responseType: 'blob' }
+    );
+  }
+
+  downloadMonografiaParcialPdf(idProjeto: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-parcial.pdf`,
+      { responseType: 'blob' }
+    );
+  }
+
+  downloadMonografiaFinalDocx(idProjeto: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-final.docx`,
+      { responseType: 'blob' }
+    );
+  }
+
+  downloadMonografiaFinalPdf(idProjeto: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-final.pdf`,
+      { responseType: 'blob' }
+    );
   }
 
   listarProjetosParaAvaliacao(): Observable<ProjetoBasico[]> {
     return this.http
-      .get<any[]>(`${this.apiBase}/avaliacoes/projetos-para-avaliacao`)
+      .get<any[]>(`${this.apiUrl}/avaliacoes/projetos-para-avaliacao`)
       .pipe(
-        map((rows) =>
+        map((rows: any[]) =>
           (rows || []).map((r) => ({
             id: r.id_projeto,
             titulo: r.titulo || r.nome || 'Projeto',
@@ -443,7 +484,7 @@ export class ProjetoService {
   listarNotasDoProjeto(idProjeto: number): Observable<number[]> {
     return this.http
       .get<{ notas: number[] }>(
-        `${this.apiBase}/avaliacoes/projetos/${idProjeto}/notas`
+        `${this.apiUrl}/avaliacoes/projetos/${idProjeto}/notas`
       )
       .pipe(
         map((res) => res?.notas || []),
@@ -456,7 +497,7 @@ export class ProjetoService {
   }): Observable<ConviteAvaliacaoResponse> {
     return this.http
       .post<ConviteAvaliacaoResponse>(
-        `${this.apiBase}/avaliacoes/convites`,
+        `${this.apiUrl}/avaliacoes/convites`,
         payload
       )
       .pipe(catchError(this.handleError));
@@ -464,7 +505,7 @@ export class ProjetoService {
 
   obterInfoPorToken(token: string): Observable<AvaliacaoLinkInfo> {
     return this.http
-      .get<AvaliacaoLinkInfo>(`${this.apiBase}/avaliacoes/form/${token}`)
+      .get<AvaliacaoLinkInfo>(`${this.apiUrl}/avaliacoes/form/${token}`)
       .pipe(catchError(this.handleError));
   }
 
@@ -474,7 +515,7 @@ export class ProjetoService {
   ): Observable<{ mensagem: string }> {
     return this.http
       .post<{ mensagem: string }>(
-        `${this.apiBase}/avaliacoes/form/${token}`,
+        `${this.apiUrl}/avaliacoes/form/${token}`,
         dto
       )
       .pipe(catchError(this.handleError));
@@ -498,12 +539,16 @@ export class ProjetoService {
   listarProjetosComPdf(): Observable<
     Array<{ id: number; titulo: string; has_pdf: boolean }>
   > {
-    return this.http.get<{ projetos: any[] }>(this.apiUrlProjetos).pipe(
+    return this.http.get<any>(this.apiUrlProjetos).pipe(
       map((res) =>
-        (res.projetos || []).map((p) => ({
-          id: p.id_projeto,
+        this.extractProjetos(res).map((p: any) => ({
+          id: p.id_projeto ?? p.id,
           titulo: p.titulo_projeto || p.nome || 'Projeto',
-          has_pdf: !!p.has_pdf,
+          has_pdf: !!(
+            p.has_mon_final_pdf ||
+            p.has_mon_parcial_pdf ||
+            p.has_ideia_inicial_pdf
+          ),
         }))
       ),
       catchError(this.handleError)
@@ -529,8 +574,42 @@ export class ProjetoService {
   };
 
   listarOrientadoresAprovados(): Observable<Orientador[]> {
-    return this.http.get<Orientador[]>(
-      `${this.apiBase}/orientadores/aprovados`
+    return this.http.get<Orientador[]>(`${this.apiUrl}/orientadores/aprovados`);
+  }
+
+  tornarAlunosInadimplentes(idProjeto: number) {
+    return this.http.post<{
+      mensagem: string;
+      total_inadimplentados: number;
+    }>(`${this.apiUrl}/alunos/${idProjeto}/inadimplentar-alunos`, {});
+  }
+
+  tornarOrientadorInadimplente(idProjeto: number) {
+    return this.http.post<{
+      mensagem: string;
+      id_orientador: number;
+    }>(`${this.apiUrl}/orientadores/${idProjeto}/inadimplentar-orientador`, {});
+  }
+
+  tornarTodosInadimplentes(idProjeto: number) {
+    return forkJoin({
+      alunos: this.tornarAlunosInadimplentes(idProjeto),
+      orientador: this.tornarOrientadorInadimplente(idProjeto),
+    }).pipe(
+      map(({ alunos, orientador }) => ({
+        mensagem: 'Alunos e orientador marcados como inadimplentes por 2 anos.',
+        detalhes: {
+          alunos,
+          orientador,
+        },
+      }))
+    );
+  }
+
+  cancelarProjeto(idProjeto: number) {
+    return this.http.put<{ mensagem: string }>(
+      `${this.apiUrl}/projetos/${idProjeto}/cancelar`,
+      {}
     );
   }
 }

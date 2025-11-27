@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ConfigService } from '@services/config.service';
+import { DialogService } from '@services/dialog.service';
 
 @Component({
   selector: 'app-configuracoes',
@@ -12,52 +13,34 @@ import { ConfigService } from '@services/config.service';
   styleUrls: ['./configuracoes.component.css'],
 })
 export class ConfiguracoesComponent implements OnInit {
-  /* ================================================================
-   * CAMPUS
-   * ================================================================ */
   campus: any[] = [];
   novoCampus = '';
 
-  /* ================================================================
-   * CURSOS
-   * ================================================================ */
   cursos: any[] = [];
   novoCurso = '';
 
-  /* ================================================================
-   * TIPOS DE BOLSA
-   * ================================================================ */
   tiposBolsa: any[] = [];
   novoTipoBolsa = '';
 
-  /* ================================================================
-   * ALUNOS EM PROJETOS (APROVADOS)
-   * ================================================================ */
   alunos: any[] = [];
   filtroBolsa = '';
 
-  // Modal de bolsas
   modalBolsaAberto = false;
   alunoSelecionado: any = null;
   bolsaSelecionada: number | null = null;
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService, private dialog: DialogService) {}
 
   ngOnInit(): void {
     this.carregarCampus();
     this.carregarCursos();
     this.carregarTiposBolsa();
-
-    /** 🔥 AGORA LISTA OS ALUNOS CADASTRADOS EM PROJETOS, NÃO MAIS INSCRIÇÕES */
-    this.carregarAlunosEmProjetos();
+    this.carregarAlunosComBolsa();
   }
 
-  /* ================================================================
-   * CAMPUS
-   * ================================================================ */
   carregarCampus() {
     this.config.listarCampus().subscribe({
-      next: (res) => (this.campus = res),
+      next: (res: { campus: any[] }) => (this.campus = res.campus),
       error: () => (this.campus = []),
     });
   }
@@ -71,18 +54,19 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  excluirCampus(id: number) {
-    if (!confirm('Confirma excluir este campus?')) return;
+  async excluirCampus(id: number) {
+    const confirmado = await this.dialog.confirm(
+      'Confirma excluir este campus?',
+      'Confirmação'
+    );
+    if (!confirmado) return;
 
     this.config.excluirCampus(id).subscribe({
       next: () => this.carregarCampus(),
-      error: () => alert('Falha ao excluir campus'),
+      error: () => this.dialog.alert('Falha ao excluir campus', 'Erro'),
     });
   }
 
-  /* ================================================================
-   * CURSOS
-   * ================================================================ */
   carregarCursos() {
     this.config.listarCursos().subscribe((res) => (this.cursos = res.cursos));
   }
@@ -96,18 +80,19 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  excluirCurso(id: number) {
-    if (!confirm('Confirma excluir este curso?')) return;
+  async excluirCurso(id: number) {
+    const confirmado = await this.dialog.confirm(
+      'Confirma excluir este curso?',
+      'Confirmação'
+    );
+    if (!confirmado) return;
 
     this.config.excluirCurso(id).subscribe({
       next: () => this.carregarCursos(),
-      error: () => alert('Falha ao excluir curso'),
+      error: () => this.dialog.alert('Falha ao excluir curso', 'Erro'),
     });
   }
 
-  /* ================================================================
-   * TIPOS DE BOLSA
-   * ================================================================ */
   carregarTiposBolsa() {
     this.config.listarTiposBolsa().subscribe((res) => {
       this.tiposBolsa = res;
@@ -117,35 +102,36 @@ export class ConfiguracoesComponent implements OnInit {
   criarTipoBolsa() {
     if (!this.novoTipoBolsa.trim()) return;
 
-    this.config
-      .criarTipoBolsa({ tipo_bolsa: this.novoTipoBolsa })
-      .subscribe(() => {
-        this.novoTipoBolsa = '';
-        this.carregarTiposBolsa();
-      });
+    this.config.criarTipoBolsa(this.novoTipoBolsa).subscribe(() => {
+      this.novoTipoBolsa = '';
+      this.carregarTiposBolsa();
+    });
   }
 
-  excluirTipoBolsa(id: number) {
-    if (!confirm('Remover este tipo de bolsa?')) return;
+  async excluirTipoBolsa(id: number) {
+    const confirmado = await this.dialog.confirm(
+      'Remover este tipo de bolsa?',
+      'Confirmação'
+    );
+    if (!confirmado) return;
 
     this.config.excluirTipoBolsa(id).subscribe(() => {
       this.carregarTiposBolsa();
     });
   }
 
-  /* ================================================================
-   * ALUNOS EM PROJETOS (APROVADOS)
-   * ================================================================ */
-  carregarAlunosEmProjetos() {
-    this.config.listarAlunosEmProjetos().subscribe({
-      next: (res) => (this.alunos = res.alunos),
+  carregarAlunosComBolsa() {
+    this.config.listarBolsas().subscribe({
+      next: (res: {
+        bolsas: any[];
+        limit: number;
+        offset: number;
+        count: number;
+      }) => (this.alunos = res.bolsas),
       error: () => (this.alunos = []),
     });
   }
 
-  /* ================================================================
-   * BOLSAS
-   * ================================================================ */
   abrirSelecaoBolsa(aluno: any) {
     this.alunoSelecionado = aluno;
     this.modalBolsaAberto = true;
@@ -157,30 +143,31 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   confirmarVinculo() {
-    if (!this.bolsaSelecionada) return;
+    if (!this.bolsaSelecionada || !this.alunoSelecionado) return;
 
     this.config
-      .criarBolsaAluno({
+      .criarBolsa({
         id_aluno: this.alunoSelecionado.id_aluno,
         id_tipo_bolsa: this.bolsaSelecionada,
       })
       .subscribe(() => {
         this.fecharModal();
-        this.carregarAlunosEmProjetos();
+        this.carregarAlunosComBolsa();
       });
   }
 
-  removerBolsa(id_bolsa: number) {
-    if (!confirm('Remover esta bolsa?')) return;
+  async removerBolsa(id_bolsa: number) {
+    const confirmado = await this.dialog.confirm(
+      'Remover esta bolsa?',
+      'Confirmação'
+    );
+    if (!confirmado) return;
 
-    this.config.removerBolsa(id_bolsa).subscribe(() => {
-      this.carregarAlunosEmProjetos();
+    this.config.excluirBolsa(id_bolsa).subscribe(() => {
+      this.carregarAlunosComBolsa();
     });
   }
 
-  /* ================================================================
-   * FILTRO
-   * ================================================================ */
   matchBolsa(term: string, ...vals: (string | number | undefined | null)[]) {
     const norm = (s: any) =>
       (s ?? '')

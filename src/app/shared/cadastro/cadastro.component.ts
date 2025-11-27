@@ -6,8 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { RegisterService } from '@services/cadastro.service';
 import { ProjetoService } from '@services/projeto.service';
 import { ConfigService } from '@services/config.service';
-import { Campus } from '@interfaces/campus';
-import { Curso } from '@interfaces/curso';
+import { Campus } from '@interfaces/configuracao';
+import { Curso } from '@interfaces/configuracao';
 
 @Component({
   selector: 'app-cadastro',

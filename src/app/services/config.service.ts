@@ -1,41 +1,80 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@environments/environment';
+import { Observable } from 'rxjs';
+import {
+  Campus,
+  Curso,
+  TipoBolsa,
+  BolsaCreateDto,
+  BolsaListResponse,
+} from '@interfaces/configuracao';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
   private readonly apiUrl = environment.apiBaseUrl;
+
   constructor(private http: HttpClient) {}
 
-  // ===== CAMPUS =====
-  listarCampus() {
-    return this.http.get<{ campus: any[] }>(`${this.apiUrl}/campus`);
+  listarCampus(): Observable<{ campus: Campus[] }> {
+    return this.http.get<{ campus: Campus[] }>(`${this.apiUrl}/campus/`);
   }
-  criarCampus(body: any) {
+
+  criarCampus(body: { campus: string }) {
     return this.http.post(`${this.apiUrl}/campus/`, body);
   }
+
   excluirCampus(id: number) {
     return this.http.delete(`${this.apiUrl}/campus/${id}`);
   }
 
-  // ===== CURSOS =====
-  listarCursos() {
-    return this.http.get<{ cursos: any[] }>(`${this.apiUrl}/cursos/`);
+  listarCursos(): Observable<{ cursos: Curso[] }> {
+    return this.http.get<{ cursos: Curso[] }>(`${this.apiUrl}/cursos/`);
   }
-  criarCurso(body: any) {
+
+  criarCurso(body: { nome: string }) {
     return this.http.post(`${this.apiUrl}/cursos/`, body);
   }
+
   excluirCurso(id: number) {
     return this.http.delete(`${this.apiUrl}/cursos/${id}`);
   }
 
-  listarTiposBolsa() {
-    return this.http.get<any>(`${this.apiUrl}/bolsas/tipos`);
+  listarTiposBolsa(
+    limit: number = 100,
+    offset: number = 0
+  ): Observable<TipoBolsa[]> {
+    const params = new HttpParams().set('limit', limit).set('offset', offset);
+
+    return this.http.get<TipoBolsa[]>(`${this.apiUrl}/tipos-bolsa/`, {
+      params,
+    });
   }
-  criarTipoBolsa(body: { nome: string }) {
-    return this.http.post(`${this.apiUrl}/bolsas/tipos`, body);
+
+  criarTipoBolsa(tipo_bolsa: string) {
+    return this.http.post(`${this.apiUrl}/tipos-bolsa/`, { tipo_bolsa });
   }
-  excluirTipoBolsa(id_bolsa: number) {
-    return this.http.delete(`${this.apiUrl}/bolsas/tipos/${id_bolsa}`);
+
+  excluirTipoBolsa(id_tipo_bolsa: number) {
+    return this.http.delete(`${this.apiUrl}/tipos-bolsa/${id_tipo_bolsa}`);
+  }
+
+  listarBolsas(
+    limit: number = 100,
+    offset: number = 0
+  ): Observable<BolsaListResponse> {
+    const params = new HttpParams().set('limit', limit).set('offset', offset);
+
+    return this.http.get<BolsaListResponse>(`${this.apiUrl}/bolsas/`, {
+      params,
+    });
+  }
+
+  criarBolsa(payload: BolsaCreateDto) {
+    return this.http.post(`${this.apiUrl}/bolsas/`, payload);
+  }
+
+  excluirBolsa(id_bolsa: number) {
+    return this.http.delete(`${this.apiUrl}/bolsas/${id_bolsa}`);
   }
 }

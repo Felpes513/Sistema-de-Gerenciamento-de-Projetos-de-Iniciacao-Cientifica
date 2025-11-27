@@ -5,7 +5,6 @@ import {
   RegisterResponse,
   RegisterAlunoData,
   RegisterOrientadorData,
-  RegisterSecretariaData, // se não usar, pode remover
 } from '@interfaces/registros';
 import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
@@ -45,14 +44,12 @@ export class RegisterService {
     );
   }
 
-  // ---- Alunos (Secretaria) ----
   listarAlunos(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/alunos/`);
   }
   aprovarAluno(id: number) {
     return this.http.put(`${this.baseUrl}/alunos/${id}/aprovar`, {});
   }
-  // estas rotas dependem do back; mantenho a assinatura
   reprovarAluno(id: number) {
     return this.http.put(`${this.baseUrl}/alunos/${id}/reprovar`, {});
   }
@@ -62,7 +59,6 @@ export class RegisterService {
       .pipe(map((r) => r.alunos || []));
   }
 
-  // ---- Orientadores (Secretaria) ----
   listarOrientadores(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/orientadores/`);
   }
@@ -80,7 +76,6 @@ export class RegisterService {
       .pipe(map((r) => r.orientadores || []));
   }
 
-  // === Utilidades (se estiver usando no cadastro) ===
   checkEmailExists(
     email: string,
     perfil: 'orientador' | 'secretaria' | 'aluno'

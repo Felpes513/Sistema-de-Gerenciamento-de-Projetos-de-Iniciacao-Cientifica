@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Notificacao } from '@interfaces/notificacao';
 import { NotificacaoService } from '@services/notificacao.service';
+import { DialogService } from '@services/dialog.service';
 
 @Component({
   selector: 'app-notificacoes',
@@ -31,7 +32,8 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
 
   constructor(
     private notifService: NotificacaoService,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private dialog: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -39,7 +41,6 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // garante que o body não fique travado caso o componente seja destruído com modal aberto
     this.renderer.removeClass(document.body, 'modal-open');
   }
 
@@ -87,28 +88,31 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
     if (this.page < this.totalPages) this.carregar(this.page + 1);
   }
 
-  marcarTodasComoLidas(): void {
-    if (!confirm('Marcar todas como lidas?')) return;
+  async marcarTodasComoLidas(): Promise<void> {
+    const ok = await this.dialog.confirm(
+      'Marcar todas as notificações como lidas?',
+      'Confirmação'
+    );
+    if (!ok) return;
+
     this.notifService.marcarTodasComoLidas(this.destinatario).subscribe({
       next: () => this.carregar(this.page),
-      error: () => {},
+      error: () => {
+      },
     });
   }
 
   abrirNotificacao(notificacao: Notificacao): void {
     this.notificacaoAberta = notificacao;
     notificacao.lida = true;
-    // trava o scroll de fundo
     this.renderer.addClass(document.body, 'modal-open');
   }
 
   fecharModal(): void {
     this.notificacaoAberta = null;
-    // libera o scroll de fundo
     this.renderer.removeClass(document.body, 'modal-open');
   }
 
-  // ESC fecha o modal — sem parâmetro para evitar o erro de tipagem
   @HostListener('document:keydown.escape')
   onEsc(): void {
     if (this.notificacaoAberta) this.fecharModal();

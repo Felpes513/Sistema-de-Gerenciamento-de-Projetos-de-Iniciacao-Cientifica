@@ -9,7 +9,7 @@ type Role = 'SECRETARIA' | 'ORIENTADOR' | 'ALUNO';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
-  private readonly baseUrl = environment.apiBaseUrl;
+  private readonly apiUrl = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -17,8 +17,9 @@ export class LoginService {
     const body = new URLSearchParams();
     body.set('username', email);
     body.set('password', senha);
+
     return this.http
-      .post<LoginResponse>(`${this.baseUrl}/login`, body.toString(), {
+      .post<LoginResponse>(`${this.apiUrl}/login`, body.toString(), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       })
       .pipe(tap((res) => this.persistTokensFromResponse(res)));
@@ -28,38 +29,44 @@ export class LoginService {
     const body = new URLSearchParams();
     body.set('username', email);
     body.set('password', senha);
+
     return this.http
-      .post<LoginResponse>(
-        `${this.baseUrl}/login-orientador`,
-        body.toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-      )
+      .post<LoginResponse>(`${this.apiUrl}/login-orientador`, body.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      })
       .pipe(tap((res) => this.persistTokensFromResponse(res)));
   }
 
   loginSecretaria(email: string, senha: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(
-        `${this.baseUrl}/secretarias/login`,
-        { email, senha } // ← JSON
-      )
+      .post<LoginResponse>(`${this.apiUrl}/secretarias/login`, {
+        email,
+        senha,
+      })
       .pipe(tap((res) => this.persistTokensFromResponse(res)));
   }
 
-  /** Centraliza a persistência e valida campos do backend */
   private persistTokensFromResponse(res: Partial<LoginResponse>) {
     const access = (res as any)?.access_token || (res as any)?.token;
     const refresh = (res as any)?.refresh_token;
-    if (!access) throw new Error('Resposta de login sem access_token');
+
+    if (!access) {
+      throw new Error('Resposta de login sem access_token');
+    }
+
     this.setTokens(access, refresh || '');
   }
 
   setTokens(accessToken: string, refreshToken: string): void {
     localStorage.setItem('access_token', accessToken);
-    if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
 
     const role = this.decodeRoleFromJwt(accessToken);
-    if (role) localStorage.setItem('role', role);
+    if (role) {
+      localStorage.setItem('role', role);
+    }
   }
 
   getRole(): Role | null {
@@ -74,12 +81,15 @@ export class LoginService {
       const payload = JSON.parse(
         this.base64UrlDecode(token.split('.')[1] || '')
       );
+
       const raw =
         payload.perfil ||
         payload.role ||
         payload.roles?.[0] ||
         payload.authorities?.[0];
+
       if (!raw) return null;
+
       const upper = String(raw).toUpperCase();
       return ['SECRETARIA', 'ORIENTADOR', 'ALUNO'].includes(upper)
         ? (upper as Role)
@@ -92,6 +102,7 @@ export class LoginService {
   private base64UrlDecode(s: string) {
     s = s.replace(/-/g, '+').replace(/_/g, '/');
     const pad = s.length % 4 ? 4 - (s.length % 4) : 0;
+
     return decodeURIComponent(
       atob(s + '='.repeat(pad))
         .split('')

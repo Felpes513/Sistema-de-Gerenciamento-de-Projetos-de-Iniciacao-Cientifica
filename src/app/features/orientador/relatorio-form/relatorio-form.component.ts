@@ -1,4 +1,3 @@
-// src/app/features/orientador/relatorio-form/relatorio-form.component.ts
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -9,6 +8,7 @@ import {
   ConfirmarRelatorioMensalDTO,
   RelatorioMensal,
 } from '@interfaces/relatorio';
+import { DialogService } from '@services/dialog.service';
 
 @Component({
   standalone: true,
@@ -22,16 +22,16 @@ export class RelatorioFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private relatorioService = inject(RelatorioService);
+  private dialog = inject(DialogService);
 
   projetoId!: number;
   salvando = signal(false);
   relatorioEnviadoDoMes = signal<RelatorioMensal | null>(null);
 
-  // quando true, tela fica somente leitura (usado pela Secretaria)
   readOnly = false;
 
   form = this.fb.group({
-    referenciaMes: ['', [Validators.required]], // YYYY-MM
+    referenciaMes: ['', [Validators.required]],
     ok: [true],
     resumo: ['', [Validators.required, Validators.minLength(10)]],
     atividades: [''],
@@ -49,7 +49,6 @@ export class RelatorioFormComponent implements OnInit {
   ngOnInit(): void {
     this.projetoId = Number(this.route.snapshot.paramMap.get('projetoId'));
 
-    // query params (vindo da Secretaria)
     const qp = this.route.snapshot.queryParamMap;
     this.readOnly = qp.has('readonly');
     const mesQP = qp.get('mes');
@@ -78,7 +77,6 @@ export class RelatorioFormComponent implements OnInit {
     return `${y}-${m}`;
   }
 
-  // >>> Hidratador do form com base no relatório encontrado
   private hidratarFormulario(r: RelatorioMensal | null) {
     if (!r) {
       this.form.patchValue(
@@ -190,17 +188,15 @@ export class RelatorioFormComponent implements OnInit {
     this.relatorioService.confirmar(this.projetoId, dto).subscribe({
       next: () => {
         this.salvando.set(false);
-        // fecha imediatamente após salvar
         this.fechar();
       },
-      error: () => {
+      error: async () => {
         this.salvando.set(false);
-        alert('Erro ao confirmar relatório.');
+        await this.dialog.alert('Erro ao confirmar relatório.', 'Aviso');
       },
     });
   }
 
-  /** Fecha o formulário: prioriza voltar para a página anterior */
   fechar(): void {
     if (document.referrer) {
       window.history.back();
@@ -209,12 +205,10 @@ export class RelatorioFormComponent implements OnInit {
     if (this.readOnly) {
       this.router.navigate(['/secretaria/relatorios']);
     } else {
-      // destino seguro para o orientador
       this.router.navigate(['/orientador']);
     }
   }
 
-  /** Atalho: ESC fecha */
   @HostListener('document:keydown.escape')
   onEsc() {
     this.fechar();

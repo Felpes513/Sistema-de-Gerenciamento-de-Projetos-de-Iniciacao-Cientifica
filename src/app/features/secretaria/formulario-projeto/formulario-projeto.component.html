@@ -113,7 +113,8 @@
         <!-- DOCX inicial (apenas no cadastro / não aparece em read-only) -->
         <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">
           <label for="docxIdeia"
-            ><i class="fas fa-file-word"></i> Documento inicial (.docx)</label
+            ><i class="fas fa-file-word"></i> Documento inicial (.docx) - Ideia
+            do Projeto</label
           >
           <div class="upload-controls">
             <input
@@ -127,131 +128,34 @@
             />
           </div>
           <small class="hint"
-            >Obrigatório no cadastro. Será enviado logo após criar o
-            projeto.</small
+            >Obrigatório no cadastro. Será armazenado como versão editável da
+            ideia inicial.</small
           >
         </div>
 
-        <!-- Notas (apenas em edição; editável só para SECRETARIA) -->
-        <div class="notas-section" *ngIf="modoEdicao">
-          <h3><i class="fas fa-graduation-cap"></i> Notas do Projeto</h3>
-          <p class="notas-description">
-            As notas abaixo são referentes ao projeto como um todo e podem ser
-            editadas apenas pela Secretaria.
-          </p>
-
-          <div class="notas-grid">
-            <div class="nota-card">
-              <label for="nota1"
-                ><i class="fas fa-star"></i> Nota 1 (Primeiro Semestre)</label
-              >
-              <input
-                type="number"
-                id="nota1"
-                min="0"
-                max="10"
-                step="0.1"
-                placeholder="0.0"
-                [(ngModel)]="projeto.nota1"
-                name="nota1"
-                [disabled]="isReadOnly"
-              />
-              <div class="nota-info">
-                <span>Máximo: 10.0</span>
-                <span
-                  class="nota-status"
-                  [class.aprovado]="(projeto.nota1 ?? 0) >= 6"
-                  [class.reprovado]="
-                    (projeto.nota1 ?? 0) > 0 && (projeto.nota1 ?? 0) < 6
-                  "
-                  [class.pendente]="projeto.nota1 == null"
-                >
-                  {{
-                    (projeto.nota1 ?? 0) >= 6
-                      ? "✓ Aprovado"
-                      : (projeto.nota1 ?? 0) > 0
-                      ? "✗ Reprovado"
-                      : "⏳ Pendente"
-                  }}
-                </span>
-              </div>
-            </div>
-
-            <div class="nota-card">
-              <label for="nota2"
-                ><i class="fas fa-star"></i> Nota 2 (Segundo Semestre)</label
-              >
-              <input
-                type="number"
-                id="nota2"
-                min="0"
-                max="10"
-                step="0.1"
-                placeholder="0.0"
-                [(ngModel)]="projeto.nota2"
-                name="nota2"
-                [disabled]="isReadOnly"
-              />
-              <div class="nota-info">
-                <span>Máximo: 10.0</span>
-                <span
-                  class="nota-status"
-                  [class.aprovado]="(projeto.nota2 ?? 0) >= 6"
-                  [class.reprovado]="
-                    (projeto.nota2 ?? 0) > 0 && (projeto.nota2 ?? 0) < 6
-                  "
-                  [class.pendente]="projeto.nota2 == null"
-                >
-                  {{
-                    (projeto.nota2 ?? 0) >= 6
-                      ? "✓ Aprovado"
-                      : (projeto.nota2 ?? 0) > 0
-                      ? "✗ Reprovado"
-                      : "⏳ Pendente"
-                  }}
-                </span>
-              </div>
-            </div>
-
-            <div class="nota-card">
-              <label for="notaFinal"
-                ><i class="fas fa-trophy"></i> Nota Final</label
-              >
-              <input
-                type="number"
-                id="notaFinal"
-                min="0"
-                max="10"
-                step="0.1"
-                placeholder="0.0"
-                [(ngModel)]="projeto.notaFinal"
-                name="notaFinal"
-                [disabled]="isReadOnly"
-              />
-              <div class="nota-info">
-                <span>Máximo: 10.0</span>
-                <span
-                  class="nota-status"
-                  [class.aprovado]="(projeto.notaFinal ?? 0) >= 6"
-                  [class.reprovado]="
-                    (projeto.notaFinal ?? 0) > 0 && (projeto.notaFinal ?? 0) < 6
-                  "
-                  [class.pendente]="projeto.notaFinal == null"
-                >
-                  {{
-                    (projeto.notaFinal ?? 0) >= 6
-                      ? "✓ Aprovado"
-                      : (projeto.notaFinal ?? 0) > 0
-                      ? "✗ Reprovado"
-                      : "⏳ Pendente"
-                  }}
-                </span>
-              </div>
-            </div>
+        <!-- PDF inicial (apenas no cadastro / não aparece em read-only) -->
+        <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">
+          <label for="pdfIdeia"
+            ><i class="fas fa-file-pdf"></i> Documento inicial (.pdf) - Ideia do
+            Projeto</label
+          >
+          <div class="upload-controls">
+            <input
+              id="pdfIdeia"
+              type="file"
+              accept=".pdf"
+              (change)="onFileSelected($event, 'pdf')"
+              aria-label="Selecionar PDF inicial"
+              required
+            />
           </div>
+          <small class="hint"
+            >Também obrigatório no cadastro. Será armazenado como versão em PDF
+            da ideia inicial.</small
+          >
         </div>
 
-        <!-- Upload pós-cadastro (oculto em read-only) -->
+        <!-- Upload pós-cadastro (PARCIAL / FINAL) - oculto em read-only -->
         <div class="upload-section" *ngIf="!isReadOnly && projetoId > 0">
           <div
             class="card-header"
@@ -262,9 +166,15 @@
               margin-bottom: var(--spacing-lg);
             "
           >
-            <h3 style="margin: 0">
-              <i class="fas fa-file-upload"></i> Documentos do projeto
-            </h3>
+            <div>
+              <h3 style="margin: 0">
+                <i class="fas fa-file-upload"></i> Documentos do projeto
+              </h3>
+              <small>
+                Etapa atual:
+                <strong>{{ tituloEtapa(currentEtapaUpload) }}</strong>
+              </small>
+            </div>
             <button
               type="button"
               class="btn btn-warning"
@@ -278,7 +188,8 @@
 
           <div class="upload-row">
             <label for="docxFile"
-              ><i class="fas fa-file-word"></i> Projeto (.docx)</label
+              ><i class="fas fa-file-word"></i>
+              {{ tituloUploadAtual }} (.docx)</label
             >
             <div class="upload-controls">
               <input
@@ -316,7 +227,8 @@
 
           <div class="upload-row">
             <label for="pdfFile"
-              ><i class="fas fa-file-pdf"></i> Projeto (.pdf)</label
+              ><i class="fas fa-file-pdf"></i>
+              {{ tituloUploadAtual }} (.pdf)</label
             >
             <div class="upload-controls">
               <input
@@ -374,11 +286,16 @@
                 class="status"
                 [class.nao-enviado]="h.status === 'NAO_ENVIADO'"
               >
-                {{
-                  h.status === "ENVIADO"
-                    ? "Enviado em " + (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
-                    : "Não enviado"
-                }}
+                <ng-container *ngIf="h.status === 'ENVIADO'; else naoEnviado">
+                  {{
+                    h.dataEnvio
+                      ? "Enviado em " +
+                        (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
+                      : "Enviado"
+                  }}
+                </ng-container>
+
+                <ng-template #naoEnviado> Não enviado </ng-template>
               </div>
 
               <div class="actions">
@@ -386,7 +303,7 @@
                   type="button"
                   class="btn ghost"
                   [disabled]="!h.arquivos?.pdf"
-                  (click)="baixarArquivo('pdf')"
+                  (click)="baixarArquivo('pdf', h.etapa)"
                 >
                   <i class="fas fa-file-pdf"></i> PDF
                 </button>
@@ -394,7 +311,7 @@
                   type="button"
                   class="btn ghost"
                   [disabled]="!h.arquivos?.docx"
-                  (click)="baixarArquivo('docx')"
+                  (click)="baixarArquivo('docx', h.etapa)"
                 >
                   <i class="fas fa-file-word"></i> DOCX
                 </button>
