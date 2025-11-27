@@ -164,5 +164,6 @@ describe('ConfiguracoesComponent', () => {
     expect(component.matchBolsa('pedro', 'João Silva', 'joao@test.com')).toBe(
       false
     );
+    expect(component.matchBolsa('', 'qualquer')).toBe(true);
   });
 });

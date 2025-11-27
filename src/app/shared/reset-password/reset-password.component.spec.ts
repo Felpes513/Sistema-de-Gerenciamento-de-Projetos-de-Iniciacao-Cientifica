@@ -57,4 +57,10 @@ describe('ResetPasswordComponent', () => {
       queryParams: { perfil: component.perfil },
     });
   });
+
+  it('should avoid calling API when email is empty', () => {
+    component.email = '';
+    component.enviar();
+    expect(config.forgotPassword).not.toHaveBeenCalled();
+  });
 });

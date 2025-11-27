@@ -55,4 +55,11 @@ describe('EnviarAvaliacoesModalComponent', () => {
     component.enviar();
     expect(component.erro).toBe('erro');
   });
+
+  it('should block sending when no project is chosen', () => {
+    component.emailsSelecionados = new Set(['a@mail.com']);
+    component.projetoSelecionadoId = null;
+    component.enviar();
+    expect(component.erro).toContain('Selecione um projeto');
+  });
 });

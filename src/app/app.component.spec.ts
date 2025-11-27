@@ -34,6 +34,13 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
+  it('should render the router outlet for child routes', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('router-outlet')).not.toBeNull();
+  });
+
   it('should show the footer on the landing routes', async () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;

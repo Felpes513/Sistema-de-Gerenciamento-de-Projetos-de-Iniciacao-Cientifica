@@ -88,4 +88,21 @@ describe('SidenavSecretariaComponent', () => {
       'secretaria'
     );
   });
+
+  it('should adapt layout when the viewport switches to mobile', () => {
+    spyOn(window, 'matchMedia').and.returnValue({
+      matches: true,
+      addListener() {},
+      removeListener() {},
+      addEventListener() {},
+      removeEventListener() {},
+      dispatchEvent: () => false,
+      media: '',
+      onchange: null,
+    } as any);
+
+    component['updateLayout' as any]();
+    expect(component.isMobile).toBeTrue();
+    expect(component.isMenuOpen).toBeFalse();
+  });
 });

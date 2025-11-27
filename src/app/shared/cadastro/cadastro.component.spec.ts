@@ -114,4 +114,8 @@ describe('RegisterComponent', () => {
     component.onSubmitAluno();
     expect(registerService.registerAluno).toHaveBeenCalled();
   });
+
+  it('should start the wizard on the first step', () => {
+    expect(component.step).toBe(1);
+  });
 });

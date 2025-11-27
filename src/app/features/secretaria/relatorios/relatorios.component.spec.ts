@@ -55,4 +55,12 @@ describe('RelatoriosComponent', () => {
     component.abrirDetalhe({ projetoId: 1, referenciaMes: '2024-01' } as any);
     expect(router.navigate).toHaveBeenCalled();
   });
+
+  it('should download the XLSX and reset loading flag', () => {
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:fake');
+    spyOn(window.URL, 'revokeObjectURL');
+    component.baixarAlunosXlsx();
+    expect(service.baixarRelatorioAlunos).toHaveBeenCalled();
+    expect(component.baixando).toBeFalse();
+  });
 });

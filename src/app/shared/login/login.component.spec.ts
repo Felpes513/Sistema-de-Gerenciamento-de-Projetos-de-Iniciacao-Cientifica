@@ -85,4 +85,8 @@ describe('LoginComponent', () => {
     component.contactSupport(new Event('click'));
     expect(spy).toHaveBeenCalled();
   });
+
+  it('should default to the aluno profile', () => {
+    expect(component.perfil).toBe('aluno');
+  });
 });

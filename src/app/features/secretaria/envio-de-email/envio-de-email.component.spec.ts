@@ -38,4 +38,10 @@ describe('EnvioDeEmailComponent', () => {
     expect(req.request.method).toBe('POST');
     req.flush({ mensagem: 'ok' });
   });
+
+  it('should cancel sending certificates when user declines', () => {
+    spyOn(window, 'confirm').and.returnValue(false);
+    component.enviarCertificados(2, 'Outro');
+    http.expectNone(`${environment.emailApiBaseUrl}/enviar-certificado`);
+  });
 });

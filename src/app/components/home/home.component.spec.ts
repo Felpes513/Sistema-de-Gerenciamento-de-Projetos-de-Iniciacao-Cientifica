@@ -19,4 +19,11 @@ describe('HomeComponent', () => {
       expect(s.img).toContain('assets');
     });
   });
+
+  it('should render the three quick access buttons', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelectorAll('.access-btn').length).toBe(3);
+  });
 });

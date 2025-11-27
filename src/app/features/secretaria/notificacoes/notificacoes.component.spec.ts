@@ -53,4 +53,11 @@ describe('NotificacoesComponent', () => {
     component.fecharModal();
     expect(component.notificacaoAberta).toBeNull();
   });
+
+  it('should keep pagination bounds when already at the last page', () => {
+    expect(service.getNotificacoesPaginado).toHaveBeenCalledTimes(1);
+    component.totalPages = 1;
+    component.proxima();
+    expect(service.getNotificacoesPaginado).toHaveBeenCalledTimes(1);
+  });
 });

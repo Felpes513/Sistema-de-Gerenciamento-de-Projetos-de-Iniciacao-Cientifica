@@ -70,4 +70,8 @@ describe('FormularioProjetoComponent', () => {
     component.avancarEtapa();
     expect(component.historico[0].status).toBe('ENVIADO');
   });
+
+  it('should start on the first etapa', () => {
+    expect(component.etapaAtual).toBe('IDEIA');
+  });
 });
