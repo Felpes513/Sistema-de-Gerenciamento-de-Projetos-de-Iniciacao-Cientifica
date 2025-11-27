@@ -55,4 +55,12 @@ describe('CadastrosComponent', () => {
     component.aprovar(2);
     expect(service.aprovarOrientador).toHaveBeenCalledWith(2);
   });
+
+  it('should reject using the correct endpoint', () => {
+    component.reprovar(3);
+    expect(service.reprovarAluno).toHaveBeenCalledWith(3);
+    component.setTipo('ORIENTADORES');
+    component.reprovar(4);
+    expect(service.reprovarOrientador).toHaveBeenCalledWith(4);
+  });
 });

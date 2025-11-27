@@ -41,4 +41,10 @@ describe('ListagemAvaliadoresComponent', () => {
     component.abrirModal();
     expect(component.showModal).toBeTrue();
   });
+
+  it('should reload the list after closing the modal with reload flag', () => {
+    expect(service.listarAvaliadoresExternos).toHaveBeenCalledTimes(1);
+    component.onModalClosed(true);
+    expect(service.listarAvaliadoresExternos).toHaveBeenCalledTimes(2);
+  });
 });

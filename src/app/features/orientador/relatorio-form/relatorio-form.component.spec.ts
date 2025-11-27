@@ -71,6 +71,12 @@ describe('RelatorioFormComponent', () => {
     expect(texto).toContain('Horas no mês: 10');
   });
 
+  it('should format ISO strings using the helper', () => {
+    const formatted = component.dataBr('2024-02-05T12:30:00Z');
+    expect(formatted).toContain('/');
+    expect(formatted).toContain(':');
+  });
+
   it('should call confirmar when saving a valid form', () => {
     component.form.patchValue({
       referenciaMes: '2024-01',

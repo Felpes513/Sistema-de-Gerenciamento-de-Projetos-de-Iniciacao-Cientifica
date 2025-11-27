@@ -101,4 +101,8 @@ describe('ListagemProjetosComponent', () => {
     component.nextPage();
     expect(component.paginatedList.length).toBe(2);
   });
+
+  it('should expose readonly mode when user lacks orientador role', () => {
+    expect(component.readonlyMode).toBeTrue();
+  });
 });

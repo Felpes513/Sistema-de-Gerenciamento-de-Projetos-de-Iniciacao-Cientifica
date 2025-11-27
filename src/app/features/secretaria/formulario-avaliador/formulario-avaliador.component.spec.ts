@@ -41,10 +41,16 @@ describe('FormularioAvaliadorComponent', () => {
 
   it('should create a new evaluator', () => {
     spyOn(window, 'alert');
-    component.avaliador.nome = 'Nome';
-    component.avaliador.email = 'mail@mail.com';
+    component.avaliador.nome = ' Nome ';
+    component.avaliador.email = 'mail@mail.com ';
     component.salvarAvaliador();
-    expect(service.criarAvaliador).toHaveBeenCalled();
+    expect(service.criarAvaliador).toHaveBeenCalledWith({
+      nome: 'Nome',
+      email: 'mail@mail.com',
+      especialidade: '',
+      subespecialidade: '',
+      link_lattes: '',
+    });
   });
 
   it('should update an existing evaluator', () => {

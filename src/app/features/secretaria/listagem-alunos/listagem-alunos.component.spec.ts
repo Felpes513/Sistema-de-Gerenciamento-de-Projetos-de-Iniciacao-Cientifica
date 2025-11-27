@@ -73,4 +73,12 @@ describe('ListagemAlunosComponent', () => {
     component.salvarSelecao();
     expect(projetoService.updateAlunosProjeto).toHaveBeenCalled();
   });
+
+  it('should remove a student from selection when toggled off', () => {
+    component.modo = 'ORIENTADOR';
+    component.selecionados = new Set([1]);
+    const inscricao: any = { id_aluno: 1, aluno: { nome: 'Aluno' } };
+    component.toggleSelecionado(inscricao, false);
+    expect(component.selecionados.has(1)).toBeFalse();
+  });
 });

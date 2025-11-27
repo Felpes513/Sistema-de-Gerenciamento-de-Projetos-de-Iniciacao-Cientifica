@@ -14,5 +14,6 @@ describe('FooterComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('footer')).toBeTruthy();
+    expect(compiled.querySelectorAll('.footer-social a').length).toBeGreaterThan(2);
   });
 });
