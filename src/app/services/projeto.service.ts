@@ -213,18 +213,15 @@ export class ProjetoService {
 
   concluirProjeto(id: number): Observable<{ mensagem: string }> {
     return this.http
-      .post<{ mensagem: string }>(`${this.apiUrlProjetos}${id}/concluir`, {})
+      .put<{ success?: boolean; message?: string }>(
+        `${this.apiUrlProjetos}${id}/concluir`,
+        {}
+      )
       .pipe(
-        catchError((err: HttpErrorResponse) => {
-          if (err.status === 404 || err.status === 405) {
-            return this.http
-              .patch<{ mensagem: string }>(`${this.apiUrlProjetos}${id}`, {
-                status: 'CONCLUIDO',
-              })
-              .pipe(catchError(this.handleError));
-          }
-          return this.handleError(err);
-        })
+        map((res) => ({
+          mensagem: res?.message || 'Projeto concluído com sucesso.',
+        })),
+        catchError(this.handleError)
       );
   }
 
@@ -294,7 +291,6 @@ export class ProjetoService {
                 i.possuiTrabalhoRemunerado ?? i.possui_trabalho_remunerado
               ),
               created_at: i.created_at ?? null,
-              documentoNotasUrl: i.documentoNotasUrl ?? null,
             })) as ProjetoInscricaoApi[]
         )
       );
@@ -478,17 +474,6 @@ export class ProjetoService {
           }))
         ),
         catchError(this.handleError)
-      );
-  }
-
-  listarNotasDoProjeto(idProjeto: number): Observable<number[]> {
-    return this.http
-      .get<{ notas: number[] }>(
-        `${this.apiUrl}/avaliacoes/projetos/${idProjeto}/notas`
-      )
-      .pipe(
-        map((res) => res?.notas || []),
-        catchError(() => of([]))
       );
   }
 

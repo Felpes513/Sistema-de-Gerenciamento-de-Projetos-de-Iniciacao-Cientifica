@@ -25,6 +25,8 @@ import {
   debounceTime,
   distinctUntilChanged,
 } from 'rxjs/operators';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-listagem-projetos',
@@ -35,6 +37,7 @@ import {
     RouterModule,
     MatSnackBarModule,
     MatIconModule,
+    MatDialogModule,
   ],
   templateUrl: './listagem-projetos.component.html',
   styleUrls: ['./listagem-projetos.component.css'],
@@ -74,8 +77,17 @@ export class ListagemProjetosComponent implements OnInit {
     private router: Router,
     private snackBar: MatSnackBar,
     private inscricoesService: InscricoesService,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private dialog: MatDialog
   ) {}
+
+  private abrirConfirmacao(titulo: string, mensagem: string) {
+    return this.dialog
+      .open(ConfirmDialogComponent, {
+        data: { titulo, mensagem, modo: 'confirm' },
+      })
+      .afterClosed(); // Observable<boolean>
+  }
 
   @HostListener('document:keydown.escape')
   onEscClose() {
@@ -232,7 +244,6 @@ export class ListagemProjetosComponent implements OnInit {
       this.atualizarProjetosFiltrados();
 
       this.hidratarSelecionados();
-      this.hidratarNotas();
     };
 
     if (this.isOrientador) {
@@ -298,33 +309,6 @@ export class ListagemProjetosComponent implements OnInit {
     if (calls.length) {
       forkJoin(calls).subscribe(() => this.atualizarProjetosFiltrados());
     }
-  }
-
-  private hidratarNotas() {
-    const calls = this.projetos
-      .filter((p) => this.isIdValido((p as any).id))
-      .map((p) =>
-        this.projetoService.listarNotasDoProjeto((p as any).id).pipe(
-          tap((notas: number[]) => {
-            (p as any).notas = notas || [];
-            if ((p as any).notas.length) {
-              const soma = (p as any).notas.reduce(
-                (acc: number, n: number) => acc + (Number(n) || 0),
-                0
-              );
-              (p as any).mediaNota = Number(
-                (soma / (p as any).notas.length).toFixed(2)
-              );
-            } else {
-              (p as any).mediaNota = undefined;
-            }
-          }),
-          catchError(() => of(null))
-        )
-      );
-
-    if (calls.length)
-      forkJoin(calls).subscribe(() => this.atualizarProjetosFiltrados());
   }
 
   onFiltroChange(valor: string) {
@@ -410,184 +394,243 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   concluirProjeto(id: number): void {
+    console.log('✅ concluirProjeto clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
       return;
     }
-    if (!confirm('Deseja marcar este projeto como concluído?')) return;
 
-    const svc: any = this.projetoService as any;
-    if (typeof svc.concluirProjeto !== 'function') {
-      this.snackBar.open(
-        'Endpoint concluirProjeto não implementado.',
-        'Fechar',
-        { duration: 3500 }
-      );
-      return;
-    }
+    this.abrirConfirmacao(
+      'Concluir projeto',
+      'Deseja marcar este projeto como concluído?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
 
-    svc.concluirProjeto(id).subscribe({
-      next: (res: any) => {
-        this.snackBar.open(res?.mensagem || 'Projeto concluído.', 'Fechar', {
-          duration: 3000,
-        });
-        this.carregarProjetos();
-      },
-      error: (e: any) => {
+      const svc: any = this.projetoService as any;
+      if (typeof svc.concluirProjeto !== 'function') {
         this.snackBar.open(
-          e?.error?.detail || 'Erro ao concluir projeto.',
+          'Endpoint concluirProjeto não implementado.',
           'Fechar',
-          { duration: 4000 }
+          { duration: 3500 }
         );
-      },
+        return;
+      }
+
+      svc.concluirProjeto(id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(res?.mensagem || 'Projeto concluído.', 'Fechar', {
+            duration: 3000,
+          });
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro concluirProjeto', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro ao concluir projeto.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
     });
   }
 
   cancelarProjeto(id: number): void {
+    console.log('✅ cancelarProjeto clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
       return;
     }
-    if (!confirm('Tem certeza que deseja cancelar este projeto?')) return;
 
-    const svc: any = this.projetoService as any;
-    if (typeof svc.cancelarProjeto !== 'function') {
-      this.snackBar.open(
-        'Endpoint cancelarProjeto não implementado.',
-        'Fechar',
-        { duration: 3500 }
-      );
-      return;
-    }
-    svc.cancelarProjeto(id).subscribe({
-      next: (res: any) => {
-        this.snackBar.open(res?.mensagem || 'Projeto cancelado.', 'Fechar', {
-          duration: 3000,
-        });
-        this.carregarProjetos();
-      },
-      error: (e: any) => {
+    this.abrirConfirmacao(
+      'Cancelar projeto',
+      'Tem certeza que deseja cancelar este projeto?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+
+      const svc: any = this.projetoService as any;
+      if (typeof svc.cancelarProjeto !== 'function') {
         this.snackBar.open(
-          e?.error?.detail || 'Erro ao cancelar projeto.',
+          'Endpoint cancelarProjeto não implementado.',
           'Fechar',
-          { duration: 4000 }
+          { duration: 3500 }
         );
-      },
+        return;
+      }
+
+      svc.cancelarProjeto(id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(res?.mensagem || 'Projeto cancelado.', 'Fechar', {
+            duration: 3000,
+          });
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro cancelarProjeto', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro ao cancelar projeto.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
     });
   }
 
   tornarAlunosInadimplentes(id: number): void {
+    console.log('✅ tornarAlunosInadimplentes clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
       return;
     }
-    if (
-      !confirm(
-        'Marcar TODOS os alunos do projeto como inadimplentes por 2 anos?'
-      )
-    )
-      return;
 
-    const fn = (this.projetoService as any).tornarAlunosInadimplentes;
-    if (typeof fn !== 'function') {
-      this.snackBar.open(
-        'Endpoint tornarAlunosInadimplentes não implementado.',
-        'Fechar',
-        { duration: 3500 }
-      );
-      return;
-    }
-    fn.call(this.projetoService, id).subscribe({
-      next: (res: any) => {
+    this.abrirConfirmacao(
+      'Inadimplência de alunos',
+      'Marcar TODOS os alunos do projeto como inadimplentes por 2 anos?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+
+      const fn = (this.projetoService as any).tornarAlunosInadimplentes;
+      if (typeof fn !== 'function') {
         this.snackBar.open(
-          res?.mensagem || 'Alunos marcados como inadimplentes.',
+          'Endpoint tornarAlunosInadimplentes não implementado.',
           'Fechar',
-          { duration: 3000 }
+          { duration: 3500 }
         );
-        this.carregarProjetos();
-      },
-      error: (e: any) => {
-        this.snackBar.open(e?.error?.detail || 'Erro na operação.', 'Fechar', {
-          duration: 4000,
-        });
-      },
+        return;
+      }
+
+      fn.call(this.projetoService, id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(
+            res?.mensagem || 'Alunos marcados como inadimplentes.',
+            'Fechar',
+            { duration: 3000 }
+          );
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro tornarAlunosInadimplentes', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro na operação.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
     });
   }
 
   tornarOrientadorInadimplente(id: number): void {
+    console.log('✅ tornarOrientadorInadimplente clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
       return;
     }
-    if (
-      !confirm(
-        'Marcar o ORIENTADOR deste projeto como inadimplente por 2 anos?'
-      )
-    )
-      return;
 
-    const fn = (this.projetoService as any).tornarOrientadorInadimplente;
-    if (typeof fn !== 'function') {
-      this.snackBar.open(
-        'Endpoint tornarOrientadorInadimplente não implementado.',
-        'Fechar',
-        { duration: 3500 }
-      );
-      return;
-    }
-    fn.call(this.projetoService, id).subscribe({
-      next: (res: any) => {
+    this.abrirConfirmacao(
+      'Inadimplência do orientador',
+      'Marcar o ORIENTADOR deste projeto como inadimplente por 2 anos?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+
+      const fn = (this.projetoService as any).tornarOrientadorInadimplente;
+      if (typeof fn !== 'function') {
         this.snackBar.open(
-          res?.mensagem || 'Orientador marcado como inadimplente.',
+          'Endpoint tornarOrientadorInadimplente não implementado.',
           'Fechar',
-          { duration: 3000 }
+          { duration: 3500 }
         );
-        this.carregarProjetos();
-      },
-      error: (e: any) => {
-        this.snackBar.open(e?.error?.detail || 'Erro na operação.', 'Fechar', {
-          duration: 4000,
-        });
-      },
+        return;
+      }
+
+      fn.call(this.projetoService, id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(
+            res?.mensagem || 'Orientador marcado como inadimplente.',
+            'Fechar',
+            { duration: 3000 }
+          );
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro tornarOrientadorInadimplente', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro na operação.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
     });
   }
 
   tornarTodosInadimplentes(id: number): void {
+    console.log('✅ tornarTodosInadimplentes clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
       return;
     }
-    if (!confirm('Marcar ORIENTADOR e ALUNOS como inadimplentes por 2 anos?'))
-      return;
 
-    const fn = (this.projetoService as any).tornarTodosInadimplentes;
-    if (typeof fn !== 'function') {
-      this.snackBar.open(
-        'Endpoint tornarTodosInadimplentes não implementado.',
-        'Fechar',
-        { duration: 3500 }
-      );
-      return;
-    }
-    fn.call(this.projetoService, id).subscribe({
-      next: (res: any) => {
+    this.abrirConfirmacao(
+      'Inadimplência geral',
+      'Marcar ORIENTADOR e ALUNOS como inadimplentes por 2 anos?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+
+      const fn = (this.projetoService as any).tornarTodosInadimplentes;
+      if (typeof fn !== 'function') {
         this.snackBar.open(
-          res?.mensagem || 'Todos marcados como inadimplentes.',
+          'Endpoint tornarTodosInadimplentes não implementado.',
           'Fechar',
-          { duration: 3000 }
+          { duration: 3500 }
         );
-        this.carregarProjetos();
-      },
-      error: (e: any) => {
-        this.snackBar.open(e?.error?.detail || 'Erro na operação.', 'Fechar', {
-          duration: 4000,
-        });
-      },
+        return;
+      }
+
+      fn.call(this.projetoService, id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(
+            res?.mensagem || 'Todos marcados como inadimplentes.',
+            'Fechar',
+            { duration: 3000 }
+          );
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro tornarTodosInadimplentes', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro na operação.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
     });
   }
 
@@ -617,10 +660,37 @@ export class ListagemProjetosComponent implements OnInit {
     }
 
     const nomeExibicao = projetoObj.nomeProjeto || 'Desconhecido';
-    const confirmacao = confirm(
+    this.abrirConfirmacao(
+      'Excluir projeto',
       `Excluir o projeto "${nomeExibicao}"?\n\nID: ${id}`
-    );
-    if (!confirmacao) return;
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+
+      this.projetoService.excluirProjeto(id).subscribe({
+        next: (response) => {
+          const mensagem =
+            (response as any)?.mensagem ||
+            (response as any)?.message ||
+            'Projeto excluído com sucesso';
+          this.snackBar.open(mensagem, 'Fechar', { duration: 3000 });
+          this.carregarProjetos();
+        },
+        error: (error) => {
+          let mensagemErro = '';
+          if (error.status === 0) mensagemErro = 'Erro de conexão';
+          else if (error.status === 404)
+            mensagemErro = 'Projeto não encontrado';
+          else if (error.status === 422) mensagemErro = 'ID inválido';
+          else if (error.status >= 500) mensagemErro = 'Erro interno';
+          else mensagemErro = error.message || `Erro HTTP ${error.status}`;
+          this.snackBar.open(`Erro ao excluir: ${mensagemErro}`, 'Fechar', {
+            duration: 4000,
+          });
+        },
+      });
+    });
 
     this.projetoService.excluirProjeto(id).subscribe({
       next: (response) => {
@@ -668,6 +738,7 @@ export class ListagemProjetosComponent implements OnInit {
 
   inscrever(projeto: Projeto & { alunosIds?: number[] }) {
     const id = (projeto as any)?.id;
+
     if (!this.isAluno) {
       this.snackBar.open(
         'Somente alunos podem se inscrever em projetos.',
@@ -676,47 +747,46 @@ export class ListagemProjetosComponent implements OnInit {
       );
       return;
     }
+
     if (!this.isIdValido(id)) {
       this.snackBar.open('Projeto sem ID válido.', 'Fechar', {
         duration: 3000,
       });
       return;
     }
-    if (this.isLotado(projeto)) {
-      this.snackBar.open('Seleção finalizada para este projeto.', 'Fechar', {
-        duration: 3000,
-      });
-      return;
-    }
+
     if (this.jaInscrito(id)) {
       this.snackBar.open('Você já se inscreveu neste projeto.', 'Fechar', {
         duration: 2500,
       });
       return;
     }
-    if (
-      !confirm(
-        `Confirmar inscrição no projeto "${(projeto as any).nomeProjeto}"?`
-      )
-    )
-      return;
 
-    this.inscrevendoId = id;
-    this.inscricoesService.inscrever(id).subscribe({
-      next: (res) => {
-        this.inscrevendoId = null;
-        this.marcarInscritoLocal(id);
-        this.snackBar.open(
-          res?.message || 'Inscrição realizada com sucesso!',
-          'Fechar',
-          { duration: 3000 }
-        );
-      },
-      error: (e) => {
-        this.inscrevendoId = null;
-        const msg = e?.error?.detail || e?.message || 'Erro ao inscrever.';
-        this.snackBar.open(msg, 'Fechar', { duration: 4000 });
-      },
+    this.abrirConfirmacao(
+      'Inscrição no projeto',
+      `Confirmar inscrição no projeto "${(projeto as any).nomeProjeto}"?`
+    ).subscribe((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+
+      this.inscrevendoId = id;
+      this.inscricoesService.inscrever(id).subscribe({
+        next: (res) => {
+          this.inscrevendoId = null;
+          this.marcarInscritoLocal(id);
+          this.snackBar.open(
+            res?.message || 'Inscrição realizada com sucesso!',
+            'Fechar',
+            { duration: 3000 }
+          );
+        },
+        error: (e) => {
+          this.inscrevendoId = null;
+          const msg = e?.error?.detail || e?.message || 'Erro ao inscrever.';
+          this.snackBar.open(msg, 'Fechar', { duration: 4000 });
+        },
+      });
     });
   }
 

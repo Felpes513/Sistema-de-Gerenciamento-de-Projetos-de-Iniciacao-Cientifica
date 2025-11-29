@@ -1,5 +1,3 @@
-// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\listagem-alunos\listagem-alunos.component.ts
-
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,8 +12,12 @@ import { ProjetoService } from '@services/projeto.service';
 import { InscricoesService } from '@services/inscricoes.service';
 import { ProjetoInscricaoApi } from '@interfaces/projeto';
 import { AlunoSecretariaView } from '@interfaces/listagem-alunos';
+import { Inscricao } from '@interfaces/inscricao';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 
 type Modo = 'SECRETARIA' | 'ORIENTADOR';
+type InscricaoLike = ProjetoInscricaoApi | Inscricao;
 
 function toTitleCase(s: string = ''): string {
   return s
@@ -29,7 +31,7 @@ function toTitleCase(s: string = ''): string {
 @Component({
   selector: 'app-listagem-alunos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatDividerModule],
   templateUrl: './listagem-alunos.component.html',
   styleUrls: ['./listagem-alunos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,11 +42,11 @@ export class ListagemAlunosComponent implements OnInit {
 
   readonly skeletonRows = [1, 2, 3, 4];
 
-  private _inscricoes: ProjetoInscricaoApi[] = [];
+  private _inscricoes: InscricaoLike[] = [];
 
   alunosSecretaria: AlunoSecretariaView[] = [];
-  aprovadas: ProjetoInscricaoApi[] = [];
-  pendentesOuReprovadas: ProjetoInscricaoApi[] = [];
+  aprovadas: InscricaoLike[] = [];
+  pendentesOuReprovadas: InscricaoLike[] = [];
   selecionados = new Set<number>();
   limite = 4;
   bloqueado = false;
@@ -92,6 +94,7 @@ export class ListagemAlunosComponent implements OnInit {
   private carregar() {
     this.loadingFlag = true;
 
+    // ===== ORIENTADOR: usa rota /projetos/{id}/inscricoes (inscrições por projeto) =====
     if (this.modo === 'ORIENTADOR') {
       this.projetoService
         .listarInscricoesPorProjeto(this.projetoId)
@@ -105,21 +108,21 @@ export class ListagemAlunosComponent implements OnInit {
           next: (inscricoes) => {
             this._inscricoes = inscricoes ?? [];
 
-            this.aprovadas = this._inscricoes.filter(
-              (i) =>
-                (i.status || '').toUpperCase() === 'VALIDADO' ||
-                (i.status || '').toUpperCase() === 'APROVADO'
-            );
+            this.aprovadas = this._inscricoes.filter((i) => {
+              const st = ((i as any).status || '').toUpperCase();
+              return st === 'VALIDADO' || st === 'APROVADO';
+            });
 
-            this.pendentesOuReprovadas = this._inscricoes.filter(
-              (i) =>
-                !this.aprovadas.includes(i) &&
-                (i.status || '').toUpperCase() !== 'CADASTRADO_FINAL'
-            );
+            this.pendentesOuReprovadas = this._inscricoes.filter((i) => {
+              const st = ((i as any).status || '').toUpperCase();
+              return !this.aprovadas.includes(i) && st !== 'CADASTRADO_FINAL';
+            });
 
             const jaVinculados = this._inscricoes
               .filter(
-                (i) => (i.status || '').toUpperCase() === 'CADASTRADO_FINAL'
+                (i) =>
+                  (((i as any).status || '') as string).toUpperCase() ===
+                  'CADASTRADO_FINAL'
               )
               .map((i) => this.alunoId(i));
 
@@ -135,8 +138,9 @@ export class ListagemAlunosComponent implements OnInit {
       return;
     }
 
-    this.projetoService
-      .listarInscricoesPorProjeto(this.projetoId)
+    // ===== SECRETARIA: usa rota /inscricao (listagem geral de inscrições) =====
+    this.inscricoesService
+      .listarPorProjeto(this.projetoId)
       .pipe(
         finalize(() => {
           this.loadingFlag = false;
@@ -170,37 +174,47 @@ export class ListagemAlunosComponent implements OnInit {
       : this.aprovadas.length + this.pendentesOuReprovadas.length;
   }
 
-  alunoId(i: ProjetoInscricaoApi): number {
+  alunoId(i: InscricaoLike): number {
+    const anyI = i as any;
     return (
-      i?.id_aluno ?? i?.aluno_id ?? i?.idAluno ?? i?.aluno?.id ?? i?.id ?? 0
+      anyI?.id_aluno ??
+      anyI?.aluno_id ??
+      anyI?.idAluno ??
+      anyI?.aluno?.id ??
+      anyI?.alunoId ??
+      anyI?.id ??
+      0
     );
   }
 
-  alunoNome(i: ProjetoInscricaoApi): string {
+  alunoNome(i: InscricaoLike): string {
+    const anyI = i as any;
     const raw =
-      i?.aluno?.nome ||
-      i?.nome_completo ||
-      i?.nome_aluno ||
-      i?.nome ||
+      anyI?.aluno?.nome ||
+      anyI?.nome_completo ||
+      anyI?.nome_aluno ||
+      anyI?.nome ||
       `Aluno #${this.alunoId(i)}`;
     return toTitleCase(raw);
   }
 
-  alunoRa(i: ProjetoInscricaoApi): string {
-    return i?.aluno?.matricula || (i as any)?.matricula || '—';
+  alunoRa(i: InscricaoLike): string {
+    const anyI = i as any;
+    return anyI?.aluno?.matricula || anyI?.matricula || '—';
   }
 
-  alunoEmail(i: ProjetoInscricaoApi): string {
-    return (i?.aluno?.email || (i as any)?.email || '—').trim();
+  alunoEmail(i: InscricaoLike): string {
+    const anyI = i as any;
+    return (anyI?.aluno?.email || anyI?.email || '—').trim();
   }
 
-  disabledCheckbox(i: ProjetoInscricaoApi): boolean {
+  disabledCheckbox(i: InscricaoLike): boolean {
     const id = this.alunoId(i);
     if (this.selecionados.has(id)) return false;
     return this.selecionados.size >= this.limite;
   }
 
-  toggleSelecionado(i: ProjetoInscricaoApi, checked: boolean) {
+  toggleSelecionado(i: InscricaoLike, checked: boolean) {
     const id = this.alunoId(i);
     if (!id) return;
     if (checked) {
@@ -211,7 +225,7 @@ export class ListagemAlunosComponent implements OnInit {
     }
   }
 
-  onSelecionadoChange(event: Event, inscricao: ProjetoInscricaoApi) {
+  onSelecionadoChange(event: Event, inscricao: InscricaoLike) {
     const target = event.target as HTMLInputElement | null;
     this.toggleSelecionado(inscricao, !!target?.checked);
   }
@@ -231,7 +245,7 @@ export class ListagemAlunosComponent implements OnInit {
             ids_alunos_aprovados: ids,
           },
           this._inscricoes.map((i) => ({
-            id_inscricao: i.id_inscricao ?? 0,
+            id_inscricao: (i as any).id_inscricao ?? 0,
             id_aluno: this.alunoId(i),
           }))
         )
@@ -239,7 +253,7 @@ export class ListagemAlunosComponent implements OnInit {
           next: (res) => {
             this.salvandoSelecao = false;
             this.sucessoSelecao =
-              res?.mensagem ||
+              (res as any)?.mensagem ||
               'Seleção salva e inscrições restantes excluídas.';
             this.selecionados = new Set<number>(ids);
             this.carregar();
@@ -280,7 +294,7 @@ export class ListagemAlunosComponent implements OnInit {
       });
   }
 
-  toggleBolsa(i: ProjetoInscricaoApi, checked: boolean) {
+  toggleBolsa(i: InscricaoLike, checked: boolean) {
     if (!this.bloqueado) return;
     const id = this.alunoId(i);
     if (!id) return;
@@ -289,45 +303,38 @@ export class ListagemAlunosComponent implements OnInit {
     else this.bolsaMarcada.delete(id);
   }
 
-  temBolsa(i: ProjetoInscricaoApi) {
+  temBolsa(i: InscricaoLike) {
     const id = this.alunoId(i);
     return this.bolsaMarcada.has(id);
   }
 
   trackByAlunoSecretaria = (_: number, aluno: AlunoSecretariaView) =>
     aluno.idInscricao;
-  trackByInscricao = (_: number, inscricao: ProjetoInscricaoApi) =>
+  trackByInscricao = (_: number, inscricao: InscricaoLike) =>
     this.alunoId(inscricao);
   trackByIndex = (index: number) => index;
 
-  private mapAlunoSecretaria(
-    inscricao: ProjetoInscricaoApi
-  ): AlunoSecretariaView {
+  private mapAlunoSecretaria(inscricao: InscricaoLike): AlunoSecretariaView {
+    const anyI = inscricao as any;
     const idAluno = this.alunoId(inscricao);
-    const idInscricao = inscricao?.id_inscricao ?? 0;
+    const idInscricao = anyI?.id_inscricao ?? anyI?.id ?? 0;
 
     const nomeRaw =
-      inscricao?.aluno?.nome ||
-      inscricao?.nome_aluno ||
-      inscricao?.nome ||
+      anyI?.aluno?.nome ||
+      anyI?.nome_aluno ||
+      anyI?.nome ||
       `Aluno #${idAluno || idInscricao}`;
 
     return {
       idInscricao,
       idAluno,
       nome: toTitleCase(nomeRaw),
-      matricula:
-        inscricao?.aluno?.matricula || (inscricao as any)?.matricula || '—',
-      email: (
-        inscricao?.aluno?.email ||
-        (inscricao as any)?.email ||
-        '—'
-      ).trim(),
-      status: inscricao?.status || (inscricao as any)?.situacao || 'PENDENTE',
+      matricula: anyI?.aluno?.matricula || anyI?.matricula || '—',
+      email: (anyI?.aluno?.email || anyI?.email || '—').trim(),
+      status: anyI?.status || anyI?.situacao || 'PENDENTE',
       possuiTrabalhoRemunerado:
-        (inscricao as any)?.possuiTrabalhoRemunerado ??
-        !!(inscricao as any)?.possui_trabalho_remunerado,
-      documentoNotasUrl: (inscricao as any)?.documentoNotasUrl ?? undefined,
+        anyI?.possuiTrabalhoRemunerado ?? !!anyI?.possui_trabalho_remunerado,
+      documentoNotasUrl: anyI?.documentoNotasUrl ?? undefined,
     };
   }
 }

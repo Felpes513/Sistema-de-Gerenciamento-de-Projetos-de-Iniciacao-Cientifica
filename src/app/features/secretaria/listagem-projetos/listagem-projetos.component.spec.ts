@@ -19,7 +19,6 @@ class ProjetoServiceStub {
     ])
   );
   listarProjetosDoOrientador = jasmine.createSpy().and.returnValue(of([]));
-  listarNotasDoProjeto = jasmine.createSpy().and.returnValue(of([10, 8]));
 }
 
 class AuthServiceStub {

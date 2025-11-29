@@ -1,6 +1,8 @@
 :host {
   display: block;
 }
+
+/* Card principal */
 .cadastros {
   background: var(--white);
   border: 1px solid var(--gray-200);
@@ -8,6 +10,17 @@
   box-shadow: var(--shadow-md);
   padding: 16px;
 }
+
+/* Título das seções de inadimplentes (Alunos / Orientadores) */
+.inad-section-title {
+  text-align: center;
+  margin: 24px 0 12px;
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: var(--gray-900);
+}
+
+/* Header antigo (se precisar usar depois) */
 .header {
   display: flex;
   align-items: center;
@@ -25,6 +38,8 @@
   color: var(--gray-500);
   font-size: 0.9rem;
 }
+
+/* Tabs (Aprovações / Inadimplentes + subtabs) */
 .tabs {
   display: flex;
   align-items: center;
@@ -65,6 +80,8 @@
   border-color: #cfe2ff;
   color: var(--uscs-blue);
 }
+
+/* Subtabs (Alunos / Orientadores) */
 .subtabs {
   display: flex;
   gap: 6px;
@@ -90,6 +107,8 @@
   color: var(--uscs-blue);
   background: #e6f0fb;
 }
+
+/* Toolbar / busca */
 .toolbar {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -126,6 +145,10 @@
   color: var(--gray-500);
   font-size: 0.9rem;
 }
+
+/* ===================== */
+/*   TABELAS (todas)     */
+/* ===================== */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -133,15 +156,19 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
+
+/* Cabeçalho: centralizado e em negrito */
 .table thead th {
   text-align: center;
   background: var(--gray-50);
   color: var(--gray-900);
-  font-weight: 600;
+  font-weight: 700;
   padding: 10px;
   border-bottom: 1px solid var(--gray-200);
   font-size: 0.92rem;
 }
+
+/* Linhas corpo */
 .table tbody tr {
   border-bottom: 1px solid var(--gray-200);
   transition: background 0.12s ease;
@@ -149,21 +176,24 @@
 .table tbody tr:hover {
   background: #fafafe;
 }
+
+/* Células: tudo centralizado e levemente em negrito */
 .table td {
   text-align: center;
   padding: 10px;
   vertical-align: middle;
   color: var(--gray-900);
   font-size: 0.95rem;
+  font-weight: 600;
 }
-.table th:first-child,
-.table td:first-child {
-  text-align: left;
-}
+
+/* Coluna de ações com largura fixa */
 .table .col-actions {
   text-align: center;
   width: 220px;
 }
+
+/* Estado vazio */
 .empty {
   text-align: center;
   padding: 26px 10px;
@@ -172,6 +202,8 @@
   border-radius: var(--radius-lg);
   background: var(--white);
 }
+
+/* Skeleton loading */
 .loading .skeleton {
   display: grid;
   gap: 8px;
@@ -191,6 +223,8 @@
     background-position: 0 0;
   }
 }
+
+/* Badges de status */
 .badge {
   display: inline-block;
   padding: 4px 8px;
@@ -219,6 +253,8 @@
   color: #6b21a8;
   border: 1px solid #e2d0ff;
 }
+
+/* Botões */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -263,6 +299,8 @@
 .btn-reject:hover {
   border-color: #ecb4b4;
 }
+
+/* User info (se usar) */
 .user {
   display: flex;
   align-items: center;
@@ -292,6 +330,8 @@
   color: var(--gray-500);
   font-size: 0.88rem;
 }
+
+/* Toolbar da tabela (se usar) */
 .table-toolbar {
   display: flex;
   justify-content: space-between;
@@ -302,13 +342,19 @@
   border-radius: var(--radius-lg);
   margin-bottom: 8px;
 }
+
+/* ===================== */
+/*   Responsivo          */
+/* ===================== */
 @media (max-width: 900px) {
   .toolbar {
     grid-template-columns: 1fr;
   }
+
   .table thead {
     display: none;
   }
+
   .table,
   .table tbody,
   .table tr,
@@ -316,53 +362,35 @@
     display: block;
     width: 100%;
   }
+
   .table tr {
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-lg);
     margin-bottom: 8px;
   }
+
   .table td {
     border: none;
     display: grid;
     grid-template-columns: 120px 1fr;
     gap: 10px;
     text-align: left;
+    font-weight: 500; /* um pouco menos forte no mobile */
   }
+
+  .table td.col-nome {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .table .col-actions {
     text-align: left;
     width: 100%;
   }
 }
-@media (max-width: 800px) {
-  .tabs {
-    flex-wrap: wrap;
-  }
-  .tabs .toolbar {
-    order: 3;
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-top: 6px;
-  }
-}
-@media (max-width: 720px) {
-  .tabs {
-    gap: 6px;
-  }
-  .tabs .toolbar {
-    flex: 1 1 100%;
-    order: 3;
-  }
-}
 
-@media (max-width: 900px) {
-  .table td.col-nome {
-    white-space: nowrap; /* mantém o nome numa linha */
-    overflow: hidden; /* esconde o excedente */
-    text-overflow: ellipsis; /* ... */
-  }
-}
-
+/* Ajustes de ações em telas menores */
 @media (max-width: 900px) {
   .table td.col-actions {
     display: flex !important;
@@ -404,4 +432,25 @@
     padding: 8px 10px;
     font-size: 0.85rem;
   }
+}
+
+/* Garantir que todas as colunas das tabelas tenham alinhamento consistente */
+.table thead th,
+.table tbody td {
+  text-align: center;
+  font-weight: 600;
+}
+
+.table thead th {
+  font-weight: 700;
+}
+
+/* Tabelas de inadimplentes: mesmas larguras de coluna em Alunos e Orientadores */
+.inad-table {
+  table-layout: fixed;
+}
+
+.inad-table thead th,
+.inad-table tbody td {
+  width: 25%; /* 4 colunas */
 }

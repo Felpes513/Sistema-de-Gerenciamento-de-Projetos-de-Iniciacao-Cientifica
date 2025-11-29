@@ -15,7 +15,6 @@
   </ng-container>
 
   <ng-template #conteudo>
-    <!-- ======== MODO SECRETARIA ======== -->
     <ng-container *ngIf="modo === 'SECRETARIA'">
       <ng-container *ngIf="lista().length; else vazio">
         <ul class="lista" role="list">
@@ -23,31 +22,41 @@
             class="item"
             *ngFor="let a of lista(); trackBy: trackByAlunoSecretaria"
           >
-            <div class="dados">
-              <strong class="nome" [title]="a.nome">
-                {{ a.nome }}
-                <span
-                  *ngIf="a.possuiTrabalhoRemunerado"
-                  class="badge remunerado"
-                  title="Possui trabalho remunerado"
-                  >💼 Remunerado</span
-                >
-              </strong>
+            <div class="aluno-card">
+              <div class="dados">
+                <strong class="nome" [title]="a.nome">
+                  <mat-icon class="avatar-icon">person</mat-icon>
+                  <span class="nome-texto">{{ a.nome }}</span>
 
-              <div class="mini">
-                <span>RA: {{ a.matricula }}</span>
-                <span class="sep">•</span>
-                <span>Email: {{ a.email }}</span>
-                <span class="sep">•</span>
-                <span
-                  >Status: <b>{{ a.status }}</b></span
-                >
-              </div>
+                  <span
+                    *ngIf="a.possuiTrabalhoRemunerado"
+                    class="badge remunerado"
+                    title="Possui trabalho remunerado"
+                  >
+                    <mat-icon class="badge-icon">work</mat-icon>
+                    Remunerado
+                  </span>
+                </strong>
 
-              <div class="links" *ngIf="a.documentoNotasUrl">
-                <a [href]="a.documentoNotasUrl" target="_blank" rel="noopener">
-                  <i class="fas fa-file-alt"></i> Visualizar Notas
-                </a>
+                <div class="mini">
+                  <span>RA: {{ a.matricula }}</span>
+                  <span>Email: {{ a.email }}</span>
+                  <span>
+                    Status:
+                    <b>{{ a.status }}</b>
+                  </span>
+                </div>
+
+                <div class="links" *ngIf="a.documentoNotasUrl">
+                  <a
+                    [href]="a.documentoNotasUrl"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <mat-icon class="link-icon">description</mat-icon>
+                    Visualizar Notas
+                  </a>
+                </div>
               </div>
             </div>
           </li>
@@ -64,7 +73,11 @@
         <ul class="lista" role="list">
           <li
             class="item"
-            *ngFor="let i of aprovadas; trackBy: trackByInscricao"
+            *ngFor="
+              let i of aprovadas;
+              let last = last;
+              trackBy: trackByInscricao
+            "
           >
             <label class="linha">
               <input
@@ -80,13 +93,17 @@
 
               <div class="dados">
                 <strong class="nome" [title]="alunoNome(i)">
-                  {{ alunoNome(i) }}
+                  <mat-icon class="avatar-icon">person</mat-icon>
+                  <span class="nome-texto">{{ alunoNome(i) }}</span>
+
                   <span
-                    *ngIf="i?.possuiTrabalhoRemunerado"
+                    *ngIf="$any(i)?.possuiTrabalhoRemunerado"
                     class="badge remunerado"
                     title="Possui trabalho remunerado"
-                    >💼 Remunerado</span
                   >
+                    <mat-icon class="badge-icon">work</mat-icon>
+                    Remunerado
+                  </span>
                 </strong>
 
                 <div class="mini">
@@ -98,11 +115,13 @@
                 </div>
               </div>
             </label>
+
+            <!-- linha de separação entre alunos -->
+            <mat-divider *ngIf="!last"></mat-divider>
           </li>
         </ul>
       </div>
 
-      <!-- estado quando não há aprovados -->
       <ng-template #nenhumAprovado>
         <p class="muted">Nenhum aluno aprovado pela Secretaria ainda.</p>
       </ng-template>

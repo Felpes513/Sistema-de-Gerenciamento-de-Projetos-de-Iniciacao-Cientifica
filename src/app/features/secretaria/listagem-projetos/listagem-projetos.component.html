@@ -51,11 +51,7 @@
       </button>
     </div>
 
-    <div
-      class="menu-overlay"
-      *ngIf="menuAberto !== null"
-      (click)="toggleMenu(null)"
-    ></div>
+    <!-- REMOVIDO overlay que capturava o clique -->
 
     <div *ngIf="!carregando && !erro" class="card-grid">
       <div
@@ -93,7 +89,7 @@
                 class="menu-item danger"
                 type="button"
                 role="menuitem"
-                (click)="cancelarProjeto(projeto.id); toggleMenu(null)"
+                (click)="cancelarProjeto(projeto.id)"
               >
                 <mat-icon>block</mat-icon> Cancelar Projeto
               </button>
@@ -101,9 +97,7 @@
                 class="menu-item warning"
                 type="button"
                 role="menuitem"
-                (click)="
-                  tornarAlunosInadimplentes(projeto.id); toggleMenu(null)
-                "
+                (click)="tornarAlunosInadimplentes(projeto.id)"
               >
                 <mat-icon>report_problem</mat-icon> Tornar Alunos Inadimplentes
               </button>
@@ -111,9 +105,7 @@
                 class="menu-item warning"
                 type="button"
                 role="menuitem"
-                (click)="
-                  tornarOrientadorInadimplente(projeto.id); toggleMenu(null)
-                "
+                (click)="tornarOrientadorInadimplente(projeto.id)"
               >
                 <mat-icon>report_problem</mat-icon> Tornar Orientador
                 Inadimplente
@@ -122,7 +114,7 @@
                 class="menu-item danger"
                 type="button"
                 role="menuitem"
-                (click)="tornarTodosInadimplentes(projeto.id); toggleMenu(null)"
+                (click)="tornarTodosInadimplentes(projeto.id)"
               >
                 <mat-icon>cancel</mat-icon> Tornar Todos Inadimplentes
               </button>
@@ -130,7 +122,7 @@
                 class="menu-item success"
                 type="button"
                 role="menuitem"
-                (click)="concluirProjeto(projeto.id); toggleMenu(null)"
+                (click)="concluirProjeto(projeto.id)"
               >
                 <mat-icon>flag_circle</mat-icon> Concluir Projeto
               </button>
@@ -157,13 +149,6 @@
             <mat-icon>school</mat-icon>
             <strong>Campus:</strong>
             <span>{{ projeto.campus || "—" }}</span>
-          </div>
-
-          <!-- Notas (se houver) -->
-          <div class="alunos-info" *ngIf="projeto.notas?.length">
-            <mat-icon>grade</mat-icon>
-            <strong>Notas:</strong>
-            <span class="chip">Média: {{ projeto.mediaNota }}</span>
           </div>
 
           <!-- SEMPRE exibe o bloco 'Alunos Participantes' -->
@@ -239,12 +224,8 @@
                 type="button"
                 class="btn-add"
                 (click)="inscrever(projeto)"
-                [disabled]="isLotado(projeto) || inscrevendoId === projeto.id"
-                [title]="
-                  isLotado(projeto)
-                    ? 'Seleção finalizada'
-                    : 'Inscrever-se no projeto'
-                "
+                [disabled]="inscrevendoId === projeto.id"
+                title="Inscrever-se no projeto"
               >
                 <mat-icon>check_circle</mat-icon>
                 {{

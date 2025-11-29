@@ -1,5 +1,187 @@
 # Changelog - FrontTCC
 
+## [Data: 28/11/2025] - Correção de Arquivos de Teste
+
+### 🎯 Resumo Geral
+- **6 arquivos modificados**
+- **294 inserções**, **137 deleções**
+- Correções e melhorias em arquivos de teste (.spec)
+- Ajustes em testes de componentes da secretaria
+- Melhorias na cobertura de testes
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias em Testes de Componentes**
+- ✅ Atualizado `ConfiguracoesComponent.spec.ts` com testes mais abrangentes
+- ✅ Melhorado `FormularioProjetoComponent.spec.ts` com novos casos de teste
+- ✅ Aprimorado `ListagemAlunosComponent.spec.ts` com validações adicionais
+- ✅ Atualizado `SidenavSecretariaComponent.spec.ts` com melhor cobertura
+
+#### 2. **Correções em Serviços de Teste**
+- ✅ Corrigido `ConfigService.spec.ts` com ajustes em mocks e stubs
+- ✅ Melhorada estrutura de testes para melhor manutenibilidade
+
+---
+
+### 🐛 Correções
+
+#### 1. **Testes de Componentes**
+- ✅ Corrigidos mocks e stubs em testes de componentes
+- ✅ Ajustados testes para refletir mudanças recentes nos componentes
+- ✅ Corrigida estrutura de testes para melhor compatibilidade
+
+#### 2. **Formulário de Projeto**
+- ✅ Corrigido pequeno ajuste no componente `FormularioProjetoComponent`
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (6 arquivos)
+- `src/app/features/secretaria/configuracoes/configuracoes.component.spec.ts` - 241 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.spec.ts` - 140 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.ts` - 2 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.spec.ts` - 38 linhas alteradas
+- `src/app/services/config.service.spec.ts` - 6 linhas alteradas
+- `src/app/shared/sidenav/sidenav-secretaria.component.spec.ts` - 4 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 28 de Novembro de 2025  
+**Commit:** `bd017dc`
+
+---
+
+## [Data: 26/11/2025] - Atualização de Testes e Documentação
+
+### 🎯 Resumo Geral
+- **22 arquivos modificados**
+- **220 inserções**, **84 deleções**
+- Atualização completa de testes de componentes
+- Melhoria na documentação do projeto
+- Aumento da cobertura de testes
+
+---
+
+### ✨ Implementações
+
+#### 1. **Atualização de Testes de Componentes**
+- ✅ Melhorado `AppComponent.spec.ts` com novos casos de teste
+- ✅ Atualizado `FooterComponent.spec.ts` com validações adicionais
+- ✅ Aprimorado `HomeComponent.spec.ts` com testes mais abrangentes
+- ✅ Atualizado `RelatorioFormComponent.spec.ts` (Orientador)
+- ✅ Melhorado `CadastrosComponent.spec.ts` com novos testes
+- ✅ Atualizado `ConfiguracoesComponent.spec.ts`
+- ✅ Aprimorado `DashboardComponent.spec.ts`
+- ✅ Melhorado `EnvioDeEmailComponent.spec.ts`
+- ✅ Atualizado `FormularioAvaliadorComponent.spec.ts`
+- ✅ Aprimorado `FormularioProjetoComponent.spec.ts`
+- ✅ Melhorado `ListagemAlunosComponent.spec.ts`
+- ✅ Atualizado `EnviarAvaliacoesModal.spec.ts`
+- ✅ Aprimorado `ListagemAvaliadoresComponent.spec.ts`
+- ✅ Melhorado `ListagemProjetosComponent.spec.ts`
+- ✅ Atualizado `NotificacoesComponent.spec.ts`
+- ✅ Aprimorado `RelatoriosComponent.spec.ts`
+- ✅ Melhorado `CadastroComponent.spec.ts`
+- ✅ Atualizado `ConfirmDialogComponent.spec.ts` com 32 linhas adicionais
+- ✅ Aprimorado `LoginComponent.spec.ts`
+- ✅ Melhorado `ResetPasswordComponent.spec.ts`
+- ✅ Atualizado `SidenavSecretariaComponent.spec.ts` com 17 linhas adicionais
+
+#### 2. **Melhorias na Documentação**
+- ✅ Atualizado `README.md` com informações mais detalhadas
+- ✅ Melhorada descrição de funcionalidades e estrutura do projeto
+- ✅ Adicionadas instruções mais claras para desenvolvimento e deploy
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (22 arquivos)
+- `README.md` - 140 linhas alteradas (refatoração completa)
+- `src/app/app.component.spec.ts` - 7 linhas adicionadas
+- `src/app/components/footer/footer.component.spec.ts` - 1 linha adicionada
+- `src/app/components/home/home.component.spec.ts` - 7 linhas adicionadas
+- `src/app/features/orientador/relatorio-form/relatorio-form.component.spec.ts` - 6 linhas adicionadas
+- `src/app/features/secretaria/cadastros/cadastros.component.spec.ts` - 8 linhas adicionadas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.spec.ts` - 1 linha adicionada
+- `src/app/features/secretaria/dashboard/dashboard.component.spec.ts` - 9 linhas adicionadas
+- `src/app/features/secretaria/envio-de-email/envio-de-email.component.spec.ts` - 6 linhas adicionadas
+- `src/app/features/secretaria/formulario-avaliador/formulario-avaliador.component.spec.ts` - 12 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.spec.ts` - 4 linhas adicionadas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.spec.ts` - 8 linhas adicionadas
+- `src/app/features/secretaria/listagem-avaliadores/enviar-avaliacoes.modal.spec.ts` - 7 linhas adicionadas
+- `src/app/features/secretaria/listagem-avaliadores/listagem-avaliadores.component.spec.ts` - 6 linhas adicionadas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.spec.ts` - 4 linhas adicionadas
+- `src/app/features/secretaria/notificacoes/notificacoes.component.spec.ts` - 7 linhas adicionadas
+- `src/app/features/secretaria/relatorios/relatorios.component.spec.ts` - 8 linhas adicionadas
+- `src/app/shared/cadastro/cadastro.component.spec.ts` - 4 linhas adicionadas
+- `src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts` - 32 linhas adicionadas
+- `src/app/shared/login/login.component.spec.ts` - 4 linhas adicionadas
+- `src/app/shared/reset-password/reset-password.component.spec.ts` - 6 linhas adicionadas
+- `src/app/shared/sidenav/sidenav-secretaria.component.spec.ts` - 17 linhas adicionadas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 26 de Novembro de 2025  
+**Commit:** `7f168bf`
+
+---
+
+## [Data: 25/11/2025] - Refatoração de Interface de Bolsas
+
+### 🎯 Resumo Geral
+- **2 commits relacionados**
+- **195 inserções**, **125 deleções**
+- Refatoração completa da interface de gerenciamento de bolsas
+- Remoção de lógica de Bolsa e adição de funcionalidades TipoBolsa
+- Melhorias na UI de registro e atribuição de bolsas
+
+---
+
+### ✨ Implementações
+
+#### 1. **Refatoração da Interface de Registro e Atribuição de Bolsas**
+- ✅ Refatorado `ConfiguracoesComponent.html` com melhor organização
+- ✅ Melhorada interface de usuário para registro de bolsas
+- ✅ Aprimorada experiência de atribuição de bolsas
+- ✅ Melhorada responsividade e layout
+
+#### 2. **Remoção de Lógica de Bolsa e Adição de TipoBolsa**
+- ✅ Removida lógica antiga de gerenciamento de bolsas
+- ✅ Implementada nova funcionalidade de gerenciamento de Tipos de Bolsa
+- ✅ Refatorado `ConfiguracoesComponent` para usar nova estrutura
+- ✅ Melhorada organização do código relacionado a bolsas
+
+---
+
+### 🐛 Correções
+
+#### 1. **Componente de Configurações**
+- ✅ Corrigida estrutura de gerenciamento de bolsas
+- ✅ Ajustada lógica para trabalhar com Tipos de Bolsa ao invés de Bolsas diretas
+- ✅ Melhorada consistência na interface
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados
+- `src/app/features/secretaria/configuracoes/configuracoes.component.html` - 137 linhas alteradas (83 inserções, 54 deleções)
+- `src/app/features/secretaria/configuracoes/configuracoes.component.ts` - 183 linhas alteradas (112 inserções, 71 deleções)
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 25 de Novembro de 2025  
+**Commits:** `5cd53c6`, `7ebf9e5`
+
+---
+
 ## [Data: 26/11/2025] - Refatoração de Serviços, Componentes e Interfaces
 
 ### 🎯 Resumo Geral
@@ -317,6 +499,119 @@
 **Desenvolvedor:** Felipe Souza Moreira  
 **Data:** 26 de Novembro de 2025  
 **Branch:** `main`
+
+---
+
+## [Data: 13/11/2025] - Correções de Redirecionamento e Reset de Senha
+
+### 🎯 Resumo Geral
+- **25 arquivos modificados**
+- **1.450 inserções**, **572 deleções**
+- Correções críticas de redirecionamento de cadastro
+- Melhorias significativas no componente de reset de senha
+- Atualizações em listagem de alunos e projetos
+- Criação de docker-compose.yml
+- Melhorias em testes e documentação
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias no Componente de Reset de Senha**
+- ✅ Refatorado completamente `ResetPasswordComponent` com melhor UX
+- ✅ Adicionado novo layout HTML com melhor organização visual
+- ✅ Implementado fluxo completo de reset de senha com validações
+- ✅ Melhorado tratamento de erros e feedback ao usuário
+- ✅ Adicionada validação de tokens e expiração
+
+#### 2. **Melhorias no Componente de Listagem de Alunos**
+- ✅ Refatorado `ListagemAlunosComponent` com melhor estrutura
+- ✅ Melhorada interface HTML com melhor organização
+- ✅ Aprimorado CSS com melhor responsividade
+- ✅ Melhorada lógica de listagem e filtros
+
+#### 3. **Melhorias no Componente de Listagem de Projetos**
+- ✅ Refatorado CSS com redesign completo (712 linhas alteradas)
+- ✅ Melhorada interface HTML com melhor organização
+- ✅ Aprimorada lógica de listagem
+
+#### 4. **Docker e Infraestrutura**
+- ✅ Criado `docker-compose.yml` para facilitar deploy
+- ✅ Configurado para build e execução simplificados
+
+#### 5. **Melhorias em Testes**
+- ✅ Atualizado `ConfiguracoesComponent.spec.ts` com 159 linhas adicionais
+- ✅ Melhorado `ConfigService.spec.ts` com 74 linhas adicionais
+- ✅ Adicionado `BolsaService.spec.ts` com 11 linhas
+
+---
+
+### 🐛 Correções
+
+#### 1. **Redirecionamento de Cadastro**
+- ✅ Corrigido redirecionamento após cadastro de usuários
+- ✅ Ajustado fluxo de cadastro para diferentes perfis
+- ✅ Melhorado tratamento de erros no cadastro
+
+#### 2. **Reset de Senha**
+- ✅ Corrigido fluxo completo de reset de senha
+- ✅ Ajustado tratamento de tokens de reset
+- ✅ Melhorado feedback ao usuário durante o processo
+- ✅ Corrigida validação de formulário de reset
+
+#### 3. **Componente de Login**
+- ✅ Removidas linhas desnecessárias do HTML
+- ✅ Melhorada lógica de login
+- ✅ Ajustado tratamento de erros
+
+#### 4. **Formulário de Projeto**
+- ✅ Removidas linhas desnecessárias do HTML
+- ✅ Ajustada lógica de formulário
+
+#### 5. **Serviços**
+- ✅ Ajustado `ConfigService` com pequenas correções
+- ✅ Removido código não utilizado do `ProjetoService`
+
+#### 6. **Componente de Cadastro**
+- ✅ Ajustado redirecionamento após cadastro
+- ✅ Melhorado tratamento de erros
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (25 arquivos)
+- `CHANGELOG.md` - 392 linhas adicionadas
+- `README.md` - 52 linhas alteradas
+- `docker-compose.yml` - 31 linhas (novo arquivo)
+- `package.json` - 2 linhas alteradas
+- `proxy.conf.json` - 2 linhas alteradas
+- `src/app/app.component.css` - 2 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.spec.ts` - 159 linhas adicionadas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.html` - 2 linhas removidas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.ts` - 27 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.css` - 4 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.html` - 42 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.ts` - 167 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.css` - 712 linhas alteradas (redesign completo)
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.html` - 83 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.ts` - 22 linhas alteradas
+- `src/app/services/bolsa.service.spec.ts` - 11 linhas adicionadas
+- `src/app/services/config.service.spec.ts` - 74 linhas alteradas
+- `src/app/services/config.service.ts` - 2 linhas alteradas
+- `src/app/services/projeto.service.ts` - 20 linhas removidas
+- `src/app/shared/cadastro/cadastro.component.ts` - 4 linhas alteradas
+- `src/app/shared/login/login.component.html` - 10 linhas removidas
+- `src/app/shared/login/login.component.ts` - 9 linhas alteradas
+- `src/app/shared/reset-password/reset-password.component.html` - 125 linhas alteradas
+- `src/app/shared/reset-password/reset-password.component.ts` - 66 linhas alteradas
+- `src/styles.css` - 2 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 13 de Novembro de 2025  
+**Commit:** `0082176`
 
 ---
 
@@ -709,6 +1004,94 @@ docker compose down
 **Desenvolvedor:** Felipe Souza Moreira  
 **Data:** 10 de Novembro de 2025  
 **Branch:** `main`
+
+---
+
+## [Data: 11/11/2025] - Correção de Botões dos Formulários e Responsividade
+
+### 🎯 Resumo Geral
+- **17 arquivos modificados**
+- **975 inserções**, **453 deleções**
+- Correções de botões em formulários
+- Melhorias de responsividade em componentes
+- Ajustes em listagem de projetos
+- Melhorias em configurações
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias no Componente de Listagem de Projetos**
+- ✅ Redesign completo do CSS (246 linhas alteradas)
+- ✅ Melhorias significativas no HTML (427 linhas alteradas)
+- ✅ Aprimorada lógica de listagem (153 linhas alteradas)
+- ✅ Melhorada responsividade e layout
+
+#### 2. **Melhorias no Componente de Configurações**
+- ✅ Refatorado HTML com melhor organização (46 linhas alteradas)
+- ✅ Melhorada lógica do componente (76 linhas alteradas)
+- ✅ Atualizado arquivo de teste (3 linhas alteradas)
+
+#### 3. **Melhorias no Formulário de Projeto**
+- ✅ Ajustado HTML removendo linhas desnecessárias (50 linhas alteradas)
+- ✅ Refatorada lógica do componente (73 linhas alteradas)
+
+#### 4. **Melhorias de Estilos Globais**
+- ✅ Adicionados estilos de scrollbar customizados (9 linhas adicionadas)
+- ✅ Melhorada responsividade geral
+
+---
+
+### 🐛 Correções
+
+#### 1. **Botões dos Formulários**
+- ✅ Corrigidos botões em todos os formulários
+- ✅ Melhorada consistência visual dos botões
+- ✅ Ajustados estilos de botões para melhor responsividade
+
+#### 2. **Responsividade**
+- ✅ Corrigida responsividade em diferentes tamanhos de tela
+- ✅ Ajustados layouts para mobile e tablet
+- ✅ Melhorada experiência em dispositivos menores
+
+#### 3. **Listagem de Projetos**
+- ✅ Corrigido cálculo de paginação
+- ✅ Ajustado scroll e navegação
+- ✅ Melhorado tratamento de erros
+
+#### 4. **Rotas**
+- ✅ Removida rota de debug não utilizada
+- ✅ Ajustadas rotas para melhor organização
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (17 arquivos)
+- `src/app/app.routes.ts` - 9 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.html` - 46 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.spec.ts` - 3 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.ts` - 76 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.html` - 50 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.ts` - 73 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.css` - 246 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.html` - 427 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.spec.ts` - 27 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.ts` - 153 linhas alteradas
+- `src/app/services/config.service.ts` - 3 linhas removidas
+- `src/app/services/projeto.service.ts` - 28 linhas alteradas
+- `src/app/shared/interfaces/bolsa.ts` - 8 linhas alteradas
+- `src/styles.css` - 9 linhas adicionadas
+
+#### Arquivos Removidos
+- `src/app/debug/health.component.ts` - 8 linhas
+- `src/app/debug/health.component.spec.ts` - 17 linhas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 11 de Novembro de 2025  
+**Commit:** `85f6538`
 
 ---
 

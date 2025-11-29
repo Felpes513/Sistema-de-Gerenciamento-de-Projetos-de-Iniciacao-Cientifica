@@ -13,6 +13,7 @@ import { catchError, startWith, switchMap } from 'rxjs/operators';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService, Role } from '@services/auth.service';
 import { NotificacaoService } from '@services/notificacao.service';
+import { DialogService } from '@services/dialog.service';
 
 @Component({
   selector: 'app-sidenav',
@@ -25,6 +26,7 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private auth = inject(AuthService);
   private notificacaoService = inject(NotificacaoService);
+  private dialog = inject(DialogService);
 
   exibirBadgeNotificacao = false;
   private notifSub?: Subscription;
@@ -95,9 +97,18 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
     if (this.isMobile) this.isMenuOpen = false;
   }
 
-  confirmarSaida(e: Event) {
+  async confirmarSaida(e: Event) {
     e.preventDefault();
-    if (!window.confirm('Tem certeza que deseja sair?')) return;
+
+    const confirmou = await this.dialog.confirm(
+      'Tem certeza que deseja sair do sistema?',
+      'Sair do sistema'
+    );
+
+    if (!confirmou) {
+      return;
+    }
+
     this.auth.clearSession();
     this.router.navigate(['/'], { replaceUrl: true });
   }
