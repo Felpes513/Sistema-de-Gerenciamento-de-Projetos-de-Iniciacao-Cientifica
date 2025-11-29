@@ -101,7 +101,9 @@ describe('SidenavSecretariaComponent', () => {
       onchange: null,
     } as any);
 
-    component['updateLayout' as any]();
+    // ⬇️ aqui é o ajuste importante
+    (component as any).updateLayout();
+
     expect(component.isMobile).toBeTrue();
     expect(component.isMenuOpen).toBeFalse();
   });

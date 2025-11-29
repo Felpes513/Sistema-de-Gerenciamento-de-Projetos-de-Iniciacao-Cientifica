@@ -6,17 +6,67 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 class ProjetoServiceStub {
   listarOrientadoresAprovados = jasmine
-    .createSpy()
-    .and.returnValue(of([{ id: 1, nome_completo: 'Maria Souza', email: 'maria@mail.com' }]));
+    .createSpy('listarOrientadoresAprovados')
+    .and.returnValue(
+      of([{ id: 1, nome_completo: 'Maria Souza', email: 'maria@mail.com' }])
+    );
+
   listarCampus = jasmine
-    .createSpy()
+    .createSpy('listarCampus')
     .and.returnValue(of([{ id_campus: 1, campus: 'Campus Central' }]));
-  listarProjetosRaw = jasmine.createSpy().and.returnValue(of([]));
-  listarOrientadores = jasmine.createSpy().and.returnValue(of([]));
-  cadastrarProjetoCompleto = jasmine.createSpy().and.returnValue(of({ id_projeto: 1 }));
-  atualizarProjeto = jasmine.createSpy().and.returnValue(of({}));
-  uploadDocx = jasmine.createSpy().and.returnValue(of({}));
-  uploadPdf = jasmine.createSpy().and.returnValue(of({}));
+
+  listarProjetosRaw = jasmine
+    .createSpy('listarProjetosRaw')
+    .and.returnValue(of([]));
+
+  listarOrientadores = jasmine
+    .createSpy('listarOrientadores')
+    .and.returnValue(of([]));
+
+  cadastrarProjetoCompleto = jasmine
+    .createSpy('cadastrarProjetoCompleto')
+    .and.returnValue(of({ id_projeto: 1 }));
+
+  atualizarProjeto = jasmine
+    .createSpy('atualizarProjeto')
+    .and.returnValue(of({}));
+
+  // Uploads usados no componente
+  uploadMonografiaParcialDocx = jasmine
+    .createSpy('uploadMonografiaParcialDocx')
+    .and.returnValue(of({}));
+
+  uploadMonografiaParcialPdf = jasmine
+    .createSpy('uploadMonografiaParcialPdf')
+    .and.returnValue(of({}));
+
+  uploadMonografiaFinalDocx = jasmine
+    .createSpy('uploadMonografiaFinalDocx')
+    .and.returnValue(of({}));
+
+  uploadMonografiaFinalPdf = jasmine
+    .createSpy('uploadMonografiaFinalPdf')
+    .and.returnValue(of({}));
+
+  // Downloads (não usados nos testes, mas stubados por segurança)
+  downloadDocx = jasmine
+    .createSpy('downloadDocx')
+    .and.returnValue(of(new Blob()));
+  downloadPdf = jasmine
+    .createSpy('downloadPdf')
+    .and.returnValue(of(new Blob()));
+  downloadMonografiaParcialDocx = jasmine
+    .createSpy('downloadMonografiaParcialDocx')
+    .and.returnValue(of(new Blob()));
+  downloadMonografiaParcialPdf = jasmine
+    .createSpy('downloadMonografiaParcialPdf')
+    .and.returnValue(of(new Blob()));
+  downloadMonografiaFinalDocx = jasmine
+    .createSpy('downloadMonografiaFinalDocx')
+    .and.returnValue(of(new Blob()));
+  downloadMonografiaFinalPdf = jasmine
+    .createSpy('downloadMonografiaFinalPdf')
+    .and.returnValue(of(new Blob()));
 }
 
 class RouterStub {
@@ -36,7 +86,10 @@ describe('FormularioProjetoComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { params: {}, data: {}, queryParamMap: new Map() },
+            snapshot: {
+              params: {}, // sem id => modo cadastro
+              data: { modo: 'SECRETARIA' },
+            },
           },
         },
       ],
@@ -45,33 +98,72 @@ describe('FormularioProjetoComponent', () => {
     const fixture = TestBed.createComponent(FormularioProjetoComponent);
     component = fixture.componentInstance;
     service = TestBed.inject(ProjetoService) as unknown as ProjetoServiceStub;
-    component.ngOnInit();
+    fixture.detectChanges(); // dispara ngOnInit
   });
 
-  it('should load orientadores and filter them', () => {
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should load orientadores and allow filtering', () => {
     expect(service.listarOrientadoresAprovados).toHaveBeenCalled();
     component.buscaOrientador = 'maria';
     component.filtrarOrientadores();
     expect(component.orientadoresFiltrados.length).toBe(1);
+    expect(component.orientadoresFiltrados[0].nome_completo).toBe(
+      'Maria Souza'
+    );
   });
 
-  it('should compute titles for etapas', () => {
-    expect(component.tituloEtapa('IDEIA')).toContain('Ideia');
-    expect(component.subtituloEtapa('FINAL')).toContain('Final');
+  it('should load campus list on init', () => {
+    expect(service.listarCampus).toHaveBeenCalled();
+    expect(component.campusList.length).toBeGreaterThan(0);
   });
 
-  it('should advance etapa when requirements are met', () => {
-    spyOn(window, 'alert');
+  it('should compute titles for etapas correctly', () => {
+    expect(component.tituloEtapa('IDEIA')).toContain('Submissão do Projeto');
+    expect(component.subtituloEtapa('FINAL')).toContain('Envio final');
+  });
+
+  it('should start upload flow on PARCIAL etapa for new project', () => {
+    // novo cadastro => sem id na rota => currentEtapaUpload deve ser PARCIAL
+    expect(component['currentEtapaUpload']).toBe('PARCIAL');
+  });
+
+  it('should send PARCIAL PDF using the proper service method', () => {
+    spyOn(window, 'alert'); // evita dialog real
+
+    component.projetoId = 123;
+    (component as any).currentEtapaUpload = 'PARCIAL';
+    const fakePdf = new File(['pdf'], 'monografia_parcial.pdf', {
+      type: 'application/pdf',
+    });
+    component.arquivoPdf = fakePdf;
+
+    component.enviarArquivo('pdf');
+
+    expect(service.uploadMonografiaParcialPdf).toHaveBeenCalledWith(
+      123,
+      fakePdf
+    );
+  });
+
+  it('should advance etapa from PARCIAL to FINAL when requirements are met', () => {
+    spyOn(window, 'alert'); // só pra não abrir diálogos
     spyOn(window, 'confirm').and.returnValue(true);
-    component.projetoId = 1;
-    component.arquivoPdf = new File(['pdf'], 'arquivo.pdf');
-    component.arquivoDocx = new File(['docx'], 'arquivo.docx');
-    component.podeAvancar = true;
-    component.avancarEtapa();
-    expect(component.historico[0].status).toBe('ENVIADO');
-  });
 
-  it('should start on the first etapa', () => {
-    expect(component.etapaAtual).toBe('IDEIA');
+    component.projetoId = 1;
+    // deixa o histórico indicando que PARCIAL já foi enviado
+    component['historico'] = [
+      { etapa: 'IDEIA', status: 'NAO_ENVIADO' },
+      { etapa: 'PARCIAL', status: 'ENVIADO' },
+      { etapa: 'FINAL', status: 'NAO_ENVIADO' },
+    ];
+    (component as any).currentEtapaUpload = 'PARCIAL';
+
+    component.avancarEtapa();
+
+    expect(component['currentEtapaUpload']).toBe('FINAL');
+    expect(component.podeAvancar).toBeFalse();
   });
 });

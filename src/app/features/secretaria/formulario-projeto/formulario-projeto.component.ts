@@ -9,7 +9,7 @@ import { DialogService } from '@services/dialog.service';
 import type { ProjetoCadastro } from '@interfaces/projeto';
 import type { Orientador } from '@interfaces/orientador';
 import type { Aluno } from '@interfaces/aluno';
-import type { Campus } from '@interfaces/campus';
+import type { Campus } from '@interfaces/configuracao';
 import { ListagemAlunosComponent } from '../listagem-alunos/listagem-alunos.component';
 import {DocumentoHistorico} from '@interfaces/projeto';
 import type { EtapaDocumento, StatusEnvio } from '@interfaces/projeto';

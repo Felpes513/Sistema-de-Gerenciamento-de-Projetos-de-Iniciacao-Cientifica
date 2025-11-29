@@ -1,51 +1,71 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { ConfiguracoesComponent } from './configuracoes.component';
 import { ConfigService } from '@services/config.service';
-import { BolsaService } from '@services/bolsa.service';
 
 class ConfigServiceStub {
+  // CAMPUS
   listarCampus = jasmine
     .createSpy('listarCampus')
     .and.returnValue(of({ campus: [{ id_campus: 1, campus: 'Campus Test' }] }));
+
+  criarCampus = jasmine.createSpy('criarCampus').and.returnValue(of({}));
+
+  excluirCampus = jasmine.createSpy('excluirCampus').and.returnValue(of({}));
+
+  // CURSOS
   listarCursos = jasmine
     .createSpy('listarCursos')
     .and.returnValue(of({ cursos: [{ id_curso: 1, nome: 'Curso Test' }] }));
-  criarCurso = jasmine.createSpy('criarCurso').and.returnValue(of({}));
-  criarCampus = jasmine.createSpy('criarCampus').and.returnValue(of({}));
-  excluirCurso = jasmine.createSpy('excluirCurso').and.returnValue(of({}));
-  excluirCampus = jasmine.createSpy('excluirCampus').and.returnValue(of({}));
-}
 
-class BolsaServiceStub {
-  listar = jasmine
-    .createSpy('listar')
-    .and.returnValue(
-      of([
+  criarCurso = jasmine.createSpy('criarCurso').and.returnValue(of({}));
+
+  excluirCurso = jasmine.createSpy('excluirCurso').and.returnValue(of({}));
+
+  // TIPOS DE BOLSA
+  listarTiposBolsa = jasmine
+    .createSpy('listarTiposBolsa')
+    .and.returnValue(of([{ id_tipo_bolsa: 1, tipo_bolsa: 'IC' }]));
+
+  criarTipoBolsa = jasmine.createSpy('criarTipoBolsa').and.returnValue(of({}));
+
+  excluirTipoBolsa = jasmine
+    .createSpy('excluirTipoBolsa')
+    .and.returnValue(of({}));
+
+  // ALUNOS COM BOLSA
+  listarBolsas = jasmine.createSpy('listarBolsas').and.returnValue(
+    of({
+      bolsas: [
         {
-          id_aluno: 1,
-          nome_completo: 'Aluno Test',
-          email: 'aluno@test.com',
-          possui_bolsa: true,
+          id_bolsa: 1,
+          id_aluno: 10,
+          aluno_nome: 'Aluno Teste',
+          aluno_email: 'aluno@test.com',
+          id_tipo_bolsa: 1,
+          tipo_bolsa: 'IC',
+          created_at: '2025-01-01T00:00:00Z',
         },
-      ])
-    );
-  create = jasmine.createSpy('create').and.returnValue(of({}));
-  setStatus = jasmine.createSpy('setStatus').and.returnValue(of({}));
+      ],
+      limit: 10,
+      offset: 0,
+      count: 1,
+    })
+  );
+
+  criarBolsa = jasmine.createSpy('criarBolsa').and.returnValue(of({}));
+
+  excluirBolsa = jasmine.createSpy('excluirBolsa').and.returnValue(of({}));
 }
 
 describe('ConfiguracoesComponent', () => {
   let component: ConfiguracoesComponent;
   let configService: ConfigServiceStub;
-  let bolsaService: BolsaServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ConfiguracoesComponent],
-      providers: [
-        { provide: ConfigService, useClass: ConfigServiceStub },
-        { provide: BolsaService, useClass: BolsaServiceStub },
-      ],
+      providers: [{ provide: ConfigService, useClass: ConfigServiceStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ConfiguracoesComponent);
@@ -53,10 +73,8 @@ describe('ConfiguracoesComponent', () => {
     configService = TestBed.inject(
       ConfigService
     ) as unknown as ConfigServiceStub;
-    bolsaService = TestBed.inject(
-      BolsaService
-    ) as unknown as BolsaServiceStub;
-    fixture.detectChanges(); // ngOnInit
+
+    fixture.detectChanges(); // dispara ngOnInit
   });
 
   it('should create', () => {
@@ -66,7 +84,8 @@ describe('ConfiguracoesComponent', () => {
   it('should load initial lists on init', () => {
     expect(configService.listarCampus).toHaveBeenCalled();
     expect(configService.listarCursos).toHaveBeenCalled();
-    expect(bolsaService.listar).toHaveBeenCalled();
+    expect(configService.listarTiposBolsa).toHaveBeenCalled();
+    expect(configService.listarBolsas).toHaveBeenCalled();
   });
 
   // ===== CAMPUS =====
@@ -79,7 +98,13 @@ describe('ConfiguracoesComponent', () => {
     expect(component.novoCampus).toBe('');
   });
 
-  it('should delete campus', () => {
+  it('should not create campus when name is empty', () => {
+    component.novoCampus = '   ';
+    component.cadastrarCampus();
+    expect(configService.criarCampus).not.toHaveBeenCalled();
+  });
+
+  it('should delete campus when confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(true);
     component.excluirCampus(1);
     expect(configService.excluirCampus).toHaveBeenCalledWith(1);
@@ -95,75 +120,103 @@ describe('ConfiguracoesComponent', () => {
     expect(component.novoCurso).toBe('');
   });
 
-  it('should delete curso', () => {
+  it('should not create course when name is empty', () => {
+    component.novoCurso = '  ';
+    component.cadastrarCurso();
+    expect(configService.criarCurso).not.toHaveBeenCalled();
+  });
+
+  it('should delete course when confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(true);
     component.excluirCurso(2);
     expect(configService.excluirCurso).toHaveBeenCalledWith(2);
   });
 
-  // ===== BOLSAS =====
-  it('should create bolsa for aluno', () => {
-    component.formBolsa = { id_aluno: 1, possui_bolsa: true };
-    component.cadastrarBolsaAluno();
-    expect(bolsaService.create).toHaveBeenCalledWith(1, true);
+  // ===== TIPOS DE BOLSA =====
+  it('should create a new tipo de bolsa', () => {
+    component.novoTipoBolsa = 'Nova Bolsa';
+    component.criarTipoBolsa();
+    expect(configService.criarTipoBolsa).toHaveBeenCalledWith('Nova Bolsa');
+    expect(component.novoTipoBolsa).toBe('');
   });
 
-  it('should not create bolsa if id_aluno is invalid', () => {
-    component.formBolsa = { id_aluno: null, possui_bolsa: true };
-    spyOn(window, 'alert');
-    component.cadastrarBolsaAluno();
-    expect(bolsaService.create).not.toHaveBeenCalled();
+  it('should not create tipo de bolsa when empty', () => {
+    component.novoTipoBolsa = '   ';
+    component.criarTipoBolsa();
+    expect(configService.criarTipoBolsa).not.toHaveBeenCalled();
   });
 
-  it('should toggle bolsa status', () => {
-    const row = {
-      id_aluno: 1,
-      nome_completo: 'Aluno Test',
-      email: 'test@test.com',
-      possui_bolsa: false,
-    };
-    component.toggleBolsa(row);
-    expect(row.possui_bolsa).toBe(true);
-    expect(bolsaService.setStatus).toHaveBeenCalledWith(1, true);
+  it('should delete tipo de bolsa when confirmed', () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    component.excluirTipoBolsa(1);
+    expect(configService.excluirTipoBolsa).toHaveBeenCalledWith(1);
   });
 
-  it('should rollback bolsa status on error', () => {
-    const row = {
-      id_aluno: 1,
-      nome_completo: 'Aluno Test',
-      email: 'test@test.com',
-      possui_bolsa: false,
-    };
-    bolsaService.setStatus.and.returnValue(throwError(() => new Error('Error')));
-    spyOn(window, 'alert');
-    component.toggleBolsa(row);
-    expect(row.possui_bolsa).toBe(false); // rollback
+  // ===== ALUNOS COM BOLSA =====
+  it('should open selection modal for aluno', () => {
+    const aluno = { id_aluno: 10, nome: 'Aluno Teste' };
+    component.abrirSelecaoBolsa(aluno);
+    expect(component.alunoSelecionado).toBe(aluno as any);
+    expect(component.modalBolsaAberto).toBeTrue();
   });
 
-  it('should filter bolsas by term', () => {
-    component.bolsas = [
-      {
-        id_aluno: 1,
-        nome_completo: 'João Silva',
-        email: 'joao@test.com',
-        possui_bolsa: true,
-      },
-      {
-        id_aluno: 2,
-        nome_completo: 'Maria Santos',
-        email: 'maria@test.com',
-        possui_bolsa: false,
-      },
-    ];
-    expect(component.matchBolsa('joão', 'João Silva', 'joao@test.com')).toBe(
-      true
-    );
-    expect(component.matchBolsa('maria', 'Maria Santos', 'maria@test.com')).toBe(
-      true
-    );
-    expect(component.matchBolsa('pedro', 'João Silva', 'joao@test.com')).toBe(
-      false
-    );
-    expect(component.matchBolsa('', 'qualquer')).toBe(true);
+  it('should close modal and reset selection', () => {
+    component.modalBolsaAberto = true;
+    component.alunoSelecionado = { id_aluno: 10 } as any;
+    component.bolsaSelecionada = 1;
+
+    component.fecharModal();
+
+    expect(component.modalBolsaAberto).toBeFalse();
+    expect(component.alunoSelecionado).toBeNull();
+    expect(component.bolsaSelecionada).toBeNull();
+  });
+
+  it('should create vinculo de bolsa when aluno and bolsa selected', () => {
+    component.alunoSelecionado = { id_aluno: 10 } as any;
+    component.bolsaSelecionada = 3;
+
+    component.confirmarVinculo();
+
+    expect(configService.criarBolsa).toHaveBeenCalledWith({
+      id_aluno: 10,
+      id_tipo_bolsa: 3,
+    });
+  });
+
+  it('should not create vinculo when data is incomplete', () => {
+    component.alunoSelecionado = null;
+    component.bolsaSelecionada = 3;
+    component.confirmarVinculo();
+    expect(configService.criarBolsa).not.toHaveBeenCalled();
+
+    component.alunoSelecionado = { id_aluno: 10 } as any;
+    component.bolsaSelecionada = null;
+    component.confirmarVinculo();
+    expect(configService.criarBolsa).not.toHaveBeenCalled();
+  });
+
+  it('should remove bolsa by id_bolsa when confirmed', () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    component.removerBolsa(5);
+    expect(configService.excluirBolsa).toHaveBeenCalledWith(5);
+  });
+
+  // ===== MATCHBOLSA (filtro) =====
+  it('should match bolsa by term (case and accent insensitive)', () => {
+    expect(
+      component.matchBolsa('joao', 'João da Silva', 'joao@teste.com')
+    ).toBeTrue();
+
+    expect(
+      component.matchBolsa('teste', 'Outra Pessoa', 'teste@dominio.com')
+    ).toBeTrue();
+
+    expect(
+      component.matchBolsa('inexistente', 'João', 'joao@teste.com')
+    ).toBeFalse();
+
+    // termo vazio => sempre true
+    expect(component.matchBolsa('', 'qualquer coisa')).toBeTrue();
   });
 });

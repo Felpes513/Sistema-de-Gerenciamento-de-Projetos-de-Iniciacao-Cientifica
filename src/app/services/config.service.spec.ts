@@ -94,14 +94,14 @@ describe('ConfigService', () => {
   });
 
   it('should create tipo de bolsa', () => {
-    const body = { nome: 'Novo Tipo' };
+    const body = 'Novo Tipo';
     service.criarTipoBolsa(body).subscribe((res) => {
       expect(res).toBeTruthy();
     });
 
-    const req = http.expectOne(`${base}/bolsas/tipos`);
+    const req = http.expectOne(`${base}/tipos-bolsa/`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(body);
+    expect(req.request.body).toEqual({ tipo_bolsa: body });
     req.flush({ id_bolsa: 1, nome: 'Novo Tipo' });
   });
 
