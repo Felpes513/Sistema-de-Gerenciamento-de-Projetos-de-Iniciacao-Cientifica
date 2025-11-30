@@ -112,12 +112,12 @@
               *ngFor="let a of alunos"
               [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
             >
-              <td>{{ a.nome_completo }}</td>
+              <td>{{ toTitleCase(a.nome_completo) }}</td>
               <td>{{ a.email }}</td>
 
               <!-- bolsas -->
               <td>
-                <div *ngIf="a.bolsas?.length; else semBolsa">
+                  <div *ngIf="a.bolsas.length; else semBolsa">
                   <span *ngFor="let b of a.bolsas" class="tag">
                     {{ b.tipo_bolsa }}
                     <button
@@ -145,8 +145,7 @@
       <div class="modal-backdrop" *ngIf="modalBolsaAberto">
         <div class="modal">
           <h3>Vincular Bolsa</h3>
-          <p>
-            Aluno: <strong>{{ alunoSelecionado?.nome_completo }}</strong>
+          <p>Aluno:<strong>{{ toTitleCase(alunoSelecionado?.nome_completo) }}</strong>
           </p>
 
           <select [(ngModel)]="bolsaSelecionada" name="tiposBolsaSelect">
