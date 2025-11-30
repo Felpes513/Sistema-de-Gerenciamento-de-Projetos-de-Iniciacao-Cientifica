@@ -91,13 +91,14 @@ export const routes: Routes = [
             './features/secretaria/formulario-projeto/formulario-projeto.component'
           ).then((m) => m.FormularioProjetoComponent),
       },
-      {
-        path: 'email',
-        loadComponent: () =>
-          import(
-            './features/secretaria/envio-de-email/envio-de-email.component'
-          ).then((m) => m.EnvioDeEmailComponent),
-      },
+{
+  path: 'email',
+  loadComponent: () =>
+    import(
+      './features/secretaria/upload-certificados/upload-certificados.component'
+    ).then((m) => m.UploadCertificadosComponent),
+},
+
       {
         path: 'relatorios',
         loadComponent: () =>
