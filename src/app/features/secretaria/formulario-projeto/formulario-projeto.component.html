@@ -4,15 +4,7 @@
   <div class="editor-grid">
     <div class="col-form">
       <form class="form-container" (ngSubmit)="salvarProjeto()" *ngIf="projeto">
-        <!-- Somente em edição: ID -->
-        <div *ngIf="modoEdicao" class="mb-2">
-          <label for="idProjeto"
-            ><i class="fas fa-id-badge"></i> ID do Projeto</label
-          >
-          <input id="idProjeto" type="text" [value]="projetoId" readonly />
-        </div>
 
-        <!-- (Opcional) Código do projeto -->
         <label for="codProjeto"
           ><i class="fas fa-hashtag"></i> Código do Projeto</label
         >

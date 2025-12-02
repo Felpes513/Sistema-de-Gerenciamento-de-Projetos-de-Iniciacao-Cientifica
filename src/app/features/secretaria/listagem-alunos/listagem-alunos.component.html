@@ -15,6 +15,7 @@
   </ng-container>
 
   <ng-template #conteudo>
+    <!-- ======== MODO SECRETARIA ======== -->
     <ng-container *ngIf="modo === 'SECRETARIA'">
       <ng-container *ngIf="lista().length; else vazio">
         <ul class="lista" role="list">
@@ -95,15 +96,7 @@
                 <strong class="nome" [title]="alunoNome(i)">
                   <mat-icon class="avatar-icon">person</mat-icon>
                   <span class="nome-texto">{{ alunoNome(i) }}</span>
-
-                  <span
-                    *ngIf="$any(i)?.possuiTrabalhoRemunerado"
-                    class="badge remunerado"
-                    title="Possui trabalho remunerado"
-                  >
-                    <mat-icon class="badge-icon">work</mat-icon>
-                    Remunerado
-                  </span>
+                  <!-- 👆 Removido o badge Remunerado aqui -->
                 </strong>
 
                 <div class="mini">
@@ -132,10 +125,18 @@
           type="button"
           (click)="salvarSelecao()"
           [disabled]="
-            salvandoSelecao || (limite > 0 && selecionados.size > limite)
+            salvandoSelecao ||
+            bloqueado ||
+            (limite > 0 && selecionados.size > limite)
           "
         >
-          {{ salvandoSelecao ? "Salvando..." : "Salvar seleção" }}
+          {{
+            salvandoSelecao
+              ? "Salvando..."
+              : bloqueado
+              ? "Seleção finalizada"
+              : "Salvar seleção"
+          }}
         </button>
 
         <span class="ok" *ngIf="sucessoSelecao">{{ sucessoSelecao }}</span>
@@ -147,6 +148,10 @@
           Selecionados: {{ selecionados.size }}
           <span *ngIf="limite">/ Limite: {{ limite }}</span>
         </div>
+
+        <p class="muted" *ngIf="bloqueado" style="margin-top: 4px">
+          Seleção bloqueada. Para alterações, contate a Secretaria.
+        </p>
       </div>
     </ng-container>
   </ng-template>

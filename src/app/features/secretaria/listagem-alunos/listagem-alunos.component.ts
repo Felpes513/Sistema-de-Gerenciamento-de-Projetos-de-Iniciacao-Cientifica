@@ -65,6 +65,12 @@ export class ListagemAlunosComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.projetoId) return;
+
+    // Se for orientador, verifica se já existe lock salvo
+    if (this.modo === 'ORIENTADOR') {
+      this.carregarLock();
+    }
+
     this.carregar();
   }
 
@@ -94,8 +100,51 @@ export class ListagemAlunosComponent implements OnInit {
   private carregar() {
     this.loadingFlag = true;
 
-    // ===== ORIENTADOR: usa rota /projetos/{id}/inscricoes (inscrições por projeto) =====
+    // ===== ORIENTADOR =====
     if (this.modo === 'ORIENTADOR') {
+      // Depois que o orientador já salvou a seleção (lock),
+      // passamos a usar a rota /projetos/{id}/alunos
+      if (this.bloqueado) {
+        this.projetoService
+          .listarAlunosDoProjeto(this.projetoId)
+          .pipe(
+            finalize(() => {
+              this.loadingFlag = false;
+              this.cdr.markForCheck();
+            })
+          )
+          .subscribe({
+            next: (alunos) => {
+              // alunos: [{ id_aluno, nome_completo, email, possuiTrabalhoRemunerado }]
+              this._inscricoes = (alunos || []).map((a: any) => ({
+                id_aluno: a.id_aluno,
+                nome_completo: a.nome_completo,
+                email: a.email,
+                possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
+                status: 'CADASTRADO_FINAL',
+              })) as any[];
+
+              this.debugDuplicatas('ORIENTADOR-LOCK', this._inscricoes);
+
+              this.aprovadas = [...this._inscricoes];
+              this.pendentesOuReprovadas = [];
+
+              // todos os alunos retornados são os vinculados
+              this.selecionados = new Set<number>(
+                this._inscricoes.map((i) => this.alunoId(i))
+              );
+            },
+            error: () => {
+              this._inscricoes = [];
+              this.aprovadas = [];
+              this.pendentesOuReprovadas = [];
+            },
+          });
+
+        return;
+      }
+
+      // Antes do lock: usa rota /projetos/{id}/inscricoes (inscrições por projeto)
       this.projetoService
         .listarInscricoesPorProjeto(this.projetoId)
         .pipe(
@@ -107,6 +156,8 @@ export class ListagemAlunosComponent implements OnInit {
         .subscribe({
           next: (inscricoes) => {
             this._inscricoes = inscricoes ?? [];
+
+            this.debugDuplicatas('ORIENTADOR', this._inscricoes);
 
             this.aprovadas = this._inscricoes.filter((i) => {
               const st = ((i as any).status || '').toUpperCase();
@@ -150,6 +201,9 @@ export class ListagemAlunosComponent implements OnInit {
       .subscribe({
         next: (inscricoes) => {
           this._inscricoes = Array.isArray(inscricoes) ? inscricoes : [];
+
+          this.debugDuplicatas('SECRETARIA', this._inscricoes);
+
           this.alunosSecretaria = this._inscricoes.map((i) =>
             this.mapAlunoSecretaria(i)
           );
@@ -209,12 +263,19 @@ export class ListagemAlunosComponent implements OnInit {
   }
 
   disabledCheckbox(i: InscricaoLike): boolean {
+    // Se o projeto já foi bloqueado, não permite alterar nada
+    if (this.modo === 'ORIENTADOR' && this.bloqueado) {
+      return true;
+    }
+
     const id = this.alunoId(i);
     if (this.selecionados.has(id)) return false;
     return this.selecionados.size >= this.limite;
   }
 
   toggleSelecionado(i: InscricaoLike, checked: boolean) {
+    if (this.modo === 'ORIENTADOR' && this.bloqueado) return;
+
     const id = this.alunoId(i);
     if (!id) return;
     if (checked) {
@@ -226,6 +287,15 @@ export class ListagemAlunosComponent implements OnInit {
   }
 
   onSelecionadoChange(event: Event, inscricao: InscricaoLike) {
+    if (this.modo === 'ORIENTADOR' && this.bloqueado) {
+      // Garante que o checkbox volte ao estado original caso alguém clique
+      const target = event.target as HTMLInputElement | null;
+      if (target) {
+        target.checked = this.selecionados.has(this.alunoId(inscricao));
+      }
+      return;
+    }
+
     const target = event.target as HTMLInputElement | null;
     this.toggleSelecionado(inscricao, !!target?.checked);
   }
@@ -256,6 +326,11 @@ export class ListagemAlunosComponent implements OnInit {
               (res as any)?.mensagem ||
               'Seleção salva e inscrições restantes excluídas.';
             this.selecionados = new Set<number>(ids);
+
+            // Bloqueia alterações futuras
+            this.salvarLock();
+
+            // Recarrega já usando a rota /projetos/{id}/alunos
             this.carregar();
           },
           error: (e: unknown) => {
@@ -336,5 +411,34 @@ export class ListagemAlunosComponent implements OnInit {
         anyI?.possuiTrabalhoRemunerado ?? !!anyI?.possui_trabalho_remunerado,
       documentoNotasUrl: anyI?.documentoNotasUrl ?? undefined,
     };
+  }
+
+  // 🔍 Helper para detectar duplicatas no front
+  private debugDuplicatas(contexto: string, lista: InscricaoLike[]) {
+    const seen = new Set<string>();
+    const dups: { key: string; idInscricao: number; idAluno: number }[] = [];
+
+    for (const i of lista || []) {
+      const anyI = i as any;
+      const idInscricao = anyI.id_inscricao ?? anyI.id ?? 0;
+      const idAluno = this.alunoId(i);
+      const key = `${idInscricao}|${idAluno}`;
+
+      if (seen.has(key)) {
+        dups.push({ key, idInscricao, idAluno });
+      } else {
+        seen.add(key);
+      }
+    }
+
+    console.log(
+      `%c[DEBUG][${contexto}] inscricoes`,
+      'color:#8e24aa;font-weight:bold',
+      {
+        total: lista?.length || 0,
+        duplicadas: dups.length,
+        detalhes: dups,
+      }
+    );
   }
 }

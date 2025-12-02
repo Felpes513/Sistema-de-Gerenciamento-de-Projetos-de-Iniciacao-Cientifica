@@ -125,9 +125,14 @@ export class ProjetoService {
   updateAlunosProjeto(
     dto: UpdateProjetoAlunosDTO
   ): Observable<{ mensagem: string }> {
+    const payload = {
+      id_projeto: dto.id_projeto,
+      id_alunos: dto.ids_alunos_aprovados,
+    };
+
     return this.http.post<{ mensagem: string }>(
       `${this.apiUrlProjetos}update-alunos`,
-      dto
+      payload
     );
   }
 
@@ -156,6 +161,17 @@ export class ProjetoService {
           );
       })
     );
+  }
+
+  listarAlunosDoProjeto(idProjeto: number): Observable<any[]> {
+    return this.http
+      .get<{ id_projeto: number; alunos: any[] }>(
+        `${this.apiUrlProjetos}${idProjeto}/alunos`
+      )
+      .pipe(
+        map((res) => res.alunos ?? []),
+        catchError(this.handleError)
+      );
   }
 
   getProjetoPorId(id: number) {
@@ -272,27 +288,59 @@ export class ProjetoService {
     return this.http
       .get<any[]>(`${this.apiUrl}/projetos/${idProjeto}/inscricoes`)
       .pipe(
-        map(
-          (items: any[]) =>
-            (items || []).map((i) => ({
-              id_inscricao: i.id_inscricao ?? 0,
-              id_aluno: i.aluno?.id ?? i.id_aluno ?? 0,
-              aluno: {
-                id: i.aluno?.id ?? i.id_aluno ?? 0,
-                nome: i.aluno?.nome ?? i.nome_aluno ?? '—',
-                email: i.aluno?.email ?? i.email ?? '—',
-                matricula: i.aluno?.matricula ?? i.matricula ?? undefined,
-              },
-              nome_aluno: i.nome_aluno ?? i.aluno?.nome ?? '—',
-              email: i.email ?? i.aluno?.email ?? '—',
-              matricula: i.matricula ?? i.cpf ?? '—',
-              status: i.status ?? i.status_aluno ?? 'PENDENTE',
-              possuiTrabalhoRemunerado: !!(
-                i.possuiTrabalhoRemunerado ?? i.possui_trabalho_remunerado
-              ),
-              created_at: i.created_at ?? null,
-            })) as ProjetoInscricaoApi[]
-        )
+        map((items: any[]) => {
+          const lista = items || [];
+
+          // 🔍 DEBUG: detectar duplicatas por (id_inscricao, id_aluno)
+          const seen = new Set<string>();
+          const duplicadas: any[] = [];
+
+          for (const i of lista) {
+            const idInscricao = i.id_inscricao ?? i.id ?? 0;
+            const idAluno = i.aluno?.id ?? i.id_aluno ?? 0;
+            const key = `${idInscricao}|${idAluno}`;
+
+            if (seen.has(key)) {
+              duplicadas.push({ idInscricao, idAluno, raw: i });
+            } else {
+              seen.add(key);
+            }
+          }
+
+          console.log(
+            '%c[DEBUG] /projetos/%o/inscricoes',
+            'color: #1976d2; font-weight: bold',
+            idProjeto,
+            {
+              totalRecebido: lista.length,
+              duplicadas: duplicadas.length,
+              detalhesDuplicadas: duplicadas,
+            }
+          );
+
+          // mantém o comportamento antigo
+          return lista.map(
+            (i) =>
+              ({
+                id_inscricao: i.id_inscricao ?? 0,
+                id_aluno: i.aluno?.id ?? i.id_aluno ?? 0,
+                aluno: {
+                  id: i.aluno?.id ?? i.id_aluno ?? 0,
+                  nome: i.aluno?.nome ?? i.nome_aluno ?? '—',
+                  email: i.aluno?.email ?? i.email ?? '—',
+                  matricula: i.aluno?.matricula ?? i.matricula ?? undefined,
+                },
+                nome_aluno: i.nome_aluno ?? i.aluno?.nome ?? '—',
+                email: i.email ?? i.aluno?.email ?? '—',
+                matricula: i.matricula ?? i.cpf ?? '—',
+                status: i.status ?? i.status_aluno ?? 'PENDENTE',
+                possuiTrabalhoRemunerado: !!(
+                  i.possuiTrabalhoRemunerado ?? i.possui_trabalho_remunerado
+                ),
+                created_at: i.created_at ?? null,
+              } as ProjetoInscricaoApi)
+          );
+        })
       );
   }
 

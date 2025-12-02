@@ -5,8 +5,6 @@ export type StatusProjeto = 'EM_EXECUCAO' | 'CONCLUIDO';
 export type StatusEnvio = 'ENVIADO' | 'NAO_ENVIADO';
 export type EtapaDocumento = 'IDEIA' | 'PARCIAL' | 'FINAL';
 
-
-
 /** DTO usado pelo endpoint POST /projetos/update-alunos */
 export interface UpdateProjetoAlunosDTO {
   id_projeto: number;
@@ -105,4 +103,11 @@ export interface DocumentoHistorico {
   status: StatusEnvio;
   dataEnvio?: Date;
   arquivos?: { docx?: { nome: string }; pdf?: { nome: string } };
+}
+
+export interface AlunoDoProjeto {
+  id_aluno: number;
+  nome_completo: string;
+  email: string;
+  possuiTrabalhoRemunerado: boolean;
 }
