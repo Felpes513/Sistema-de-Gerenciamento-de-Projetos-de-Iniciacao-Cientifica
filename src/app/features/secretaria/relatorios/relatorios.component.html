@@ -1,3 +1,41 @@
+<h2>Relatórios Mensais</h2>
+
+<div class="toolbar">
+  <div class="mes-picker">
+    <label for="mesRef">Mês de referência</label>
+
+    <div class="controls">
+      <button
+        type="button"
+        class="btn-icon"
+        (click)="mudarMes(-1)"
+        [disabled]="carregandoMensal"
+        aria-label="Mês anterior"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <input
+        id="mesRef"
+        type="month"
+        [(ngModel)]="mes"
+        (ngModelChange)="atualizarMes()"
+        [disabled]="carregandoMensal"
+      />
+
+      <button
+        type="button"
+        class="btn-icon"
+        (click)="mudarMes(1)"
+        [disabled]="carregandoMensal"
+        aria-label="Próximo mês"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
 <section class="card">
   <header>
     <h3><mat-icon>check_circle</mat-icon> Recebidos no mês</h3>
@@ -40,7 +78,6 @@
               <span class="status" [class.ok]="r.ok" [class.nok]="!r.ok">
                 {{ r.ok ? "OK" : "Pendente" }}
               </span>
-              <!-- resumo removido -->
             </td>
             <td class="nowrap">{{ dataBr(r.confirmadoEm) }}</td>
           </tr>

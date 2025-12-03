@@ -7,7 +7,8 @@
       (click)="marcarTodasComoLidas()"
       [disabled]="!notificacoes.length"
     >
-      <mat-icon>done_all</mat-icon> Ler todas as notificações
+      <mat-icon>done_all</mat-icon>
+      Ler todas as notificações
     </button>
 
     <div class="paginacao">
@@ -18,7 +19,9 @@
       >
         <span class="arrow arrow-left">‹</span>
       </button>
+
       <span>Página {{ page }} / {{ totalPages }}</span>
+
       <button
         (click)="proxima()"
         [disabled]="page >= totalPages"
@@ -29,7 +32,7 @@
     </div>
   </div>
 
-  <!-- LISTA: abaixo da toolbar e acessível por teclado -->
+  <!-- LISTA -->
   <ng-container *ngIf="!carregando && !erro">
     <div class="lista">
       <div
@@ -67,10 +70,13 @@
       <button class="fechar" (click)="fecharModal()" aria-label="Fechar">
         <mat-icon>close</mat-icon>
       </button>
+
       <h3 id="notificacaoTitulo">{{ notificacaoAberta.tipo }}</h3>
+
       <p class="mensagem">
         <strong>{{ notificacaoAberta.mensagem }}</strong>
       </p>
+
       <small class="data">
         {{ notificacaoAberta.data }} às {{ notificacaoAberta.hora }}
       </small>

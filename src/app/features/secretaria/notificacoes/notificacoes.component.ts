@@ -23,7 +23,8 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
 
   notificacoes: Notificacao[] = [];
   page = 1;
-  size = 10;
+  /** Limite fixo de 5 notificações por página */
+  size = 5;
   total = 0;
   totalPages = 1;
   carregando = false;
@@ -44,15 +45,75 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
     this.renderer.removeClass(document.body, 'modal-open');
   }
 
+  /**
+   * Monta mensagem amigável para relatório mensal quando o back
+   * passar a enviar nome do projeto/orientador. Enquanto isso,
+   * mantém a mensagem original.
+   */
+  private formatMensagem(n: any): string {
+    const base = n.mensagem || n.message || '';
+
+    const tipo = (n.tipo || n.titulo || '').toString().toLowerCase();
+
+    const nomeProjeto =
+      n.projeto_nome ||
+      n.nome_projeto ||
+      n.titulo_projeto ||
+      n.projeto?.nome ||
+      n.projeto?.titulo;
+
+    const nomeOrientador =
+      n.orientador_nome || n.nome_orientador || n.orientador?.nome;
+
+    // Só mexe na mensagem de relatório mensal
+    if (tipo.includes('relatorio mensal') && (nomeProjeto || nomeOrientador)) {
+      const mes =
+        n.mes || n.mes_referencia || n.mes_ref || this.extrairMesDoTexto(base);
+
+      if (nomeProjeto && nomeOrientador) {
+        if (mes) {
+          return `O orientador ${nomeOrientador} enviou o relatório mensal do projeto "${nomeProjeto}" (mês ${mes}).`;
+        }
+        return `O orientador ${nomeOrientador} enviou o relatório mensal do projeto "${nomeProjeto}".`;
+      }
+
+      if (nomeProjeto && mes) {
+        return `Relatório mensal do projeto "${nomeProjeto}" enviado (mês ${mes}).`;
+      }
+
+      if (nomeProjeto) {
+        return `Relatório mensal do projeto "${nomeProjeto}" enviado.`;
+      }
+    }
+
+    // Qualquer outra notificação fica exatamente como veio do back
+    return base;
+  }
+
+  private extrairMesDoTexto(texto: string | undefined): string | null {
+    if (!texto) return null;
+    const match = texto.match(/\d{4}-(0[1-9]|1[0-2])/);
+    return match ? match[0] : null;
+  }
+
   private mapItem(n: any): Notificacao {
     const rawDate = n.data_criacao || n.created_at || n.data || n.timestamp;
     const d = rawDate ? new Date(rawDate) : new Date();
+
+    // Conversão explícita: garante que lida seja sempre boolean
+    const rawLida = n.lida;
+    const lida = rawLida === true || rawLida === 1 || rawLida === '1';
+
     return {
       tipo: n.titulo || n.tipo || 'Notificação',
-      mensagem: n.mensagem || n.message || '',
-      data: d.toLocaleDateString(),
-      hora: d.toLocaleTimeString(),
-      lida: !!n.lida,
+      mensagem: this.formatMensagem(n),
+      data: d.toLocaleDateString('pt-BR'),
+      hora: d.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }),
+      lida,
       id: n.id,
     };
   }
@@ -64,16 +125,30 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
     this.notifService
       .getNotificacoesPaginado(this.destinatario, p, this.size)
       .subscribe({
-        next: (res) => {
-          const items = res?.items ?? [];
-          this.notificacoes = items.map((x: any) => this.mapItem(x));
+        next: (res: any) => {
+          console.log('📥 Resposta da API:', res);
+
+          const itemsRaw = Array.isArray(res?.items)
+            ? res.items
+            : Array.isArray(res)
+            ? res
+            : [];
+
+          console.log('📋 Items raw:', itemsRaw);
+
+          this.notificacoes = itemsRaw.map((x: any) => {
+            const mapped = this.mapItem(x);
+            console.log('🔄 Item mapeado:', mapped);
+            return mapped;
+          });
+
           this.page = res?.page ?? p;
-          this.size = res?.size ?? this.size;
-          this.total = res?.total ?? items.length;
+          this.total = res?.total ?? itemsRaw.length;
           this.totalPages = Math.max(1, Math.ceil(this.total / this.size));
           this.carregando = false;
         },
-        error: () => {
+        error: (e) => {
+          console.error('[NOTIF] erro ao carregar notificações', e);
           this.erro = 'Falha ao carregar notificações';
           this.carregando = false;
         },
@@ -81,11 +156,15 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
   }
 
   anterior(): void {
-    if (this.page > 1) this.carregar(this.page - 1);
+    if (this.page > 1) {
+      this.carregar(this.page - 1);
+    }
   }
 
   proxima(): void {
-    if (this.page < this.totalPages) this.carregar(this.page + 1);
+    if (this.page < this.totalPages) {
+      this.carregar(this.page + 1);
+    }
   }
 
   async marcarTodasComoLidas(): Promise<void> {
@@ -98,6 +177,7 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
     this.notifService.marcarTodasComoLidas(this.destinatario).subscribe({
       next: () => this.carregar(this.page),
       error: () => {
+        // opcional: tratar erro
       },
     });
   }
@@ -115,7 +195,9 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEsc(): void {
-    if (this.notificacaoAberta) this.fecharModal();
+    if (this.notificacaoAberta) {
+      this.fecharModal();
+    }
   }
 
   get novasNotificacoes(): boolean {

@@ -103,6 +103,28 @@ export class RelatoriosComponent implements OnInit {
     });
   }
 
+  mudarMes(delta: number): void {
+    // Se por algum motivo o mes estiver vazio, volta para o mês atual
+    if (!this.mes) {
+      this.mes = this.toYYYYMM(new Date());
+    }
+
+    const [yStr, mStr] = this.mes.split('-');
+    let year = Number(yStr);
+    let monthIndex = Number(mStr) - 1; // 0–11
+
+    if (Number.isNaN(year) || Number.isNaN(monthIndex)) {
+      // fallback seguro
+      this.mes = this.toYYYYMM(new Date());
+    } else {
+      // JS ajusta ano automaticamente quando passa de 0–11
+      const novaData = new Date(year, monthIndex + delta, 1);
+      this.mes = this.toYYYYMM(novaData);
+    }
+
+    this.carregarMensal();
+  }
+
   async baixarAlunosXlsx() {
     this.baixando = true;
     this.relatorioService.baixarRelatorioAlunos().subscribe({

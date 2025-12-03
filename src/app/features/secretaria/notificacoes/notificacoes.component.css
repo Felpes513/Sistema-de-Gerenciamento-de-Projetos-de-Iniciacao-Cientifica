@@ -38,14 +38,14 @@
 }
 
 .notificacao {
-  background-color: #f9f9f9;
+  background-color: var(--white);
   padding: 15px;
   border-left: 4px solid var(--uscs-blue);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
   width: 100%;
-  max-width: 760px; /* mantém à esquerda sem esticar demais */
+  max-width: 760px;
 }
 
 /* hover + foco visível para navegação por teclado */
@@ -108,8 +108,16 @@
 }
 
 .notificacao.lida {
-  opacity: 0.55;
-  background-color: var(--gray-100);
+  background-color: #f8f9fa; /* cinza bem claro */
+  opacity: 0.6; /* reduz opacidade */
+  border-left-color: #dee2e6; /* borda mais clara */
+}
+
+.notificacao:not(.lida) {
+  background-color: var(--white);
+  opacity: 1;
+  border-left-color: var(--uscs-blue);
+  font-weight: 500; /* destaca não lidas */
 }
 
 /* toolbar ocupa a linha toda */
