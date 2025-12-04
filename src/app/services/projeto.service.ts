@@ -13,7 +13,6 @@ import {
 } from '@interfaces/projeto';
 import { Orientador } from '@interfaces/orientador';
 import { Campus } from '@interfaces/configuracao';
-import { AvaliadorExterno } from '@interfaces/avaliador_externo';
 import { ApiMensagem } from '@interfaces/api';
 import {
   AvaliacaoEnvio,
@@ -31,7 +30,7 @@ export class ProjetoService {
   private readonly apiUrlOrientadores = `${this.apiUrl}/orientadores`;
   private readonly apiUrlCampus = `${this.apiUrl}/campus`;
   private readonly apiUrlInscricoes = `${this.apiUrl}/inscricoes`;
-  private readonly apiUrlAvaliadoresExternos = `${this.apiUrl}/avaliadores-externos/`;
+
 
   constructor(private http: HttpClient) {}
 
@@ -356,30 +355,6 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  criarAvaliador(a: AvaliadorExterno): Observable<{ id_avaliador: number }> {
-    return this.http
-      .post<{ id_avaliador: number }>(this.apiUrlAvaliadoresExternos, a)
-      .pipe(catchError(this.handleError));
-  }
-
-  atualizarAvaliador(id: number, a: AvaliadorExterno): Observable<void> {
-    return this.http
-      .put<void>(`${this.apiUrlAvaliadoresExternos}${id}`, a)
-      .pipe(catchError(this.handleError));
-  }
-
-  listarAvaliadoresExternos(): Observable<AvaliadorExterno[]> {
-    return this.http
-      .get<AvaliadorExterno[]>(this.apiUrlAvaliadoresExternos)
-      .pipe(catchError(this.handleError));
-  }
-
-  deleteAvaliador(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${this.apiUrlAvaliadoresExternos}${id}`)
-      .pipe(catchError(this.handleError));
-  }
-
   listarProjetosDoOrientador() {
     return this.http
       .get<any>(`${this.apiUrlProjetos}me`)
@@ -554,20 +529,7 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  enviarProjetoParaAvaliadores(
-    idProjeto: number,
-    destinatarios: string[],
-    mensagem?: string,
-    assunto?: string
-  ): Observable<{ mensagem: string }> {
-    const body = { destinatarios, mensagem, assunto };
-    return this.http
-      .post<{ mensagem: string }>(
-        `${this.apiUrlProjetos}${idProjeto}/enviar`,
-        body
-      )
-      .pipe(catchError(this.handleError));
-  }
+
 
   listarProjetosComPdf(): Observable<
     Array<{ id: number; titulo: string; has_pdf: boolean }>

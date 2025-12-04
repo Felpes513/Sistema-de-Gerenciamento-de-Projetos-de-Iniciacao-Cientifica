@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProjetoService } from '@services/projeto.service';
+import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 import { AvaliadorExterno } from '@interfaces/avaliador_externo';
 
 type ProjetoMin = { id: number; titulo: string; has_pdf: boolean };
@@ -31,17 +32,20 @@ export class EnviarAvaliacoesModalComponent implements OnInit {
   assunto = '';
   mensagem = '';
 
-  constructor(private projService: ProjetoService) {}
+  constructor(
+    private projService: ProjetoService,
+    private avaliadoresService: AvaliadoresExternosService
+  ) {}
 
   ngOnInit(): void {
     this.carregando = true;
     this.projService.listarProjetosComPdf().subscribe({
-      next: (rows) => {
+      next: (rows: ProjetoMin[]) => {
         // mostra só os que já têm PDF
         this.projetos = (rows || []).filter((p) => p.has_pdf);
         this.carregando = false;
       },
-      error: (e) => {
+      error: (e: any) => {
         this.erro = e?.message || 'Falha ao carregar projetos';
         this.carregando = false;
       },
@@ -86,7 +90,7 @@ export class EnviarAvaliacoesModalComponent implements OnInit {
     }
 
     this.carregando = true;
-    this.projService
+    this.avaliadoresService
       .enviarProjetoParaAvaliadores(
         this.projetoSelecionadoId,
         destinatarios,
@@ -94,12 +98,12 @@ export class EnviarAvaliacoesModalComponent implements OnInit {
         this.assunto?.trim() || undefined
       )
       .subscribe({
-        next: (res) => {
+        next: (res: { mensagem: string }) => {
           this.carregando = false;
           this.sucesso = res?.mensagem || 'Projeto enviado aos avaliadores.';
           setTimeout(() => this.fechar(true), 1200);
         },
-        error: (e) => {
+        error: (e: any) => {
           this.carregando = false;
           this.erro =
             e?.message || e?.error?.detail || 'Falha ao enviar e-mail.';

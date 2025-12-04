@@ -1,3 +1,5 @@
+// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\listagem-avaliadores\listagem-avaliadores.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -8,7 +10,7 @@ import {
   faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { AvaliadorExterno } from '@interfaces/avaliador_externo';
-import { ProjetoService } from '@services/projeto.service';
+import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 import { EnviarAvaliacoesModalComponent } from './enviar-avaliacoes.modal';
 import { DialogService } from '@services/dialog.service';
 
@@ -24,13 +26,14 @@ export class ListagemAvaliadoresComponent implements OnInit {
   carregando = false;
   erro = '';
   showModal = false;
+
   icUsers = faUsers;
   icPlus = faPlus;
   icEdit = faEdit;
   icTrash = faTrash;
 
   constructor(
-    private service: ProjetoService,
+    private service: AvaliadoresExternosService,
     private router: Router,
     private dialog: DialogService
   ) {}
@@ -44,25 +47,26 @@ export class ListagemAvaliadoresComponent implements OnInit {
     this.carregando = true;
     this.erro = '';
     this.service.listarAvaliadoresExternos().subscribe({
-      next: (lista) => {
-        this.avaliadores = (lista || []).map((a) => ({
+      next: (lista: AvaliadorExterno[]) => {
+        this.avaliadores = (lista || []).map((a: AvaliadorExterno) => ({
           ...a,
+          // garante compatibilidade com possíveis campos diferentes do back
           link_lattes: (a as any).link_lattes ?? (a as any).lattes_link ?? '',
         }));
         this.carregando = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         this.erro = err?.message || 'Falha ao carregar avaliadores';
         this.carregando = false;
       },
     });
   }
 
-  abrirModal() {
+  abrirModal(): void {
     this.showModal = true;
   }
 
-  onModalClosed(reload: boolean) {
+  onModalClosed(reload: boolean): void {
     this.showModal = false;
     if (reload) this.carregar();
   }
@@ -87,7 +91,7 @@ export class ListagemAvaliadoresComponent implements OnInit {
         this.avaliadores = this.avaliadores.filter((av) => av.id !== id);
         await this.dialog.alert('Avaliador excluído com sucesso!', 'Sucesso');
       },
-      error: async (err) => {
+      error: async (err: any) => {
         await this.dialog.alert(
           err?.message || 'Erro ao excluir avaliador',
           'Erro'

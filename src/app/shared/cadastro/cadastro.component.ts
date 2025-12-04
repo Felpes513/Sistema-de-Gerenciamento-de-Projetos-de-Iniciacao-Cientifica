@@ -4,10 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RegisterService } from '@services/cadastro.service';
-import { ProjetoService } from '@services/projeto.service';
 import { ConfigService } from '@services/config.service';
-import { Campus } from '@interfaces/configuracao';
-import { Curso } from '@interfaces/configuracao';
+import { Campus, Curso } from '@interfaces/configuracao';
 
 @Component({
   selector: 'app-cadastro',
@@ -22,11 +20,14 @@ export class RegisterComponent implements OnInit {
   isLoading = false;
   erro: string | null = null;
   sucesso: string | null = null;
+
   cursos: Curso[] = [];
   campus: Campus[] = [];
+
   ori = { nomeCompleto: '', cpf: '', email: '', senha: '', confirmar: '' };
   showPassOri = false;
   acceptTermsOri = false;
+
   alu = {
     nomeCompleto: '',
     cpf: '',
@@ -44,18 +45,20 @@ export class RegisterComponent implements OnInit {
 
   constructor(
     private registerService: RegisterService,
-    private projetoService: ProjetoService,
     private configService: ConfigService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Lista de cursos (GET /cursos/)
     this.configService.listarCursos().subscribe({
-      next: (res) => (this.cursos = res.cursos || []),
+      next: (res) => (this.cursos = res?.cursos || []),
       error: () => (this.cursos = []),
     });
-    this.projetoService.listarCampus().subscribe({
-      next: (res) => (this.campus = res || []),
+
+    // Lista de campus (GET /campus/)
+    this.configService.listarCampus().subscribe({
+      next: (res) => (this.campus = res?.campus || []),
       error: () => (this.campus = []),
     });
   }
