@@ -97,56 +97,61 @@
           />
         </div>
 
-        <table class="table table-bolsas" *ngIf="alunos.length">
-          <thead>
-            <tr>
-              <th>Aluno</th>
-              <th>Email</th>
-              <th>Bolsas Atuais</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
+        <!-- wrapper com scroll -->
+        <div class="table-bolsas-wrapper" *ngIf="alunos.length">
+          <table class="table table-bolsas">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Email</th>
+                <th>Bolsas Atuais</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            <tr
-              *ngFor="let a of alunos"
-              [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
-            >
-              <td>{{ a.nome_completo }}</td>
-              <td>{{ a.email }}</td>
+            <tbody>
+              <tr
+                *ngFor="let a of alunos"
+                [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
+              >
+                <td>{{ toTitleCase(a.nome_completo) }}</td>
+                <td>{{ a.email }}</td>
 
-              <!-- bolsas -->
-              <td>
-                <div *ngIf="a.bolsas?.length; else semBolsa">
-                  <span *ngFor="let b of a.bolsas" class="tag">
-                    {{ b.tipo_bolsa }}
-                    <button
-                      class="tag-remove"
-                      (click)="removerBolsa(b.id_bolsa)"
-                    >
-                      x
-                    </button>
-                  </span>
-                </div>
+                <!-- bolsas -->
+                <td>
+                  <div *ngIf="a.bolsas.length; else semBolsa">
+                    <span *ngFor="let b of a.bolsas" class="tag">
+                      {{ b.tipo_bolsa }}
+                      <button
+                        class="tag-remove"
+                        (click)="removerBolsa(b.id_bolsa)"
+                      >
+                        x
+                      </button>
+                    </span>
+                  </div>
 
-                <ng-template #semBolsa>
-                  <span class="muted">Nenhuma bolsa</span>
-                </ng-template>
-              </td>
+                  <ng-template #semBolsa>
+                    <span class="muted">Nenhuma bolsa</span>
+                  </ng-template>
+                </td>
 
-              <td>
-                <button (click)="abrirSelecaoBolsa(a)">Vincular Bolsa</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <td>
+                  <button (click)="abrirSelecaoBolsa(a)">Vincular Bolsa</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="modal-backdrop" *ngIf="modalBolsaAberto">
         <div class="modal">
           <h3>Vincular Bolsa</h3>
           <p>
-            Aluno: <strong>{{ alunoSelecionado?.nome_completo }}</strong>
+            Aluno:<strong>{{
+              toTitleCase(alunoSelecionado?.nome_completo)
+            }}</strong>
           </p>
 
           <select [(ngModel)]="bolsaSelecionada" name="tiposBolsaSelect">

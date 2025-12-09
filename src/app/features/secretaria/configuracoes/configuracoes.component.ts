@@ -4,6 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ConfigService } from '@services/config.service';
 import { DialogService } from '@services/dialog.service';
+import { RegisterService } from '@services/cadastro.service';
+import { forkJoin } from 'rxjs';
+import { BolsaListItem } from '@interfaces/configuracao';
+
+interface AlunoConfigView {
+  id_aluno: number;
+  nome_completo: string;
+  email: string;
+  status?: string;
+  bolsas: {
+    id_bolsa: number;
+    id_tipo_bolsa: number;
+    tipo_bolsa: string;
+  }[];
+}
 
 @Component({
   selector: 'app-configuracoes',
@@ -22,14 +37,18 @@ export class ConfiguracoesComponent implements OnInit {
   tiposBolsa: any[] = [];
   novoTipoBolsa = '';
 
-  alunos: any[] = [];
+  alunos: AlunoConfigView[] = [];
   filtroBolsa = '';
 
   modalBolsaAberto = false;
-  alunoSelecionado: any = null;
+  alunoSelecionado: AlunoConfigView | null = null;
   bolsaSelecionada: number | null = null;
 
-  constructor(private config: ConfigService, private dialog: DialogService) {}
+  constructor(
+    private config: ConfigService,
+    private dialog: DialogService,
+    private registerService: RegisterService
+  ) {}
 
   ngOnInit(): void {
     this.carregarCampus();
@@ -37,6 +56,8 @@ export class ConfiguracoesComponent implements OnInit {
     this.carregarTiposBolsa();
     this.carregarAlunosComBolsa();
   }
+
+  // ========= Campus =========
 
   carregarCampus() {
     this.config.listarCampus().subscribe({
@@ -67,6 +88,8 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
+  // ========= Cursos =========
+
   carregarCursos() {
     this.config.listarCursos().subscribe((res) => (this.cursos = res.cursos));
   }
@@ -92,6 +115,8 @@ export class ConfiguracoesComponent implements OnInit {
       error: () => this.dialog.alert('Falha ao excluir curso', 'Erro'),
     });
   }
+
+  // ========= Tipos de Bolsa =========
 
   carregarTiposBolsa() {
     this.config.listarTiposBolsa().subscribe((res) => {
@@ -120,19 +145,54 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
+  // ========= Alunos + Bolsas =========
+
   carregarAlunosComBolsa() {
-    this.config.listarBolsas().subscribe({
-      next: (res: {
-        bolsas: any[];
-        limit: number;
-        offset: number;
-        count: number;
-      }) => (this.alunos = res.bolsas),
-      error: () => (this.alunos = []),
+    forkJoin({
+      alunos: this.registerService.listarAlunos(),   // GET /alunos/
+      bolsasResp: this.config.listarBolsas(),        // GET /bolsas/
+    }).subscribe({
+      next: ({ alunos, bolsasResp }) => {
+        const bolsas: BolsaListItem[] = bolsasResp?.bolsas || [];
+
+        // agrupa bolsas por id_aluno
+        const bolsasPorAluno: Record<number, AlunoConfigView['bolsas']> = {};
+        for (const b of bolsas) {
+          const idAluno = b.id_aluno;
+          if (!bolsasPorAluno[idAluno]) {
+            bolsasPorAluno[idAluno] = [];
+          }
+          bolsasPorAluno[idAluno].push({
+            id_bolsa: b.id_bolsa,
+            id_tipo_bolsa: b.id_tipo_bolsa,
+            tipo_bolsa: b.tipo_bolsa,
+          });
+        }
+
+        // filtra só alunos aprovados pela secretaria
+        const aprovados = (alunos || []).filter(
+          (a: any) => a.status === 'APROVADO'
+        );
+
+        // monta a estrutura consumida pelo HTML
+        this.alunos = aprovados.map((a: any) => {
+          const alunoId = Number(a.id_aluno ?? a.id);
+          return {
+            id_aluno: alunoId,
+            nome_completo: a.nome_completo,
+            email: a.email,
+            status: a.status,
+            bolsas: bolsasPorAluno[alunoId] || [],
+          };
+        });
+      },
+      error: () => {
+        this.alunos = [];
+      },
     });
   }
 
-  abrirSelecaoBolsa(aluno: any) {
+  abrirSelecaoBolsa(aluno: AlunoConfigView) {
     this.alunoSelecionado = aluno;
     this.modalBolsaAberto = true;
   }
@@ -145,15 +205,26 @@ export class ConfiguracoesComponent implements OnInit {
   confirmarVinculo() {
     if (!this.bolsaSelecionada || !this.alunoSelecionado) return;
 
-    this.config
-      .criarBolsa({
-        id_aluno: this.alunoSelecionado.id_aluno,
-        id_tipo_bolsa: this.bolsaSelecionada,
-      })
-      .subscribe(() => {
+    const payload = {
+      id_aluno: this.alunoSelecionado.id_aluno,
+      id_tipo_bolsa: this.bolsaSelecionada,
+    };
+
+    console.log('Payload criar bolsa:', payload);
+
+    this.config.criarBolsa(payload).subscribe({
+      next: () => {
         this.fecharModal();
         this.carregarAlunosComBolsa();
-      });
+      },
+      error: (err) => {
+        console.error('Erro ao criar bolsa', err);
+        this.dialog.alert(
+          'Não foi possível atribuir a bolsa. Verifique se o aluno e o tipo de bolsa são válidos.',
+          'Erro ao atribuir bolsa'
+        );
+      },
+    });
   }
 
   async removerBolsa(id_bolsa: number) {
@@ -168,6 +239,8 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
+  // ========= Helpers =========
+
   matchBolsa(term: string, ...vals: (string | number | undefined | null)[]) {
     const norm = (s: any) =>
       (s ?? '')
@@ -181,5 +254,16 @@ export class ConfiguracoesComponent implements OnInit {
     if (!f) return true;
 
     return vals.some((v) => norm(v).includes(f));
+  }
+
+  /** Exibe nome em Title Case (Felipe Souza Moreira) */
+  toTitleCase(value?: string | null): string {
+    if (!value) return '';
+    return value
+      .toLowerCase()
+      .split(' ')
+      .filter((p) => p)
+      .map((p) => p[0].toUpperCase() + p.slice(1))
+      .join(' ');
   }
 }

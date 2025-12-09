@@ -72,13 +72,12 @@
   width: 280px;
 }
 
-/* Listas simples (Campus/Cursos) */
 .list {
   list-style: none;
   padding: 0;
   margin: 10px auto 0;
   max-width: 640px;
-  text-align: left;
+  text-align: center;
 }
 .list li {
   display: flex;
@@ -103,7 +102,7 @@
   table-layout: auto;
 }
 .table thead th {
-  text-align: center; /* títulos centralizados */
+  text-align: center;
   font-weight: 600;
   padding: 10px 12px;
   color: var(--gray-700);
@@ -116,6 +115,56 @@
 }
 .table .center {
   text-align: center;
+}
+
+/* Wrapper da tabela de bolsas com scroll e limite de altura */
+.table-bolsas-wrapper {
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  max-height: 420px; /* ~10 linhas */
+  overflow-y: auto;
+}
+
+/* Cabeçalho fixo enquanto rola a lista de alunos */
+.table-bolsas thead th {
+  position: sticky;
+  top: 0;
+  background: #f5f7fb;
+  z-index: 1;
+}
+
+/* Ajustes específicos da tabela de bolsas */
+.table-bolsas thead th:first-child,
+.table-bolsas tbody td:first-child,
+.table-bolsas thead th:nth-child(2),
+.table-bolsas tbody td:nth-child(2) {
+  text-align: center;
+}
+
+/* Tags de bolsas */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  margin: 2px 4px 2px 0;
+}
+.tag-remove {
+  background: transparent;
+  color: #ef4444;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.tag-remove:hover {
+  filter: none;
+  color: #b91c1c;
 }
 
 /* Botões */
@@ -233,6 +282,39 @@ button.danger:disabled {
   color: #ef4444;
 }
 
+/* Modal Vincular Bolsa */
+.modal-backdrop {
+  margin-top: 16px;
+}
+.modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+  max-width: 950px;
+  margin: 0 auto;
+  text-align: left;
+}
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: var(--uscs-blue-dark);
+}
+.modal p {
+  margin: 4px 0 12px;
+}
+.modal select {
+  width: 100%;
+  max-width: 420px;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: flex-start;
+}
+
 /* Sem scroll horizontal */
 .config-page,
 .config-page mat-tab-group {
@@ -258,5 +340,12 @@ button.danger:disabled {
   .form-section button {
     width: 100%;
     max-width: 200px;
+  }
+  .modal {
+    padding: 16px;
+  }
+
+  .table-bolsas-wrapper {
+    max-height: 360px;
   }
 }

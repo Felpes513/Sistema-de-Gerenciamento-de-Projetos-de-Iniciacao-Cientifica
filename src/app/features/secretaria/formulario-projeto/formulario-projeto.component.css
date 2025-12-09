@@ -4,7 +4,7 @@
 .editor-grid {
   display: flex;
   gap: var(--spacing-xl);
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   max-width: 100%;
   padding: var(--spacing-md);
@@ -28,10 +28,15 @@
   width: 350px;
   position: sticky;
   top: var(--spacing-xl);
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
   box-sizing: border-box;
+  display: flex;
 }
+
+.col-inscritos app-listagem-alunos {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
 
 /* =========================
    TÍTULO / FORMULÁRIO BASE

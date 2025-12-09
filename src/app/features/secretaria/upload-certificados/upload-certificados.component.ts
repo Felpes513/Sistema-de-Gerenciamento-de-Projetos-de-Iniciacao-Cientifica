@@ -1,14 +1,11 @@
-// src/app/features/secretaria/upload-certificados/upload-certificados.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UploadService } from '@services/upload.service';
 
-// Angular Material
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 
-// Nosso dialog compartilhado
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -53,13 +50,12 @@ export class UploadCertificadosComponent {
     return this.file ? this.file.name : null;
   }
 
-  /** Abre o dialog no modo "alert" (só botão OK) */
   private abrirAlerta(titulo: string, mensagem: string) {
     this.dialog.open(ConfirmDialogComponent, {
       data: {
         titulo,
         mensagem,
-        modo: 'alert', // o template já trata isso
+        modo: 'alert',
       },
     });
   }

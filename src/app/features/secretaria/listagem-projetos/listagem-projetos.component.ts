@@ -89,6 +89,13 @@ export class ListagemProjetosComponent implements OnInit {
       .afterClosed(); // Observable<boolean>
   }
 
+  /** Popup simples em modo alerta (sem confirmação) */
+  private abrirAlerta(titulo: string, mensagem: string) {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: { titulo, mensagem, modo: 'alert' },
+    });
+  }
+
   @HostListener('document:keydown.escape')
   onEscClose() {
     this.menuAberto = null;
@@ -118,6 +125,7 @@ export class ListagemProjetosComponent implements OnInit {
 
     this.atualizarProjetosFiltrados();
     this.carregarProjetos();
+    this.carregarInscricoesAluno();
   }
 
   ngOnDestroy() {
@@ -639,6 +647,7 @@ export class ListagemProjetosComponent implements OnInit {
       this.snackBar.open('Ação não permitida.', 'Fechar', { duration: 3000 });
       return;
     }
+
     let id: number;
     let projetoObj: any | null = null;
 
@@ -651,15 +660,18 @@ export class ListagemProjetosComponent implements OnInit {
     }
 
     if (!this.isIdValido(id)) {
-      alert('ID inválido.');
+      this.snackBar.open('ID inválido.', 'Fechar', { duration: 3000 });
       return;
     }
     if (!projetoObj) {
-      alert('Projeto não encontrado.');
+      this.snackBar.open('Projeto não encontrado.', 'Fechar', {
+        duration: 3000,
+      });
       return;
     }
 
     const nomeExibicao = projetoObj.nomeProjeto || 'Desconhecido';
+
     this.abrirConfirmacao(
       'Excluir projeto',
       `Excluir o projeto "${nomeExibicao}"?\n\nID: ${id}`
@@ -670,14 +682,20 @@ export class ListagemProjetosComponent implements OnInit {
 
       this.projetoService.excluirProjeto(id).subscribe({
         next: (response) => {
+          this.menuAberto = null;
           const mensagem =
             (response as any)?.mensagem ||
             (response as any)?.message ||
-            'Projeto excluído com sucesso';
-          this.snackBar.open(mensagem, 'Fechar', { duration: 3000 });
+            `Projeto ${id} deletado com sucesso`;
+
+          // Recarrega lista
           this.carregarProjetos();
+
+          // Mostra popup usando o ConfirmDialog em modo alerta
+          this.abrirAlerta('Projeto excluído', mensagem);
         },
         error: (error) => {
+          this.menuAberto = null;
           let mensagemErro = '';
           if (error.status === 0) mensagemErro = 'Erro de conexão';
           else if (error.status === 404)
@@ -687,31 +705,10 @@ export class ListagemProjetosComponent implements OnInit {
           else mensagemErro = error.message || `Erro HTTP ${error.status}`;
           this.snackBar.open(`Erro ao excluir: ${mensagemErro}`, 'Fechar', {
             duration: 4000,
+            panelClass: ['snackbar-error'],
           });
         },
       });
-    });
-
-    this.projetoService.excluirProjeto(id).subscribe({
-      next: (response) => {
-        const mensagem =
-          (response as any)?.mensagem ||
-          (response as any)?.message ||
-          'Projeto excluído com sucesso';
-        this.snackBar.open(mensagem, 'Fechar', { duration: 3000 });
-        this.carregarProjetos();
-      },
-      error: (error) => {
-        let mensagemErro = '';
-        if (error.status === 0) mensagemErro = 'Erro de conexão';
-        else if (error.status === 404) mensagemErro = 'Projeto não encontrado';
-        else if (error.status === 422) mensagemErro = 'ID inválido';
-        else if (error.status >= 500) mensagemErro = 'Erro interno';
-        else mensagemErro = error.message || `Erro HTTP ${error.status}`;
-        this.snackBar.open(`Erro ao excluir: ${mensagemErro}`, 'Fechar', {
-          duration: 4000,
-        });
-      },
     });
   }
 
@@ -721,7 +718,7 @@ export class ListagemProjetosComponent implements OnInit {
       return;
     }
     if (!this.isIdValido(id)) {
-      alert('ID inválido');
+      this.snackBar.open('ID inválido', 'Fechar', { duration: 3000 });
       return;
     }
     this.router.navigate(['/secretaria/projetos/editar', id]);
@@ -730,7 +727,9 @@ export class ListagemProjetosComponent implements OnInit {
   irParaRelatorio(projeto: Projeto): void {
     const id = (projeto as any)?.id;
     if (!this.isIdValido(id)) {
-      alert('Projeto sem ID válido.');
+      this.snackBar.open('Projeto sem ID válido.', 'Fechar', {
+        duration: 3000,
+      });
       return;
     }
     this.router.navigate(['/orientador/relatorios', id]);
@@ -790,20 +789,39 @@ export class ListagemProjetosComponent implements OnInit {
     });
   }
 
-  irParaRelatorioAluno(projeto: Projeto & { alunosIds?: number[] }) {
-    const id = (projeto as any)?.id;
-    if (!this.isIdValido(id)) {
-      alert('Projeto sem ID válido.');
-      return;
-    }
-    this.router.navigate(['/aluno/relatorios', id]);
-  }
-
   jaInscrito(idProjeto: number): boolean {
     return this.inscricoesDoAluno.has(idProjeto);
   }
   private marcarInscritoLocal(idProjeto: number) {
     this.inscricoesDoAluno.add(idProjeto);
+  }
+
+  private carregarInscricoesAluno() {
+    if (!this.isAluno) return;
+
+    this.inscricoesService
+      .listarMinhasInscricoes()
+      .pipe(
+        catchError((err) => {
+          console.error('Erro ao carregar inscrições do aluno:', err);
+          return of([]);
+        })
+      )
+      .subscribe((inscricoes: any[]) => {
+        this.inscricoesDoAluno.clear();
+
+        (inscricoes || []).forEach((insc) => {
+          const idProjeto = Number(
+            insc.id_projeto ??
+              insc.projeto_id ??
+              insc.projeto?.id ??
+              insc.idProjeto
+          );
+          if (this.isIdValido(idProjeto)) {
+            this.inscricoesDoAluno.add(idProjeto);
+          }
+        });
+      });
   }
 
   podeVerRelatorio(projeto: Projeto & { alunosIds?: number[] }): boolean {
@@ -816,11 +834,13 @@ export class ListagemProjetosComponent implements OnInit {
 
   recarregar(): void {
     this.carregarProjetos();
+    this.carregarInscricoesAluno();
   }
 
   temIdValido(projeto: Projeto): boolean {
     return this.isIdValido((projeto as any).id);
   }
+
   private isIdValido(id: any): id is number {
     return (
       id !== undefined &&

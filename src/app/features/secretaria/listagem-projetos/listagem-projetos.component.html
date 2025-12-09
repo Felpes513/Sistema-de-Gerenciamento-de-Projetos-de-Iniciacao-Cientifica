@@ -218,27 +218,42 @@
                 class="btn-report"
                 [routerLink]="['/aluno/projetos', projeto.id]"
               >
-                <mat-icon>visibility</mat-icon> Ver Projeto
+                <mat-icon>visibility</mat-icon>
+                Ver Projeto
               </a>
+
               <button
                 type="button"
                 class="btn-add"
+                [class.btn-inscrito]="jaInscrito(projeto.id)"
                 (click)="inscrever(projeto)"
-                [disabled]="inscrevendoId === projeto.id"
-                title="Inscrever-se no projeto"
+                [disabled]="
+                  inscrevendoId === projeto.id || jaInscrito(projeto.id)
+                "
+                [title]="
+                  jaInscrito(projeto.id)
+                    ? 'Você já está inscrito neste projeto'
+                    : 'Inscrever-se no projeto'
+                "
               >
                 <mat-icon>check_circle</mat-icon>
-                {{
-                  inscrevendoId === projeto.id
-                    ? "Inscrevendo..."
-                    : "Inscrever-se"
-                }}
+
+                <ng-container
+                  *ngIf="inscrevendoId === projeto.id; else labelInscricao"
+                >
+                  Inscrevendo...
+                </ng-container>
+
+                <ng-template #labelInscricao>
+                  {{ jaInscrito(projeto.id) ? "Inscrito" : "Inscrever-se" }}
+                </ng-template>
               </button>
             </ng-container>
+
             <ng-template #alunoDisabled>
-              <a class="btn-report" disabled
-                ><mat-icon>visibility</mat-icon> Ver Projeto</a
-              >
+              <a class="btn-report" disabled>
+                <mat-icon>visibility</mat-icon> Ver Projeto
+              </a>
               <button type="button" class="btn-add" disabled>
                 <mat-icon>check_circle</mat-icon> Inscrever-se
               </button>
