@@ -72,13 +72,12 @@
   width: 280px;
 }
 
-/* Listas simples (Campus/Cursos) */
 .list {
   list-style: none;
   padding: 0;
   margin: 10px auto 0;
   max-width: 640px;
-  text-align: left;
+  text-align: center;
 }
 .list li {
   display: flex;
@@ -118,12 +117,30 @@
   text-align: center;
 }
 
+/* Wrapper da tabela de bolsas com scroll e limite de altura */
+.table-bolsas-wrapper {
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  max-height: 420px; /* ~10 linhas */
+  overflow-y: auto;
+}
+
+/* Cabeçalho fixo enquanto rola a lista de alunos */
+.table-bolsas thead th {
+  position: sticky;
+  top: 0;
+  background: #f5f7fb;
+  z-index: 1;
+}
+
 /* Ajustes específicos da tabela de bolsas */
 .table-bolsas thead th:first-child,
 .table-bolsas tbody td:first-child,
 .table-bolsas thead th:nth-child(2),
 .table-bolsas tbody td:nth-child(2) {
-  text-align: left;
+  text-align: center;
 }
 
 /* Tags de bolsas */
@@ -326,5 +343,9 @@ button.danger:disabled {
   }
   .modal {
     padding: 16px;
+  }
+
+  .table-bolsas-wrapper {
+    max-height: 360px;
   }
 }

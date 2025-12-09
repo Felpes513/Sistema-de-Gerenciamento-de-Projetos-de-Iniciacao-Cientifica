@@ -1,5 +1,562 @@
 # Changelog - FrontTCC
 
+## [Data: 04/12/2025] - Implementação de Token nas Rotas e Refatoração de Serviços
+
+### 🎯 Resumo Geral
+- **6 arquivos modificados**
+- **192 inserções**, **96 deleções**
+- Implementação de token de autenticação nas rotas do backend
+- Refatoração do serviço de avaliadores externos
+- Melhorias no fluxo de envio de projetos para avaliadores
+- Atualizações no componente de formulário de avaliador
+
+---
+
+### ✨ Implementações
+
+#### 1. **Novo Serviço de Avaliadores Externos (AvaliadoresExternosService)**
+- ✅ Criado serviço dedicado `avaliadores_externos.service.ts` (111 linhas)
+- ✅ Implementado CRUD completo de avaliadores externos:
+  - `criarAvaliador()` - Criação de novo avaliador
+  - `atualizarAvaliador()` - Atualização de avaliador existente
+  - `listarAvaliadoresExternos()` - Listagem de todos os avaliadores
+  - `obterAvaliadorPorId()` - Busca de avaliador por ID
+  - `deleteAvaliador()` - Exclusão de avaliador
+- ✅ Implementado método `enviarProjetoParaAvaliadores()` para envio de projetos
+- ✅ Suporte a autenticação via token Bearer com múltiplas fontes de token
+- ✅ Tratamento de erros robusto com catchError
+
+#### 2. **Refatoração do Componente de Formulário de Avaliador**
+- ✅ Refatorado `FormularioAvaliadorComponent` para usar novo serviço
+- ✅ Removida dependência direta de `ProjetoService` para operações de avaliadores
+- ✅ Melhorada separação de responsabilidades
+
+#### 3. **Melhorias no Modal de Envio de Avaliações**
+- ✅ Refatorado `EnviarAvaliacoesModal` para usar novo serviço
+- ✅ Melhorado tratamento de envio de projetos para avaliadores
+- ✅ Suporte a múltiplos destinatários (1 a 5 avaliadores)
+
+#### 4. **Melhorias no Serviço de Projetos**
+- ✅ Removidas funcionalidades relacionadas a avaliadores (migradas para serviço dedicado)
+- ✅ Simplificado `ProjetoService` focando apenas em operações de projetos
+
+#### 5. **Melhorias no Componente de Cadastro**
+- ✅ Atualizado `CadastroComponent` com ajustes no fluxo de cadastro
+
+---
+
+### 🐛 Correções
+
+#### 1. **Autenticação e Tokens**
+- ✅ Implementado suporte a múltiplas fontes de token no serviço de avaliadores
+- ✅ Corrigido tratamento de autenticação em requisições
+
+#### 2. **Organização de Serviços**
+- ✅ Separadas responsabilidades entre `ProjetoService` e `AvaliadoresExternosService`
+- ✅ Melhorada manutenibilidade do código
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (6 arquivos)
+- `src/app/services/avaliadores_externos.service.ts` - 111 linhas (novo arquivo)
+- `src/app/features/secretaria/formulario-avaliador/formulario-avaliador.component.ts` - 82 linhas alteradas
+- `src/app/features/secretaria/listagem-avaliadores/enviar-avaliacoes.modal.ts` - 16 linhas alteradas
+- `src/app/features/secretaria/listagem-avaliadores/listagem-avaliadores.component.ts` - 20 linhas alteradas
+- `src/app/services/projeto.service.ts` - 42 linhas removidas
+- `src/app/shared/cadastro/cadastro.component.ts` - 17 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 04 de Dezembro de 2025  
+**Commit:** `7c0a7ce`
+
+---
+
+## [Data: 02/12/2025] - Correção de Bugs de Notificações e Limpeza de Testes
+
+### 🎯 Resumo Geral
+- **14 arquivos modificados**
+- **237 inserções**, **727 deleções**
+- Correção de bug de listagem de notificações
+- Resolução de problema de duplicação de dados
+- Limpeza de arquivos de teste não utilizados
+- Melhorias em componentes de notificações e relatórios
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias no Componente de Notificações**
+- ✅ Refatorado `NotificacoesComponent` com melhor lógica de listagem (110 linhas alteradas)
+- ✅ Melhorado tratamento de dados e paginação
+- ✅ Ajustes no CSS e HTML para melhor apresentação (16 e 10 linhas respectivamente)
+
+#### 2. **Melhorias no Componente de Relatórios**
+- ✅ Refatorado CSS do componente de relatórios (179 linhas alteradas)
+- ✅ Melhorada interface HTML com novos elementos (39 linhas alteradas)
+- ✅ Adicionada nova funcionalidade no TypeScript (22 linhas alteradas)
+
+---
+
+### 🐛 Correções
+
+#### 1. **Bug de Duplicação**
+- ✅ Corrigido bug de duplicagem que não estava ocorrendo mais
+- ✅ Validado fluxo de dados para evitar duplicações
+
+#### 2. **Bug de Listagem de Notificações**
+- ✅ Corrigido bug na listagem de notificações
+- ✅ Melhorado carregamento e exibição de notificações
+
+---
+
+### 🗑️ Remoções
+
+#### 1. **Arquivos de Teste Removidos**
+- ❌ Removidos arquivos `.spec.ts` não utilizados ou desatualizados:
+  - `src/app/services/auth.service.spec.ts` - 63 linhas removidas
+  - `src/app/services/cadastro.service.spec.ts` - 50 linhas removidas
+  - `src/app/services/config.service.spec.ts` - 114 linhas removidas
+  - `src/app/services/inscricoes.service.spec.ts` - 56 linhas removidas
+  - `src/app/services/login.service.spec.ts` - 70 linhas removidas
+  - `src/app/services/notificacao.service.spec.ts` - 75 linhas removidas
+  - `src/app/services/projeto.service.spec.ts` - 109 linhas removidas
+  - `src/app/services/relatorio.service.spec.ts` - 51 linhas removidas
+- **Motivo**: Limpeza de testes desatualizados ou não utilizados
+- **Total**: 588 linhas de testes removidas
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (14 arquivos)
+- `src/app/features/secretaria/notificacoes/notificacoes.component.css` - 16 linhas alteradas
+- `src/app/features/secretaria/notificacoes/notificacoes.component.html` - 10 linhas alteradas
+- `src/app/features/secretaria/notificacoes/notificacoes.component.ts` - 110 linhas alteradas
+- `src/app/features/secretaria/relatorios/relatorios.component.css` - 179 linhas alteradas
+- `src/app/features/secretaria/relatorios/relatorios.component.html` - 39 linhas alteradas
+- `src/app/features/secretaria/relatorios/relatorios.component.ts` - 22 linhas alteradas
+- `src/app/services/auth.service.spec.ts` - 63 linhas removidas
+- `src/app/services/cadastro.service.spec.ts` - 50 linhas removidas
+- `src/app/services/config.service.spec.ts` - 114 linhas removidas
+- `src/app/services/inscricoes.service.spec.ts` - 56 linhas removidas
+- `src/app/services/login.service.spec.ts` - 70 linhas removidas
+- `src/app/services/notificacao.service.spec.ts` - 75 linhas removidas
+- `src/app/services/projeto.service.spec.ts` - 109 linhas removidas
+- `src/app/services/relatorio.service.spec.ts` - 51 linhas removidas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 02 de Dezembro de 2025  
+**Commit:** `005f97a`
+
+---
+
+## [Data: 01/12/2025] - Correção de Duplicação de Inscrições e Cadastros
+
+### 🎯 Resumo Geral
+- **10 arquivos modificados**
+- **269 inserções**, **104 deleções**
+- Correção de bug de duplicação de inscrições e cadastros de alunos
+- Melhorias no componente de listagem de alunos
+- Atualizações no fluxo de inscrições
+- Ajustes no componente de upload de certificados
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias no Componente de Listagem de Alunos**
+- ✅ Refatorado `ListagemAlunosComponent` com melhor tratamento de duplicações (106 linhas adicionadas)
+- ✅ Implementada função de debug para identificação de duplicatas
+- ✅ Melhorado sistema de seleção de alunos
+- ✅ Aprimorado CSS com melhorias visuais (43 linhas alteradas)
+- ✅ Atualizado HTML com nova estrutura (27 linhas alteradas)
+
+#### 2. **Melhorias no Componente de Listagem de Projetos**
+- ✅ Refatorado `ListagemProjetosComponent` com melhor organização (63 linhas alteradas)
+- ✅ Otimizado carregamento de dados
+
+#### 3. **Melhorias no Formulário de Projeto**
+- ✅ Ajustes no CSS do formulário (11 linhas alteradas)
+- ✅ Removidas linhas desnecessárias do HTML (8 linhas removidas)
+
+#### 4. **Atualizações no Serviço de Projetos**
+- ✅ Melhorado `ProjetoService` com novos métodos e validações (92 linhas alteradas)
+- ✅ Adicionado suporte para tratamento de duplicações
+
+#### 5. **Melhorias no Serviço de Upload**
+- ✅ Atualizado `UploadService` com ajustes no envio de arquivos (6 linhas alteradas)
+
+#### 6. **Melhorias no Componente de Upload de Certificados**
+- ✅ Ajustes no componente de upload de certificados (6 linhas alteradas)
+
+#### 7. **Atualizações nas Interfaces**
+- ✅ Atualizada interface `Projeto` com novos campos (11 linhas alteradas)
+
+---
+
+### 🐛 Correções
+
+#### 1. **Bug de Duplicação de Inscrições**
+- ✅ Corrigido bug que causava duplicação de inscrições de alunos
+- ✅ Implementada validação para evitar cadastros duplicados
+- ✅ Adicionado sistema de debug para identificar duplicatas
+
+#### 2. **Bug de Duplicação de Cadastros**
+- ✅ Corrigido problema de cadastros duplicados de alunos
+- ✅ Melhorada validação de dados antes do cadastro
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (10 arquivos)
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.css` - 11 linhas alteradas
+- `src/app/features/secretaria/formulario-projeto/formulario-projeto.component.html` - 8 linhas removidas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.css` - 43 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.html` - 27 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.ts` - 106 linhas adicionadas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.ts` - 63 linhas alteradas
+- `src/app/features/secretaria/upload-certificados/upload-certificados.component.ts` - 6 linhas alteradas
+- `src/app/services/projeto.service.ts` - 92 linhas alteradas
+- `src/app/services/upload.service.ts` - 6 linhas alteradas
+- `src/app/shared/interfaces/projeto.ts` - 11 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 01 de Dezembro de 2025  
+**Commit:** `0fed6d8`
+
+---
+
+## [Data: 30/11/2025] - Correção de Listagem de Alunos e Atribuição de Bolsas
+
+### 🎯 Resumo Geral
+- **3 arquivos modificados**
+- **176 inserções**, **24 deleções**
+- Correção de problemas na listagem de alunos
+- Melhorias no sistema de atribuição de bolsas
+- Aprimoramentos no componente de configurações
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias no Componente de Configurações**
+- ✅ Refatorado `ConfiguracoesComponent` com melhor lógica de bolsas (123 linhas alteradas)
+- ✅ Melhorado sistema de atribuição de bolsas a alunos
+- ✅ Aprimorado CSS com novos estilos (70 linhas adicionadas)
+- ✅ Ajustes no HTML para melhor organização (7 linhas alteradas)
+
+---
+
+### 🐛 Correções
+
+#### 1. **Listagem de Alunos**
+- ✅ Corrigido problema na listagem de alunos
+- ✅ Melhorado carregamento e exibição de dados
+
+#### 2. **Atribuição de Bolsas**
+- ✅ Corrigido sistema de atribuição de bolsas
+- ✅ Melhorada validação e tratamento de erros
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (3 arquivos)
+- `src/app/features/secretaria/configuracoes/configuracoes.component.css` - 70 linhas adicionadas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.html` - 7 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.ts` - 123 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 30 de Novembro de 2025  
+**Commit:** `8eaa3ed`
+
+---
+
+## [Data: 30/11/2025] - Implementação do Componente de Envio de Certificados
+
+### 🎯 Resumo Geral
+- **14 arquivos modificados**
+- **433 inserções**, **601 deleções**
+- Implementação do componente de upload e envio de certificados
+- Remoção do componente antigo de envio de e-mail
+- Integração com serviço de upload
+- Atualização de dependências
+
+---
+
+### ✨ Implementações
+
+#### 1. **Novo Componente de Upload de Certificados**
+- ✅ Criado componente `UploadCertificadosComponent` completo (100 linhas)
+- ✅ Implementado upload de arquivo com drag & drop
+- ✅ Interface HTML moderna e responsiva (69 linhas)
+- ✅ Estilos CSS customizados (131 linhas)
+- ✅ Arquivo de teste criado (23 linhas)
+- ✅ Integração com `UploadService` para envio de arquivos
+- ✅ Feedback visual com diálogos de confirmação
+- ✅ Tratamento de erros robusto
+
+#### 2. **Novo Serviço de Upload**
+- ✅ Criado `UploadService` para envio de arquivos (21 linhas)
+- ✅ Método `enviarArquivo()` para upload de arquivos
+- ✅ Integração com endpoint `/send-emails`
+- ✅ Suporte a FormData para envio de arquivos
+
+#### 3. **Nova Interface de Resposta**
+- ✅ Criada interface `SendEmailResponse` (7 linhas)
+- ✅ Tipagem para resposta do envio de e-mails
+- ✅ Suporte a dados de quantidade enviada
+
+#### 4. **Atualização de Rotas**
+- ✅ Adicionada rota para componente de upload de certificados
+- ✅ Integração no sistema de navegação (15 linhas alteradas)
+
+#### 5. **Melhorias na Sidenav**
+- ✅ Atualizado `SidenavSecretariaComponent` com link para upload de certificados
+- ✅ Refatoração completa do HTML (132 linhas alteradas)
+- ✅ Melhor organização dos links de navegação
+
+---
+
+### 🗑️ Remoções
+
+#### 1. **Componente de Envio de E-mail Removido**
+- ❌ Removido componente `EnvioDeEmailComponent` completamente:
+  - `envio-de-email.component.ts` - 131 linhas removidas
+  - `envio-de-email.component.html` - 81 linhas removidas
+  - `envio-de-email.component.css` - 263 linhas removidas
+  - `envio-de-email.component.spec.ts` - 47 linhas removidas
+- **Motivo**: Substituído pelo novo componente de upload de certificados
+- **Total**: 522 linhas removidas
+
+---
+
+### 📦 Dependências
+
+#### 1. **Atualização de Pacotes**
+- ✅ Atualizado `package.json` e `package-lock.json` (5 e 9 linhas alteradas)
+- ✅ Novas dependências adicionadas para suporte a upload
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Criados (5 arquivos)
+- `src/app/features/secretaria/upload-certificados/upload-certificados.component.ts` - 100 linhas
+- `src/app/features/secretaria/upload-certificados/upload-certificados.component.html` - 69 linhas
+- `src/app/features/secretaria/upload-certificados/upload-certificados.component.css` - 131 linhas
+- `src/app/features/secretaria/upload-certificados/upload-certificados.component.spec.ts` - 23 linhas
+- `src/app/services/upload.service.ts` - 21 linhas
+- `src/app/shared/interfaces/send-email-response.model.ts` - 7 linhas
+
+#### Arquivos Modificados (6 arquivos)
+- `src/app/app.routes.ts` - 15 linhas alteradas
+- `src/app/features/secretaria/upload-certificados/upload-certificados.component.ts` - 6 linhas alteradas (após criação)
+- `src/app/shared/sidenav/sidenav-secretaria.component.html` - 132 linhas alteradas
+- `package.json` - 5 linhas alteradas
+- `package-lock.json` - 9 linhas alteradas
+
+#### Arquivos Removidos (4 arquivos)
+- `src/app/features/secretaria/envio-de-email/envio-de-email.component.ts` - 131 linhas
+- `src/app/features/secretaria/envio-de-email/envio-de-email.component.html` - 81 linhas
+- `src/app/features/secretaria/envio-de-email/envio-de-email.component.css` - 263 linhas
+- `src/app/features/secretaria/envio-de-email/envio-de-email.component.spec.ts` - 47 linhas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 30 de Novembro de 2025  
+**Commit:** `4b4134b`
+
+---
+
+## [Data: 29/11/2025] - Correção de Fluxo de Inscrições e Criação de Bolsas
+
+### 🎯 Resumo Geral
+- **16 arquivos modificados**
+- **1018 inserções**, **397 deleções**
+- Correção de erros no fluxo de inscrições
+- Correção de problema na criação de bolsas
+- Melhorias significativas em componentes da secretaria
+- Atualização completa do CHANGELOG
+
+---
+
+### ✨ Implementações
+
+#### 1. **Atualização Completa do CHANGELOG**
+- ✅ Adicionada documentação completa de 383 linhas
+- ✅ Documentação de todas as mudanças anteriores
+
+#### 2. **Melhorias no Componente de Cadastros**
+- ✅ Refatorado CSS com redesign completo (117 linhas alteradas)
+- ✅ Atualizado HTML com melhor estrutura (8 linhas alteradas)
+- ✅ Melhorias na apresentação visual
+
+#### 3. **Melhorias no Componente de Listagem de Alunos**
+- ✅ Refatorado CSS com novos estilos (132 linhas adicionadas)
+- ✅ Atualizado HTML com melhor organização (79 linhas alteradas)
+- ✅ Refatorada lógica do componente (119 linhas alteradas)
+- ✅ Melhor tratamento de dados e validações
+
+#### 4. **Melhorias no Componente de Listagem de Projetos**
+- ✅ Ajustes no CSS (1 linha alterada)
+- ✅ Atualizado HTML com melhorias (35 linhas alteradas)
+- ✅ Refatoração completa da lógica (422 linhas alteradas)
+- ✅ Melhor sistema de paginação e filtros
+
+#### 5. **Melhorias no Serviço de Inscrições**
+- ✅ Refatorado `InscricoesService` com novos métodos (51 linhas alteradas)
+- ✅ Melhor tratamento de dados de inscrições
+
+#### 6. **Melhorias no Serviço de Projetos**
+- ✅ Atualizado `ProjetoService` com ajustes (31 linhas alteradas)
+- ✅ Melhor compatibilidade com API
+
+#### 7. **Melhorias na Sidenav**
+- ✅ Ajustes no CSS (13 linhas adicionadas)
+- ✅ Atualizada lógica do componente (15 linhas alteradas)
+
+---
+
+### 🐛 Correções
+
+#### 1. **Fluxo de Inscrições**
+- ✅ Corrigido erro na listagem de inscrições
+- ✅ Melhorado tratamento de dados
+- ✅ Corrigida validação de inscrições
+
+#### 2. **Criação de Bolsas**
+- ✅ Corrigido problema que impedia criação de bolsas
+- ✅ Melhorada validação de dados
+- ✅ Corrigido tratamento de erros
+
+#### 3. **Listagem de Projetos**
+- ✅ Corrigido cálculo de paginação
+- ✅ Melhorado carregamento de dados
+- ✅ Corrigidos filtros e busca
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (16 arquivos)
+- `CHANGELOG.md` - 383 linhas adicionadas
+- `src/app/components/footer/footer.component.html` - 2 linhas alteradas
+- `src/app/features/secretaria/cadastros/cadastros.component.css` - 117 linhas alteradas
+- `src/app/features/secretaria/cadastros/cadastros.component.html` - 8 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.html` - 6 linhas removidas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.css` - 132 linhas adicionadas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.html` - 79 linhas alteradas
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.ts` - 119 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.css` - 1 linha alterada
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.html` - 35 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.spec.ts` - 1 linha removida
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.ts` - 422 linhas alteradas
+- `src/app/services/inscricoes.service.ts` - 51 linhas alteradas
+- `src/app/services/projeto.service.ts` - 31 linhas alteradas
+- `src/app/shared/sidenav/sidenav-secretaria.component.css` - 13 linhas adicionadas
+- `src/app/shared/sidenav/sidenav-secretaria.component.ts` - 15 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 29 de Novembro de 2025  
+**Commit:** `76cedc3`
+
+---
+
+## [Data: 26/11/2025] - Correção de Serviços de Bolsa, Projetos e Modal de Notificações
+
+### 🎯 Resumo Geral
+- **45 arquivos modificados**
+- **1832 inserções**, **1005 deleções**
+- Correção de serviços de bolsa e projetos
+- Criação de modal para notificações
+- Refatoração de componentes da secretaria
+- Consolidação de interfaces
+
+---
+
+### ✨ Implementações
+
+#### 1. **Melhorias no Serviço de Configurações**
+- ✅ Adicionados métodos para gerenciamento de bolsas e tipos de bolsa (69 linhas alteradas)
+- ✅ Melhor integração com API
+
+#### 2. **Refatoração do Componente de Configurações**
+- ✅ Refatorado componente com melhor estrutura (107 linhas alteradas)
+- ✅ Melhor organização do código
+
+#### 3. **Melhorias no Serviço de Projetos**
+- ✅ Refatorado com novos métodos e validações (257 linhas alteradas)
+- ✅ Melhor tratamento de dados
+
+#### 4. **Melhorias no Serviço de Relatórios**
+- ✅ Refatorado com melhor estrutura (129 linhas alteradas)
+- ✅ Melhor mapeamento de dados
+
+#### 5. **Melhorias no Serviço de Login**
+- ✅ Atualizado com melhor tratamento de tokens (41 linhas alteradas)
+
+#### 6. **Melhorias no Serviço de Inscrições**
+- ✅ Refatorado com novos métodos (28 linhas alteradas)
+
+#### 7. **Melhorias no Serviço de Notificações**
+- ✅ Atualizado com melhor estrutura (19 linhas alteradas)
+
+#### 8. **Melhorias no Serviço de Senha**
+- ✅ Atualizado com melhor tratamento de erros (23 linhas alteradas)
+
+#### 9. **Melhorias em Componentes da Secretaria**
+- ✅ `FormularioProjetoComponent`: Refatorado com melhor lógica (354 linhas alteradas)
+- ✅ `FormularioAvaliadorComponent`: Melhorado (47 linhas alteradas)
+- ✅ `ListagemAlunosComponent`: Refatorado (41 linhas alteradas)
+- ✅ `ListagemAvaliadoresComponent`: Melhorado (51 linhas alteradas)
+- ✅ `NotificacoesComponent`: Atualizado (20 linhas alteradas)
+- ✅ `RelatoriosComponent`: Melhorado (12 linhas alteradas)
+- ✅ `CadastrosComponent`: Atualizado (34 linhas alteradas)
+
+---
+
+### 🗑️ Remoções
+
+#### 1. **Serviço de Bolsa Removido**
+- ❌ Removido `BolsaService` (31 linhas removidas)
+- ❌ Removido teste do serviço (60 linhas removidas)
+- **Motivo**: Funcionalidades migradas para `ConfigService`
+
+#### 2. **Interfaces Removidas**
+- ❌ Removidas interfaces duplicadas (consolidadas em `configuracao.ts`)
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (45 arquivos)
+- Múltiplos arquivos de componentes e serviços atualizados
+- Consolidação de interfaces
+- Remoção de código duplicado
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 26 de Novembro de 2025  
+**Commit:** `4b452c6`
+
+---
+
 ## [Data: 28/11/2025] - Correção de Arquivos de Teste
 
 ### 🎯 Resumo Geral

@@ -125,6 +125,7 @@ export class ListagemProjetosComponent implements OnInit {
 
     this.atualizarProjetosFiltrados();
     this.carregarProjetos();
+    this.carregarInscricoesAluno();
   }
 
   ngOnDestroy() {
@@ -795,6 +796,34 @@ export class ListagemProjetosComponent implements OnInit {
     this.inscricoesDoAluno.add(idProjeto);
   }
 
+  private carregarInscricoesAluno() {
+    if (!this.isAluno) return;
+
+    this.inscricoesService
+      .listarMinhasInscricoes()
+      .pipe(
+        catchError((err) => {
+          console.error('Erro ao carregar inscrições do aluno:', err);
+          return of([]);
+        })
+      )
+      .subscribe((inscricoes: any[]) => {
+        this.inscricoesDoAluno.clear();
+
+        (inscricoes || []).forEach((insc) => {
+          const idProjeto = Number(
+            insc.id_projeto ??
+              insc.projeto_id ??
+              insc.projeto?.id ??
+              insc.idProjeto
+          );
+          if (this.isIdValido(idProjeto)) {
+            this.inscricoesDoAluno.add(idProjeto);
+          }
+        });
+      });
+  }
+
   podeVerRelatorio(projeto: Projeto & { alunosIds?: number[] }): boolean {
     if (!this.isAluno) return false;
     const meuId = this.getMeuId();
@@ -805,11 +834,13 @@ export class ListagemProjetosComponent implements OnInit {
 
   recarregar(): void {
     this.carregarProjetos();
+    this.carregarInscricoesAluno();
   }
 
   temIdValido(projeto: Projeto): boolean {
     return this.isIdValido((projeto as any).id);
   }
+
   private isIdValido(id: any): id is number {
     return (
       id !== undefined &&

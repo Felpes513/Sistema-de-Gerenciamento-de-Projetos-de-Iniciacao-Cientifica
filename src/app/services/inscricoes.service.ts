@@ -18,6 +18,10 @@ export class InscricoesService {
     }>(`${this.apiUrl}/inscricao/inscrever`, { id_projeto: projetoId });
   }
 
+  listarMinhasInscricoes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/inscricao/minhas`);
+  }
+
   listarPorProjeto(
     projetoId: number,
     _status?: string,
@@ -27,7 +31,7 @@ export class InscricoesService {
     _ordem: 'asc' | 'desc' = 'asc'
   ): Observable<Inscricao[]> {
     return this.http
-      .get<any[]>(`${this.apiUrl}/projetos/${projetoId}/inscricoes`)
+      .get<any[]>(`${this.apiUrl}/projetos/${projetoId}/inscricao`)
       .pipe(
         map((lista) =>
           (lista ?? []).map(
@@ -47,10 +51,7 @@ export class InscricoesService {
         )
       );
   }
-  /**
-   * Lista alunos já vinculados ao projeto (tb_projeto_aluno).
-   * Essa rota é mais para estágio "final" (CADASTRADO_FINAL).
-   */
+
   listarAprovadosDoProjeto(projetoId: number) {
     return this.http
       .get<{ id_projeto: number; alunos: any[] }>(
@@ -61,36 +62,26 @@ export class InscricoesService {
 
   aprovar(inscricaoId: number) {
     return this.http.patch(
-      `${this.apiUrl}/inscricoes/${inscricaoId}/aprovar`,
+      `${this.apiUrl}/inscricao/${inscricaoId}/aprovar`,
       {}
     );
   }
 
   finalizar(inscricaoId: number) {
     return this.http.patch(
-      `${this.apiUrl}/inscricoes/${inscricaoId}/finalizar`,
+      `${this.apiUrl}/inscricao/${inscricaoId}/finalizar`,
       {}
     );
   }
 
   rejeitar(inscricaoId: number) {
     return this.http.patch(
-      `${this.apiUrl}/inscricoes/${inscricaoId}/rejeitar`,
+      `${this.apiUrl}/inscricao/${inscricaoId}/rejeitar`,
       {}
     );
   }
 
   excluir(inscricaoId: number) {
-    return this.http.delete(`${this.apiUrl}/inscricoes/${inscricaoId}`);
-  }
-
-  uploadDocumento(inscricaoId: number, arquivo: File) {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-
-    return this.http.put(
-      `${this.apiUrl}/inscricoes/${inscricaoId}/documento-notas`,
-      formData
-    );
+    return this.http.delete(`${this.apiUrl}/inscricao/${inscricaoId}`);
   }
 }
