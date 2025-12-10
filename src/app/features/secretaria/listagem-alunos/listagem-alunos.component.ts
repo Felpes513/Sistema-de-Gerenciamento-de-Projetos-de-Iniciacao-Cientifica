@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs/operators';
+import { finalize, of, switchMap } from 'rxjs';
 import { ProjetoService } from '@services/projeto.service';
 import { InscricoesService } from '@services/inscricoes.service';
 import { ProjetoInscricaoApi } from '@interfaces/projeto';
@@ -50,7 +50,6 @@ export class ListagemAlunosComponent implements OnInit {
   selecionados = new Set<number>();
   limite = 4;
   bloqueado = false;
-  bloqueadoEm?: string;
   loadingFlag = false;
   salvandoSelecao = false;
   sucessoSelecao = '';
@@ -65,134 +64,44 @@ export class ListagemAlunosComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.projetoId) return;
-
-    // Se for orientador, verifica se já existe lock salvo
-    if (this.modo === 'ORIENTADOR') {
-      this.carregarLock();
-    }
-
     this.carregar();
-  }
-
-  private lockKey() {
-    return `proj-lock:${this.projetoId}`;
-  }
-
-  private carregarLock() {
-    try {
-      const raw = localStorage.getItem(this.lockKey());
-      if (!raw) return;
-      const v = JSON.parse(raw);
-      this.bloqueado = !!v?.lock;
-      this.bloqueadoEm = v?.ts || undefined;
-    } catch {
-      this.bloqueado = localStorage.getItem(this.lockKey()) === '1';
-    }
-  }
-
-  private salvarLock() {
-    const payload = { lock: true, ts: new Date().toISOString() };
-    localStorage.setItem(this.lockKey(), JSON.stringify(payload));
-    this.bloqueado = true;
-    this.bloqueadoEm = payload.ts;
   }
 
   private carregar() {
     this.loadingFlag = true;
 
-    // ===== ORIENTADOR =====
     if (this.modo === 'ORIENTADOR') {
-      // Depois que o orientador já salvou a seleção (lock),
-      // passamos a usar a rota /projetos/{id}/alunos
-      if (this.bloqueado) {
-        this.projetoService
-          .listarAlunosDoProjeto(this.projetoId)
-          .pipe(
-            finalize(() => {
-              this.loadingFlag = false;
-              this.cdr.markForCheck();
-            })
-          )
-          .subscribe({
-            next: (alunos) => {
-              // alunos: [{ id_aluno, nome_completo, email, possuiTrabalhoRemunerado }]
-              this._inscricoes = (alunos || []).map((a: any) => ({
-                id_aluno: a.id_aluno,
-                nome_completo: a.nome_completo,
-                email: a.email,
-                possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
-                status: 'CADASTRADO_FINAL',
-              })) as any[];
-
-              this.debugDuplicatas('ORIENTADOR-LOCK', this._inscricoes);
-
-              this.aprovadas = [...this._inscricoes];
-              this.pendentesOuReprovadas = [];
-
-              // todos os alunos retornados são os vinculados
-              this.selecionados = new Set<number>(
-                this._inscricoes.map((i) => this.alunoId(i))
-              );
-            },
-            error: () => {
-              this._inscricoes = [];
-              this.aprovadas = [];
-              this.pendentesOuReprovadas = [];
-            },
-          });
-
-        return;
-      }
-
-      // Antes do lock: usa rota /projetos/{id}/inscricoes (inscrições por projeto)
-      this.projetoService
-        .listarInscricoesPorProjeto(this.projetoId)
-        .pipe(
-          finalize(() => {
-            this.loadingFlag = false;
-            this.cdr.markForCheck();
-          })
-        )
-        .subscribe({
-          next: (inscricoes) => {
-            this._inscricoes = inscricoes ?? [];
-
-            this.debugDuplicatas('ORIENTADOR', this._inscricoes);
-
-            this.aprovadas = this._inscricoes.filter((i) => {
-              const st = ((i as any).status || '').toUpperCase();
-              return st === 'VALIDADO' || st === 'APROVADO';
-            });
-
-            this.pendentesOuReprovadas = this._inscricoes.filter((i) => {
-              const st = ((i as any).status || '').toUpperCase();
-              return !this.aprovadas.includes(i) && st !== 'CADASTRADO_FINAL';
-            });
-
-            const jaVinculados = this._inscricoes
-              .filter(
-                (i) =>
-                  (((i as any).status || '') as string).toUpperCase() ===
-                  'CADASTRADO_FINAL'
-              )
-              .map((i) => this.alunoId(i));
-
-            this.selecionados = new Set<number>(jaVinculados);
-          },
-          error: () => {
-            this._inscricoes = [];
-            this.aprovadas = [];
-            this.pendentesOuReprovadas = [];
-          },
-        });
-
+      this.carregarOrientador();
       return;
     }
 
-    // ===== SECRETARIA: usa rota /inscricao (listagem geral de inscrições) =====
-    this.inscricoesService
-      .listarPorProjeto(this.projetoId)
+    this.projetoService
+      .listarAlunosDoProjeto(this.projetoId)
       .pipe(
+        switchMap((alunosVinculados) => {
+          if (alunosVinculados && alunosVinculados.length) {
+            this.bloqueado = true;
+
+            this._inscricoes = (alunosVinculados || []).map((a: any) => ({
+              id_aluno: a.id_aluno,
+              nome_completo: a.nome_completo,
+              email: a.email,
+              possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
+              status: 'CADASTRADO_FINAL',
+            })) as any[];
+
+            this.debugDuplicatas('SECRETARIA-LOCK', this._inscricoes);
+
+            this.alunosSecretaria = this._inscricoes.map((i) =>
+              this.mapAlunoSecretaria(i)
+            );
+
+            return of(null);
+          }
+
+          this.bloqueado = false;
+          return this.inscricoesService.listarPorProjeto(this.projetoId);
+        }),
         finalize(() => {
           this.loadingFlag = false;
           this.cdr.markForCheck();
@@ -200,6 +109,8 @@ export class ListagemAlunosComponent implements OnInit {
       )
       .subscribe({
         next: (inscricoes) => {
+          if (!inscricoes) return;
+
           this._inscricoes = Array.isArray(inscricoes) ? inscricoes : [];
 
           this.debugDuplicatas('SECRETARIA', this._inscricoes);
@@ -210,6 +121,76 @@ export class ListagemAlunosComponent implements OnInit {
         },
         error: () => {
           this.alunosSecretaria = [];
+        },
+      });
+  }
+
+  private carregarOrientador() {
+    this.projetoService
+      .listarAlunosDoProjeto(this.projetoId)
+      .pipe(
+        switchMap((alunosVinculados) => {
+          if (alunosVinculados && alunosVinculados.length) {
+            this.bloqueado = true;
+
+            this._inscricoes = (alunosVinculados || []).map((a: any) => ({
+              id_aluno: a.id_aluno,
+              nome_completo: a.nome_completo,
+              email: a.email,
+              possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
+              status: 'CADASTRADO_FINAL',
+            })) as any[];
+
+            this.debugDuplicatas('ORIENTADOR-LOCK', this._inscricoes);
+
+            this.aprovadas = [...this._inscricoes];
+            this.pendentesOuReprovadas = [];
+
+            this.selecionados = new Set<number>(
+              this._inscricoes.map((i) => this.alunoId(i))
+            );
+            return of(null);
+          }
+          this.bloqueado = false;
+          return this.projetoService.listarInscricoesPorProjeto(this.projetoId);
+        }),
+        finalize(() => {
+          this.loadingFlag = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (inscricoes) => {
+          if (!inscricoes) return;
+
+          this._inscricoes = inscricoes ?? [];
+
+          this.debugDuplicatas('ORIENTADOR', this._inscricoes);
+
+          this.aprovadas = this._inscricoes.filter((i) => {
+            const st = ((i as any).status || '').toUpperCase();
+            return st === 'VALIDADO' || st === 'APROVADO';
+          });
+
+          this.pendentesOuReprovadas = this._inscricoes.filter((i) => {
+            const st = ((i as any).status || '').toUpperCase();
+            return !this.aprovadas.includes(i) && st !== 'CADASTRADO_FINAL';
+          });
+
+          const jaVinculados = this._inscricoes
+            .filter(
+              (i) =>
+                (((i as any).status || '') as string).toUpperCase() ===
+                'CADASTRADO_FINAL'
+            )
+            .map((i) => this.alunoId(i));
+
+          this.selecionados = new Set<number>(jaVinculados);
+        },
+        error: () => {
+          this._inscricoes = [];
+          this.aprovadas = [];
+          this.pendentesOuReprovadas = [];
         },
       });
   }
@@ -263,7 +244,6 @@ export class ListagemAlunosComponent implements OnInit {
   }
 
   disabledCheckbox(i: InscricaoLike): boolean {
-    // Se o projeto já foi bloqueado, não permite alterar nada
     if (this.modo === 'ORIENTADOR' && this.bloqueado) {
       return true;
     }
@@ -288,7 +268,6 @@ export class ListagemAlunosComponent implements OnInit {
 
   onSelecionadoChange(event: Event, inscricao: InscricaoLike) {
     if (this.modo === 'ORIENTADOR' && this.bloqueado) {
-      // Garante que o checkbox volte ao estado original caso alguém clique
       const target = event.target as HTMLInputElement | null;
       if (target) {
         target.checked = this.selecionados.has(this.alunoId(inscricao));
@@ -327,10 +306,6 @@ export class ListagemAlunosComponent implements OnInit {
               'Seleção salva e inscrições restantes excluídas.';
             this.selecionados = new Set<number>(ids);
 
-            // Bloqueia alterações futuras
-            this.salvarLock();
-
-            // Recarrega já usando a rota /projetos/{id}/alunos
             this.carregar();
           },
           error: (e: unknown) => {
@@ -396,6 +371,7 @@ export class ListagemAlunosComponent implements OnInit {
 
     const nomeRaw =
       anyI?.aluno?.nome ||
+      anyI?.nome_completo ||
       anyI?.nome_aluno ||
       anyI?.nome ||
       `Aluno #${idAluno || idInscricao}`;
@@ -413,7 +389,6 @@ export class ListagemAlunosComponent implements OnInit {
     };
   }
 
-  // 🔍 Helper para detectar duplicatas no front
   private debugDuplicatas(contexto: string, lista: InscricaoLike[]) {
     const seen = new Set<string>();
     const dups: { key: string; idInscricao: number; idAluno: number }[] = [];

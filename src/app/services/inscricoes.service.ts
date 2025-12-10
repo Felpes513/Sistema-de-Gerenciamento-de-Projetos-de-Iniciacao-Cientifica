@@ -31,7 +31,7 @@ export class InscricoesService {
     _ordem: 'asc' | 'desc' = 'asc'
   ): Observable<Inscricao[]> {
     return this.http
-      .get<any[]>(`${this.apiUrl}/projetos/${projetoId}/inscricao`)
+      .get<any[]>(`${this.apiUrl}/projetos/${projetoId}/inscricoes`)
       .pipe(
         map((lista) =>
           (lista ?? []).map(
