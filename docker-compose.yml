@@ -8,11 +8,6 @@ services:
     container_name: fronttcc-frontend
     ports:
       - "8080:80"
-    volumes:
-      # Para desenvolvimento: montar o código fonte (opcional)
-      # - ./src:/app/src
-      # - ./dist:/app/dist
-      # Nota: nginx.conf está incluído no build do Dockerfile
     environment:
       - NODE_ENV=production
     restart: unless-stopped

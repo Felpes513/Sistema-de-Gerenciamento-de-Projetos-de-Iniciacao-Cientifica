@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ConfiguracoesComponent } from './configuracoes.component';
 import { ConfigService } from '@services/config.service';
+import { DialogService } from '@services/dialog.service';
+import { RegisterService } from '@services/cadastro.service';
 
 class ConfigServiceStub {
   // CAMPUS
@@ -58,14 +61,39 @@ class ConfigServiceStub {
   excluirBolsa = jasmine.createSpy('excluirBolsa').and.returnValue(of({}));
 }
 
+class DialogServiceStub {
+  confirm = jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true));
+  alert = jasmine.createSpy('alert');
+}
+
+class RegisterServiceStub {
+  listarAlunos = jasmine
+    .createSpy('listarAlunos')
+    .and.returnValue(
+      of([
+        {
+          id_aluno: 1,
+          nome_completo: 'Aluno Teste',
+          email: 'aluno@teste.com',
+          status: 'APROVADO',
+        },
+      ])
+    );
+}
+
 describe('ConfiguracoesComponent', () => {
   let component: ConfiguracoesComponent;
   let configService: ConfigServiceStub;
+  let dialogService: DialogServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ConfiguracoesComponent],
-      providers: [{ provide: ConfigService, useClass: ConfigServiceStub }],
+      imports: [ConfiguracoesComponent, HttpClientTestingModule],
+      providers: [
+        { provide: ConfigService, useClass: ConfigServiceStub },
+        { provide: DialogService, useClass: DialogServiceStub },
+        { provide: RegisterService, useClass: RegisterServiceStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ConfiguracoesComponent);
@@ -73,6 +101,9 @@ describe('ConfiguracoesComponent', () => {
     configService = TestBed.inject(
       ConfigService
     ) as unknown as ConfigServiceStub;
+    dialogService = TestBed.inject(
+      DialogService
+    ) as unknown as DialogServiceStub;
 
     fixture.detectChanges(); // dispara ngOnInit
   });
@@ -104,9 +135,9 @@ describe('ConfiguracoesComponent', () => {
     expect(configService.criarCampus).not.toHaveBeenCalled();
   });
 
-  it('should delete campus when confirmed', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    component.excluirCampus(1);
+  it('should delete campus when confirmed', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
+    await component.excluirCampus(1);
     expect(configService.excluirCampus).toHaveBeenCalledWith(1);
   });
 
@@ -126,9 +157,9 @@ describe('ConfiguracoesComponent', () => {
     expect(configService.criarCurso).not.toHaveBeenCalled();
   });
 
-  it('should delete course when confirmed', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    component.excluirCurso(2);
+  it('should delete course when confirmed', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
+    await component.excluirCurso(2);
     expect(configService.excluirCurso).toHaveBeenCalledWith(2);
   });
 
@@ -146,23 +177,33 @@ describe('ConfiguracoesComponent', () => {
     expect(configService.criarTipoBolsa).not.toHaveBeenCalled();
   });
 
-  it('should delete tipo de bolsa when confirmed', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    component.excluirTipoBolsa(1);
+  it('should delete tipo de bolsa when confirmed', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
+    await component.excluirTipoBolsa(1);
     expect(configService.excluirTipoBolsa).toHaveBeenCalledWith(1);
   });
 
   // ===== ALUNOS COM BOLSA =====
   it('should open selection modal for aluno', () => {
-    const aluno = { id_aluno: 10, nome: 'Aluno Teste' };
+    const aluno = {
+      id_aluno: 10,
+      nome_completo: 'Aluno Teste',
+      email: 'aluno@teste.com',
+      bolsas: []
+    };
     component.abrirSelecaoBolsa(aluno);
-    expect(component.alunoSelecionado).toBe(aluno as any);
+    expect(component.alunoSelecionado).toBe(aluno);
     expect(component.modalBolsaAberto).toBeTrue();
   });
 
   it('should close modal and reset selection', () => {
     component.modalBolsaAberto = true;
-    component.alunoSelecionado = { id_aluno: 10 } as any;
+    component.alunoSelecionado = {
+      id_aluno: 10,
+      nome_completo: 'Aluno Teste',
+      email: 'aluno@teste.com',
+      bolsas: []
+    };
     component.bolsaSelecionada = 1;
 
     component.fecharModal();
@@ -173,7 +214,12 @@ describe('ConfiguracoesComponent', () => {
   });
 
   it('should create vinculo de bolsa when aluno and bolsa selected', () => {
-    component.alunoSelecionado = { id_aluno: 10 } as any;
+    component.alunoSelecionado = {
+      id_aluno: 10,
+      nome_completo: 'Aluno Teste',
+      email: 'aluno@teste.com',
+      bolsas: []
+    };
     component.bolsaSelecionada = 3;
 
     component.confirmarVinculo();
@@ -190,15 +236,20 @@ describe('ConfiguracoesComponent', () => {
     component.confirmarVinculo();
     expect(configService.criarBolsa).not.toHaveBeenCalled();
 
-    component.alunoSelecionado = { id_aluno: 10 } as any;
+    component.alunoSelecionado = {
+      id_aluno: 10,
+      nome_completo: 'Aluno Teste',
+      email: 'aluno@teste.com',
+      bolsas: []
+    };
     component.bolsaSelecionada = null;
     component.confirmarVinculo();
     expect(configService.criarBolsa).not.toHaveBeenCalled();
   });
 
-  it('should remove bolsa by id_bolsa when confirmed', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    component.removerBolsa(5);
+  it('should remove bolsa by id_bolsa when confirmed', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
+    await component.removerBolsa(5);
     expect(configService.excluirBolsa).toHaveBeenCalledWith(5);
   });
 

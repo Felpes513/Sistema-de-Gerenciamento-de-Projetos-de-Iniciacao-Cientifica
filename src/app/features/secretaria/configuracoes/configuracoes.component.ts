@@ -199,6 +199,7 @@ export class ConfiguracoesComponent implements OnInit {
 
   fecharModal() {
     this.modalBolsaAberto = false;
+    this.alunoSelecionado = null;
     this.bolsaSelecionada = null;
   }
 
