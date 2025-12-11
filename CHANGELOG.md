@@ -1,5 +1,206 @@
 # Changelog - FrontTCC
 
+## [Data: 09/12/2025] - Correção de Fluxo de Inscrições
+
+### 🎯 Resumo Geral
+- **2 arquivos modificados**
+- **102 inserções**, **127 deleções**
+- Correção de problemas no fluxo de inscrições
+- Otimização do componente de listagem de alunos
+- Ajustes no serviço de inscrições
+
+---
+
+### ✨ Implementações
+
+#### 1. **Otimização do Componente de Listagem de Alunos**
+- ✅ Refatorado `ListagemAlunosComponent` com melhor estrutura (227 linhas refatoradas)
+- ✅ Removido código redundante e simplificada lógica
+- ✅ Melhorado tratamento de dados de inscrições
+
+#### 2. **Ajustes no Serviço de Inscrições**
+- ✅ Pequenos ajustes no `InscricoesService` (2 linhas alteradas)
+- ✅ Melhor compatibilidade com API
+
+---
+
+### 🐛 Correções
+
+#### 1. **Fluxo de Inscrições**
+- ✅ Corrigido fluxo de inscrições de alunos
+- ✅ Melhorado tratamento de dados
+- ⚠️ **Nota**: Para alunos, ainda exibe todos os projetos (bug conhecido a ser corrigido)
+
+#### 2. **Listagem de Alunos**
+- ✅ Simplificada lógica de carregamento
+- ✅ Removido código duplicado
+- ✅ Melhor performance no carregamento
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (2 arquivos)
+- `src/app/features/secretaria/listagem-alunos/listagem-alunos.component.ts` - 227 linhas refatoradas (102 inserções, 127 deleções)
+- `src/app/services/inscricoes.service.ts` - 2 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 09 de Dezembro de 2025  
+**Commit:** `49e9754`
+
+---
+
+## [Data: 09/12/2025] - Botão de Inscrição Dinâmico e Melhorias em Bolsas
+
+### 🎯 Resumo Geral
+- **7 arquivos modificados**
+- **697 inserções**, **77 deleções**
+- Implementação de botão de inscrição que muda conforme status do aluno
+- Melhorias no componente de configurações (bolsas)
+- Atualizações na listagem de projetos
+- Melhorias no serviço de inscrições
+- Atualização completa do CHANGELOG
+
+---
+
+### ✨ Implementações
+
+#### 1. **Botão de Inscrição Dinâmico**
+- ✅ Implementado botão de inscrição que muda de estado conforme status do aluno
+- ✅ Botão exibe "Inscrever-se" quando aluno não está inscrito
+- ✅ Botão exibe "Inscrito" quando aluno já está inscrito no projeto
+- ✅ Botão desabilitado quando aluno já está inscrito
+- ✅ Feedback visual com classe CSS `btn-inscrito` para estado de inscrito
+- ✅ Integrado no componente `ListagemProjetosComponent` (31 linhas alteradas)
+
+#### 2. **Melhorias no Componente de Listagem de Projetos**
+- ✅ Atualizado HTML com novo sistema de botões dinâmicos (37 linhas alteradas)
+- ✅ Melhor feedback visual para alunos
+- ✅ Melhor tratamento de estados de inscrição
+
+#### 3. **Melhorias no Componente de Configurações (Bolsas)**
+- ✅ Refatorado CSS com novos estilos (27 linhas alteradas)
+- ✅ Atualizado HTML com melhor organização (92 linhas alteradas)
+- ✅ Removida linha desnecessária do TypeScript (1 linha removida)
+- ✅ Melhor interface para gerenciamento de bolsas
+
+#### 4. **Melhorias no Serviço de Inscrições**
+- ✅ Atualizado `InscricoesService` com novos métodos e validações (29 linhas alteradas)
+- ✅ Melhor tratamento de estados de inscrição
+- ✅ Suporte para verificação de status de inscrição
+
+---
+
+### 🐛 Correções
+
+#### 1. **Status de Inscrição**
+- ✅ Corrigido sistema de verificação de inscrição
+- ✅ Melhorado feedback visual para usuários
+- ✅ Corrigido estado do botão baseado no status do aluno
+
+#### 2. **Componente de Configurações**
+- ✅ Removido código não utilizado
+- ✅ Melhorada organização do código
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Modificados (7 arquivos)
+- `CHANGELOG.md` - 557 linhas adicionadas (documentação completa)
+- `src/app/features/secretaria/configuracoes/configuracoes.component.css` - 27 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.html` - 92 linhas alteradas
+- `src/app/features/secretaria/configuracoes/configuracoes.component.ts` - 1 linha removida
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.html` - 37 linhas alteradas
+- `src/app/features/secretaria/listagem-projetos/listagem-projetos.component.ts` - 31 linhas alteradas
+- `src/app/services/inscricoes.service.ts` - 29 linhas alteradas
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 09 de Dezembro de 2025  
+**Commit:** `8308078`
+
+---
+
+## [Data: 09/12/2025] - Merge: Feature de Bolsas
+
+### 🎯 Resumo Geral
+- **35 arquivos modificados**
+- **1566 inserções**, **1023 deleções**
+- Merge do pull request #10 com feature completa de bolsas
+- Consolidação de múltiplas melhorias e correções
+- Integração de todas as funcionalidades de gerenciamento de bolsas
+
+---
+
+### ✨ Implementações
+
+#### 1. **Feature Completa de Bolsas**
+- ✅ Sistema completo de gerenciamento de bolsas
+- ✅ Interface de configuração de bolsas
+- ✅ Atribuição e gerenciamento de bolsas para alunos
+- ✅ Integração com backend para operações de bolsas
+
+#### 2. **Novo Serviço de Avaliadores Externos**
+- ✅ Criado serviço dedicado `avaliadores_externos.service.ts` (111 linhas)
+- ✅ CRUD completo de avaliadores externos
+- ✅ Método para envio de projetos para avaliadores
+
+#### 3. **Melhorias em Componentes da Secretaria**
+- ✅ `ConfiguracoesComponent`: Refatoração completa (122 linhas alteradas)
+- ✅ `FormularioAvaliadorComponent`: Atualizado para usar novo serviço (82 linhas alteradas)
+- ✅ `ListagemAlunosComponent`: Melhorias significativas (106 linhas alteradas)
+- ✅ `ListagemProjetosComponent`: Refatoração e melhorias (94 linhas alteradas)
+- ✅ `NotificacoesComponent`: Melhorias na lógica (110 linhas alteradas)
+- ✅ `RelatoriosComponent`: Atualizações e melhorias (22 linhas alteradas)
+
+#### 4. **Refatoração de Serviços**
+- ✅ `ProjetoService`: Simplificado e otimizado (134 linhas alteradas)
+- ✅ `InscricoesService`: Melhorias e novos métodos (29 linhas alteradas)
+- ✅ `UploadService`: Pequenos ajustes (6 linhas alteradas)
+
+---
+
+### 🗑️ Remoções
+
+#### 1. **Arquivos de Teste Removidos**
+- ❌ Removidos arquivos `.spec.ts` não utilizados:
+  - `auth.service.spec.ts` - 63 linhas
+  - `cadastro.service.spec.ts` - 50 linhas
+  - `config.service.spec.ts` - 114 linhas
+  - `inscricoes.service.spec.ts` - 56 linhas
+  - `login.service.spec.ts` - 70 linhas
+  - `notificacao.service.spec.ts` - 75 linhas
+  - `projeto.service.spec.ts` - 109 linhas
+  - `relatorio.service.spec.ts` - 51 linhas
+- **Total**: 588 linhas de testes removidas
+
+---
+
+### 📊 Estatísticas de Alterações
+
+#### Arquivos Criados (1 arquivo)
+- `src/app/services/avaliadores_externos.service.ts` - 111 linhas
+
+#### Arquivos Modificados (34 arquivos)
+- Múltiplos componentes e serviços atualizados
+- Melhorias em interfaces e tipos
+- Atualização do CHANGELOG completo
+
+#### Arquivos Removidos (8 arquivos)
+- Arquivos de teste não utilizados
+
+---
+
+**Desenvolvedor:** Felipe Souza Moreira  
+**Data:** 09 de Dezembro de 2025  
+**Commit:** `3f27fe2` (Merge PR #10)
+
+---
+
 ## [Data: 04/12/2025] - Implementação de Token nas Rotas e Refatoração de Serviços
 
 ### 🎯 Resumo Geral
