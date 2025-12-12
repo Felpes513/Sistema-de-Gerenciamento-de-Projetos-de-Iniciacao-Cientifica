@@ -1,13 +1,20 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { RelatorioFormComponent } from './relatorio-form.component';
 import { RelatorioService } from '@services/relatorio.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DialogService } from '@services/dialog.service';
 
 class RelatorioServiceStub {
   listarDoMes = jasmine.createSpy().and.returnValue(of([]));
   listarRecebidosSecretaria = jasmine.createSpy().and.returnValue(of([]));
   confirmar = jasmine.createSpy().and.returnValue(of({ mensagem: 'ok' }));
+}
+
+class DialogServiceStub {
+  confirm = jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true));
+  alert = jasmine.createSpy('alert');
 }
 
 class RouterStub {
@@ -27,7 +34,7 @@ describe('RelatorioFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RelatorioFormComponent],
+      imports: [RelatorioFormComponent, HttpClientTestingModule],
       providers: [
         { provide: RelatorioService, useClass: RelatorioServiceStub },
         {
@@ -40,6 +47,7 @@ describe('RelatorioFormComponent', () => {
           },
         },
         { provide: Router, useClass: RouterStub },
+        { provide: DialogService, useClass: DialogServiceStub },
       ],
     }).compileComponents();
 

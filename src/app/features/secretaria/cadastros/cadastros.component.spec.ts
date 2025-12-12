@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { CadastrosComponent } from './cadastros.component';
 import { RegisterService } from '@services/cadastro.service';
+import { DialogService } from '@services/dialog.service';
 
 class RegisterServiceStub {
   listarAlunos = jasmine
@@ -18,19 +20,29 @@ class RegisterServiceStub {
   reprovarOrientador = jasmine.createSpy().and.returnValue(of({}));
 }
 
+class DialogServiceStub {
+  confirm = jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true));
+  alert = jasmine.createSpy('alert');
+}
+
 describe('CadastrosComponent', () => {
   let component: CadastrosComponent;
   let service: RegisterServiceStub;
+  let dialogService: DialogServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CadastrosComponent],
-      providers: [{ provide: RegisterService, useClass: RegisterServiceStub }],
+      imports: [CadastrosComponent, HttpClientTestingModule],
+      providers: [
+        { provide: RegisterService, useClass: RegisterServiceStub },
+        { provide: DialogService, useClass: DialogServiceStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(CadastrosComponent);
     component = fixture.componentInstance;
     service = TestBed.inject(RegisterService) as unknown as RegisterServiceStub;
+    dialogService = TestBed.inject(DialogService) as unknown as DialogServiceStub;
     fixture.detectChanges(); // ngOnInit -> load()
   });
 
@@ -56,11 +68,12 @@ describe('CadastrosComponent', () => {
     expect(service.aprovarOrientador).toHaveBeenCalledWith(2);
   });
 
-  it('should reject using the correct endpoint', () => {
-    component.reprovar(3);
+  it('should reject using the correct endpoint', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
+    await component.reprovar(3);
     expect(service.reprovarAluno).toHaveBeenCalledWith(3);
     component.setTipo('ORIENTADORES');
-    component.reprovar(4);
+    await component.reprovar(4);
     expect(service.reprovarOrientador).toHaveBeenCalledWith(4);
   });
 });

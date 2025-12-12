@@ -12,12 +12,15 @@ class ProjetoServiceStub {
     of([
       {
         id: 1,
-        titulo_projeto: 'Projeto Teste',
-        orientador: 'joao da silva',
+        nomeProjeto: 'Projeto Teste',
+        nomeOrientador: 'joao da silva',
         campus: 'Campus',
+        quantidadeMaximaAlunos: 0,
+        nomesAlunos: [],
       },
     ])
   );
+
   listarProjetosDoOrientador = jasmine.createSpy().and.returnValue(of([]));
 }
 
@@ -87,8 +90,8 @@ describe('ListagemProjetosComponent', () => {
   });
 
   it('should paginate to 8 items per page', () => {
-    component.pageSize = 8; // Define explicitamente o tamanho da página para o teste
-    component.currentPage = 1; // Garante que está na primeira página
+    component.pageSize = 8;
+    component.currentPage = 1;
     (component as any).projetos = Array.from({ length: 10 }).map((_, i) => ({
       id: i + 1,
       nomeProjeto: `P${i + 1}`,

@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { RelatoriosComponent } from './relatorios.component';
 import { RelatorioService } from '@services/relatorio.service';
 import { Router } from '@angular/router';
+import { DialogService } from '@services/dialog.service';
 
 class RelatorioServiceStub {
   listarRecebidosSecretaria = jasmine
@@ -16,6 +18,11 @@ class RelatorioServiceStub {
     .and.returnValue(of({ body: new Blob(), headers: new Map([['Content-Disposition', 'filename="relatorio.xlsx"']]) } as any));
 }
 
+class DialogServiceStub {
+  confirm = jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true));
+  alert = jasmine.createSpy('alert');
+}
+
 class RouterStub {
   navigate = jasmine.createSpy('navigate');
 }
@@ -26,10 +33,11 @@ describe('RelatoriosComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RelatoriosComponent],
+      imports: [RelatoriosComponent, HttpClientTestingModule],
       providers: [
         { provide: RelatorioService, useClass: RelatorioServiceStub },
         { provide: Router, useClass: RouterStub },
+        { provide: DialogService, useClass: DialogServiceStub },
       ],
     }).compileComponents();
 

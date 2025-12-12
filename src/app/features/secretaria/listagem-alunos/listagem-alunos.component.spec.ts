@@ -5,30 +5,45 @@ import { ProjetoService } from '@services/projeto.service';
 import { InscricoesService } from '@services/inscricoes.service';
 
 class ProjetoServiceStub {
-  listarInscricoesPorProjeto = jasmine.createSpy().and.returnValue(
-    of([
-      {
-        id_inscricao: 1,
-        id_aluno: 1,
-        aluno: { nome: 'Aluno Um', email: 'a@a', matricula: '1' },
-        status: 'APROVADO',
-      },
-    ])
-  );
+  listarAlunosDoProjeto = jasmine
+    .createSpy('listarAlunosDoProjeto')
+    .and.returnValue(of([]));
 
-  // SECRETARIA (usado quando modo = 'SECRETARIA')
+  listarInscricoesPorProjeto = jasmine
+    .createSpy('listarInscricoesPorProjeto')
+    .and.returnValue(
+      of([
+        {
+          id_inscricao: 1,
+          id_aluno: 1,
+          aluno: { nome: 'Aluno Um', email: 'a@a', matricula: '1' },
+          status: 'APROVADO',
+        },
+      ])
+    );
+
   updateAlunosProjeto = jasmine
     .createSpy('updateAlunosProjeto')
     .and.returnValue(of({ mensagem: 'ok' }));
 
-  // ORIENTADOR (usado quando modo = 'ORIENTADOR')
   atualizarAprovadosEExcluirRejeitados = jasmine
     .createSpy('atualizarAprovadosEExcluirRejeitados')
-    .and.returnValue(of({ mensagem: 'ok' }));
+    .and.returnValue(of({ mensagem: 'ok', excluidos: [] }));
 }
 
 class InscricoesServiceStub {
-  // Mantido só pra satisfazer o construtor, mesmo sem uso direto no componente
+  listarPorProjeto = jasmine
+    .createSpy('listarPorProjeto')
+    .and.returnValue(
+      of([
+        {
+          id_inscricao: 1,
+          id_aluno: 1,
+          aluno: { nome: 'Aluno Um', email: 'a@a', matricula: '1' },
+          status: 'APROVADO',
+        },
+      ])
+    );
 }
 
 describe('ListagemAlunosComponent', () => {
@@ -52,20 +67,21 @@ describe('ListagemAlunosComponent', () => {
 
   it('should map students for secretaria view', () => {
     component.modo = 'SECRETARIA';
-    component.ngOnInit(); // chama carregar() e popula alunosSecretaria
-    expect(component.lista()[0].nome).toBe('Aluno Um');
+    component.ngOnInit();
+
+    const lista = component.lista();
+    expect(lista.length).toBe(1);
+    expect(lista[0].nome).toBe('Aluno Um');
+    expect(lista[0].matricula).toBe('1');
+    expect(lista[0].email).toBe('a@a');
   });
 
   it('should toggle selection respecting the limit', () => {
     component.modo = 'ORIENTADOR';
-    component.ngOnInit(); // popula aprovadas
-
+    component.ngOnInit();
     const outra: any = { id_aluno: 2, aluno: { nome: 'Aluno 2' } };
     component.limite = 1;
-
-    // Seleciona o primeiro
     component.toggleSelecionado(component.aprovadas[0] as any, true);
-    // Tenta selecionar mais um (deve respeitar o limite)
     component.toggleSelecionado(outra, true);
 
     expect(component.selecionados.size).toBe(1);

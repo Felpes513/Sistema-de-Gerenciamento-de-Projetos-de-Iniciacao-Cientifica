@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { FormularioProjetoComponent } from './formulario-projeto.component';
 import { ProjetoService } from '@services/projeto.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { DialogService } from '@services/dialog.service';
 
 class ProjetoServiceStub {
   listarOrientadoresAprovados = jasmine
@@ -69,6 +71,11 @@ class ProjetoServiceStub {
     .and.returnValue(of(new Blob()));
 }
 
+class DialogServiceStub {
+  confirm = jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true));
+  alert = jasmine.createSpy('alert');
+}
+
 class RouterStub {
   navigate = jasmine.createSpy('navigate');
 }
@@ -76,13 +83,15 @@ class RouterStub {
 describe('FormularioProjetoComponent', () => {
   let component: FormularioProjetoComponent;
   let service: ProjetoServiceStub;
+  let dialogService: DialogServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FormularioProjetoComponent],
+      imports: [FormularioProjetoComponent, HttpClientTestingModule],
       providers: [
         { provide: ProjetoService, useClass: ProjetoServiceStub },
         { provide: Router, useClass: RouterStub },
+        { provide: DialogService, useClass: DialogServiceStub },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -98,6 +107,7 @@ describe('FormularioProjetoComponent', () => {
     const fixture = TestBed.createComponent(FormularioProjetoComponent);
     component = fixture.componentInstance;
     service = TestBed.inject(ProjetoService) as unknown as ProjetoServiceStub;
+    dialogService = TestBed.inject(DialogService) as unknown as DialogServiceStub;
     fixture.detectChanges(); // dispara ngOnInit
   });
 
@@ -131,8 +141,6 @@ describe('FormularioProjetoComponent', () => {
   });
 
   it('should send PARCIAL PDF using the proper service method', () => {
-    spyOn(window, 'alert'); // evita dialog real
-
     component.projetoId = 123;
     (component as any).currentEtapaUpload = 'PARCIAL';
     const fakePdf = new File(['pdf'], 'monografia_parcial.pdf', {
@@ -148,9 +156,8 @@ describe('FormularioProjetoComponent', () => {
     );
   });
 
-  it('should advance etapa from PARCIAL to FINAL when requirements are met', () => {
-    spyOn(window, 'alert'); // só pra não abrir diálogos
-    spyOn(window, 'confirm').and.returnValue(true);
+  it('should advance etapa from PARCIAL to FINAL when requirements are met', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
 
     component.projetoId = 1;
     // deixa o histórico indicando que PARCIAL já foi enviado
@@ -161,7 +168,7 @@ describe('FormularioProjetoComponent', () => {
     ];
     (component as any).currentEtapaUpload = 'PARCIAL';
 
-    component.avancarEtapa();
+    await component.avancarEtapa();
 
     expect(component['currentEtapaUpload']).toBe('FINAL');
     expect(component.podeAvancar).toBeFalse();

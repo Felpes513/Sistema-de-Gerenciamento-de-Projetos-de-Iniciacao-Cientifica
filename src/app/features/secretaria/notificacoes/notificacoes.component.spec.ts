@@ -1,14 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { NotificacoesComponent } from './notificacoes.component';
 import { NotificacaoService } from '@services/notificacao.service';
 import { Renderer2 } from '@angular/core';
+import { DialogService } from '@services/dialog.service';
 
 class NotificacaoServiceStub {
   getNotificacoesPaginado = jasmine.createSpy().and.returnValue(
     of({ items: [{ id: 1, mensagem: 'Oi', data_criacao: new Date() }], page: 1, size: 10, total: 1 })
   );
   marcarTodasComoLidas = jasmine.createSpy().and.returnValue(of({}));
+}
+
+class DialogServiceStub {
+  confirm = jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true));
+  alert = jasmine.createSpy('alert');
 }
 
 class RendererStub {
@@ -19,19 +26,22 @@ class RendererStub {
 describe('NotificacoesComponent', () => {
   let component: NotificacoesComponent;
   let service: NotificacaoServiceStub;
+  let dialogService: DialogServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [NotificacoesComponent],
+      imports: [NotificacoesComponent, HttpClientTestingModule],
       providers: [
         { provide: NotificacaoService, useClass: NotificacaoServiceStub },
         { provide: Renderer2, useClass: RendererStub },
+        { provide: DialogService, useClass: DialogServiceStub },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(NotificacoesComponent);
     component = fixture.componentInstance;
     service = TestBed.inject(NotificacaoService) as unknown as NotificacaoServiceStub;
+    dialogService = TestBed.inject(DialogService) as unknown as DialogServiceStub;
     component.ngOnInit();
   });
 
@@ -40,9 +50,9 @@ describe('NotificacoesComponent', () => {
     expect(component.totalPages).toBe(1);
   });
 
-  it('should mark all notifications as read', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    component.marcarTodasComoLidas();
+  it('should mark all notifications as read', async () => {
+    dialogService.confirm.and.returnValue(Promise.resolve(true));
+    await component.marcarTodasComoLidas();
     expect(service.marcarTodasComoLidas).toHaveBeenCalled();
   });
 

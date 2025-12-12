@@ -1,5 +1,3 @@
-// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\services\avaliadores_externos.service.ts
-
 import { Injectable } from '@angular/core';
 import {
   HttpClient,
@@ -21,8 +19,6 @@ export class AvaliadoresExternosService {
 
   constructor(private http: HttpClient) {}
 
-  // --- Helpers ---
-
   private getAuthHeaders(): HttpHeaders {
     const token =
       localStorage.getItem('token') ||
@@ -43,8 +39,6 @@ export class AvaliadoresExternosService {
     console.error('Erro em AvaliadoresExternosService', error);
     return throwError(() => error);
   }
-
-  // --- CRUD Avaliadores Externos ---
 
   criarAvaliador(a: AvaliadorExterno): Observable<{ id_avaliador: number }> {
     return this.http
@@ -89,8 +83,6 @@ export class AvaliadoresExternosService {
       })
       .pipe(catchError((error) => this.handleError(error)));
   }
-
-  // --- Envio de projetos para avaliadores ---
 
   enviarProjetoParaAvaliadores(
     idProjeto: number,
