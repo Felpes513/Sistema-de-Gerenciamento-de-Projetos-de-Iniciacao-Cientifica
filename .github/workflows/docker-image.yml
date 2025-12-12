@@ -68,6 +68,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
+          load: true            # 👈 ESSENCIAL pra usar no docker run
           tags: fronttcc-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
