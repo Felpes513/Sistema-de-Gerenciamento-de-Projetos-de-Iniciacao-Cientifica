@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   frontend:
@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: fronttcc-frontend
     ports:
-      - "8080:80"
+      - "80:80"
     environment:
       - NODE_ENV=production
     restart: unless-stopped
@@ -18,9 +18,8 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - fronttcc-network
+      - sgpic-net
 
 networks:
-  fronttcc-network:
-    driver: bridge
-
+  sgpic-net:
+    external: true
