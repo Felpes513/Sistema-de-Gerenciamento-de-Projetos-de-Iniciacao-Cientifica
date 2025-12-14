@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { PasswordService } from '@services/password.service';
+import {Component} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {ActivatedRoute, Router, RouterModule} from '@angular/router';
+import {MatIconModule} from '@angular/material/icon';
+import {PasswordService} from '@services/password.service';
 
 type Perfil = 'aluno' | 'orientador' | 'secretaria';
 
@@ -68,7 +68,7 @@ export class ResetPasswordComponent {
   }
 
   strongEnough(): boolean {
-    return this.novaSenha.length >= 8;
+    return this.novaSenha.length >= 6;
   }
 
   salvarNovaSenha() {
@@ -95,7 +95,7 @@ export class ResetPasswordComponent {
   }
 
   voltarLogin() {
-    this.router.navigate(['/login'], { queryParams: { perfil: this.perfil } });
+    this.router.navigate(['/login'], {queryParams: {perfil: this.perfil}});
   }
 
   irParaLogin() {
