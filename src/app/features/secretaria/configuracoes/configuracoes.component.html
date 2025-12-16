@@ -1,6 +1,6 @@
 <div class="config-page">
   <h2>Configurações do Sistema</h2>
-  <p class="muted">Gerencie campus, cursos e bolsas</p>
+  <p class="muted">Gerencie campus, cursos, bolsas e secretarias</p>
 
   <mat-tab-group>
     <!-- ===== Campus ===== -->
@@ -57,11 +57,9 @@
       </div>
     </mat-tab>
 
+    <!-- ===== Bolsas ===== -->
     <mat-tab label="Bolsas">
       <div class="form-section">
-        <!-- ============================================= -->
-        <!--  TIPOS DE BOLSA (CADASTRO)                    -->
-        <!-- ============================================= -->
         <h3>Cadastrar Tipo de Bolsa</h3>
 
         <form (ngSubmit)="criarTipoBolsa()" class="crud-inline">
@@ -97,29 +95,27 @@
           />
         </div>
 
-        <!-- wrapper com scroll -->
         <div class="table-bolsas-wrapper" *ngIf="alunos.length">
           <table class="table table-bolsas">
             <thead>
-              <tr>
-                <th>Aluno</th>
-                <th>Email</th>
-                <th>Bolsas Atuais</th>
-                <th>Ações</th>
-              </tr>
+            <tr>
+              <th>Aluno</th>
+              <th>Email</th>
+              <th>Bolsas Atuais</th>
+              <th>Ações</th>
+            </tr>
             </thead>
 
             <tbody>
-              <tr
-                *ngFor="let a of alunos"
-                [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
-              >
-                <td>{{ toTitleCase(a.nome_completo) }}</td>
-                <td>{{ a.email }}</td>
+            <tr
+              *ngFor="let a of alunos"
+              [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
+            >
+              <td>{{ toTitleCase(a.nome_completo) }}</td>
+              <td>{{ a.email }}</td>
 
-                <!-- bolsas -->
-                <td>
-                  <div *ngIf="a.bolsas.length; else semBolsa">
+              <td>
+                <div *ngIf="a.bolsas.length; else semBolsa">
                     <span *ngFor="let b of a.bolsas" class="tag">
                       {{ b.tipo_bolsa }}
                       <button
@@ -129,17 +125,17 @@
                         x
                       </button>
                     </span>
-                  </div>
+                </div>
 
-                  <ng-template #semBolsa>
-                    <span class="muted">Nenhuma bolsa</span>
-                  </ng-template>
-                </td>
+                <ng-template #semBolsa>
+                  <span class="muted">Nenhuma bolsa</span>
+                </ng-template>
+              </td>
 
-                <td>
-                  <button (click)="abrirSelecaoBolsa(a)">Vincular Bolsa</button>
-                </td>
-              </tr>
+              <td>
+                <button (click)="abrirSelecaoBolsa(a)">Vincular Bolsa</button>
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
@@ -148,10 +144,9 @@
       <div class="modal-backdrop" *ngIf="modalBolsaAberto">
         <div class="modal">
           <h3>Vincular Bolsa</h3>
-          <p>
-            Aluno:<strong>{{
-              toTitleCase(alunoSelecionado?.nome_completo)
-            }}</strong>
+          <p class="modal-aluno">
+            <span class="label">Aluno:</span>
+            <strong>{{ toTitleCase(alunoSelecionado?.nome_completo) }}</strong>
           </p>
 
           <select [(ngModel)]="bolsaSelecionada" name="tiposBolsaSelect">
@@ -168,6 +163,111 @@
             <button class="danger" (click)="fecharModal()">Cancelar</button>
           </div>
         </div>
+      </div>
+    </mat-tab>
+
+    <!-- ===== Secretarias (NOVA ABA) ===== -->
+    <mat-tab label="Secretarias">
+      <div class="form-section">
+        <h3>Cadastrar Secretaria</h3>
+        <p class="muted sec-muted">
+          Apenas uma secretária logada pode criar outras secretárias.
+        </p>
+
+        <form (ngSubmit)="cadastrarSecretaria()" class="sec-form">
+          <div class="sec-field span-2">
+            <label>Nome completo</label>
+            <input
+              type="text"
+              name="sec_nome"
+              [(ngModel)]="sec.nomeCompleto"
+              placeholder="Nome completo"
+              required
+              minlength="3"
+              [class.invalid]="secTouched.nome && !sec.nomeCompleto.trim()"
+              (blur)="secTouched.nome = true"
+            />
+          </div>
+
+          <div class="sec-field">
+            <label>E-mail</label>
+            <input
+              type="email"
+              name="sec_email"
+              [(ngModel)]="sec.email"
+              placeholder="E-mail"
+              required
+              [class.invalid]="secTouched.email && !isEmailValid(sec.email)"
+              (blur)="secTouched.email = true"
+            />
+            <small class="sec-hint error" *ngIf="secTouched.email && !isEmailValid(sec.email)">
+              E-mail inválido
+            </small>
+          </div>
+
+          <div class="sec-field">
+            <label>CPF</label>
+            <input
+              type="text"
+              name="sec_cpf"
+              [(ngModel)]="sec.cpf"
+              placeholder="CPF"
+              required
+              (blur)="onSecCpfBlur()"
+              [class.invalid]="secTouched.cpf && !isCpfValido(sec.cpf)"
+            />
+            <small class="sec-hint error" *ngIf="secTouched.cpf && !isCpfValido(sec.cpf)">
+              CPF inválido
+            </small>
+          </div>
+
+          <div class="sec-field">
+            <label>Senha</label>
+            <input
+              type="password"
+              name="sec_senha"
+              [(ngModel)]="sec.senha"
+              placeholder="Senha (mín. 6 dígitos)"
+              required
+              minlength="6"
+              (blur)="secTouched.senha = true"
+              [class.invalid]="secTouched.senha && !isSenhaValida(sec.senha)"
+            />
+            <small class="sec-hint error" *ngIf="secTouched.senha && !isSenhaValida(sec.senha)">
+              Senha deve ter no mínimo 6 caracteres
+            </small>
+          </div>
+
+          <div class="sec-field">
+            <label>Confirmar senha</label>
+            <input
+              type="password"
+              name="sec_confirmar"
+              [(ngModel)]="sec.confirmar"
+              placeholder="Confirmar senha"
+              required
+              (blur)="secTouched.confirmar = true"
+              [class.invalid]="
+                secTouched.confirmar && !!sec.confirmar && sec.senha !== sec.confirmar
+              "
+            />
+            <small
+              class="sec-hint error"
+              *ngIf="secTouched.confirmar && !!sec.confirmar && sec.senha !== sec.confirmar"
+            >
+              Senhas não conferem
+            </small>
+          </div>
+
+          <div class="sec-actions span-2">
+            <button type="submit" [disabled]="secLoading || !canSubmitSecretaria()">
+              {{ secLoading ? 'Salvando...' : 'Salvar' }}
+            </button>
+          </div>
+
+          <div class="sec-msg erro" *ngIf="secErro">{{ secErro }}</div>
+          <div class="sec-msg sucesso" *ngIf="secSucesso">{{ secSucesso }}</div>
+        </form>
       </div>
     </mat-tab>
   </mat-tab-group>

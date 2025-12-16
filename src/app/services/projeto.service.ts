@@ -30,8 +30,6 @@ import { environment } from '@environments/environment';
 @Injectable({ providedIn: 'root' })
 export class ProjetoService {
   private readonly apiUrl = environment.apiBaseUrl;
-
-  // Mantive do seu jeito (com / no final)
   private readonly apiUrlProjetos = `${this.apiUrl}/projetos/`;
   private readonly apiUrlOrientadores = `${this.apiUrl}/orientadores`;
   private readonly apiUrlCampus = `${this.apiUrl}/campus`;
@@ -91,7 +89,6 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  // (Não usado no seu trecho, mantive igual)
   private processarDadosECadastrar(formulario: ProjetoFormulario): Observable<any> {
     return this.buscarOrientadorPorNome(formulario.orientador_nome).pipe(
       switchMap((orientador: Orientador) => {

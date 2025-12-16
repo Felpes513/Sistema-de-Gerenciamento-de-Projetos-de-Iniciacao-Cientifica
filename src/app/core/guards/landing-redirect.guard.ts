@@ -7,17 +7,23 @@ export class LandingRedirectGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
 
   canActivate(): true | UrlTree {
+    const isLogged = typeof this.auth.isLoggedIn === 'function'
+      ? this.auth.isLoggedIn()
+      : !!this.auth.getRole?.();
+
+    if (!isLogged) return true;
+
     const role = this.auth.getRole?.();
     if (!role) return true;
 
     const target =
       role === 'SECRETARIA'
-        ? '/secretaria/dashboard'
+        ? '/secretaria/projetos'
         : role === 'ORIENTADOR'
-        ? '/orientador/projetos'
-        : role === 'ALUNO'
-        ? '/aluno/projetos'
-        : '/login';
+          ? '/orientador/projetos'
+          : role === 'ALUNO'
+            ? '/aluno/projetos'
+            : '/login';
 
     return this.router.parseUrl(target);
   }

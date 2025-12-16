@@ -44,6 +44,20 @@ export class ConfiguracoesComponent implements OnInit {
   alunoSelecionado: AlunoConfigView | null = null;
   bolsaSelecionada: number | null = null;
 
+  // ===== Secretarias (novo) =====
+  sec = { nomeCompleto: '', cpf: '', email: '', senha: '', confirmar: '' };
+  secLoading = false;
+  secErro: string | null = null;
+  secSucesso: string | null = null;
+
+  secTouched = {
+    nome: false,
+    email: false,
+    cpf: false,
+    senha: false,
+    confirmar: false,
+  };
+
   constructor(
     private config: ConfigService,
     private dialog: DialogService,
@@ -149,19 +163,16 @@ export class ConfiguracoesComponent implements OnInit {
 
   carregarAlunosComBolsa() {
     forkJoin({
-      alunos: this.registerService.listarAlunos(),   // GET /alunos/
-      bolsasResp: this.config.listarBolsas(),        // GET /bolsas/
+      alunos: this.registerService.listarAlunos(),
+      bolsasResp: this.config.listarBolsas(),
     }).subscribe({
       next: ({ alunos, bolsasResp }) => {
         const bolsas: BolsaListItem[] = bolsasResp?.bolsas || [];
 
-        // agrupa bolsas por id_aluno
         const bolsasPorAluno: Record<number, AlunoConfigView['bolsas']> = {};
         for (const b of bolsas) {
           const idAluno = b.id_aluno;
-          if (!bolsasPorAluno[idAluno]) {
-            bolsasPorAluno[idAluno] = [];
-          }
+          if (!bolsasPorAluno[idAluno]) bolsasPorAluno[idAluno] = [];
           bolsasPorAluno[idAluno].push({
             id_bolsa: b.id_bolsa,
             id_tipo_bolsa: b.id_tipo_bolsa,
@@ -169,12 +180,10 @@ export class ConfiguracoesComponent implements OnInit {
           });
         }
 
-        // filtra só alunos aprovados pela secretaria
         const aprovados = (alunos || []).filter(
           (a: any) => a.status === 'APROVADO'
         );
 
-        // monta a estrutura consumida pelo HTML
         this.alunos = aprovados.map((a: any) => {
           const alunoId = Number(a.id_aluno ?? a.id);
           return {
@@ -211,15 +220,12 @@ export class ConfiguracoesComponent implements OnInit {
       id_tipo_bolsa: this.bolsaSelecionada,
     };
 
-    console.log('Payload criar bolsa:', payload);
-
     this.config.criarBolsa(payload).subscribe({
       next: () => {
         this.fecharModal();
         this.carregarAlunosComBolsa();
       },
-      error: (err) => {
-        console.error('Erro ao criar bolsa', err);
+      error: () => {
         this.dialog.alert(
           'Não foi possível atribuir a bolsa. Verifique se o aluno e o tipo de bolsa são válidos.',
           'Erro ao atribuir bolsa'
@@ -240,6 +246,108 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
+  // ========= Secretarias (novo) =========
+
+  onSecCpfBlur() {
+    this.secTouched.cpf = true;
+    this.sec.cpf = this.applyCpfMask(this.sec.cpf);
+  }
+
+  canSubmitSecretaria(): boolean {
+    return (
+      this.sec.nomeCompleto.trim().length >= 3 &&
+      this.isEmailValid(this.sec.email) &&
+      this.isCpfValido(this.sec.cpf) &&
+      this.isSenhaValida(this.sec.senha) &&
+      this.sec.senha === this.sec.confirmar
+    );
+  }
+
+  cadastrarSecretaria() {
+    this.secErro = null;
+    this.secSucesso = null;
+
+    // marca tudo como "tocado" pra pintar os erros
+    this.secTouched = {
+      nome: true,
+      email: true,
+      cpf: true,
+      senha: true,
+      confirmar: true,
+    };
+
+    if (!this.canSubmitSecretaria()) {
+      this.secErro = 'Revise os campos destacados.';
+      return;
+    }
+
+    this.secLoading = true;
+
+    this.registerService
+      .registerSecretaria({
+        nomeCompleto: this.sec.nomeCompleto,
+        email: this.sec.email,
+        cpf: this.sec.cpf,
+        senha: this.sec.senha,
+      })
+      .subscribe({
+        next: (res: any) => {
+          this.secLoading = false;
+          this.secSucesso = res?.mensagem || 'Secretaria cadastrada com sucesso.';
+
+          this.sec = { nomeCompleto: '', cpf: '', email: '', senha: '', confirmar: '' };
+          this.secTouched = {
+            nome: false,
+            email: false,
+            cpf: false,
+            senha: false,
+            confirmar: false,
+          };
+        },
+        error: (e) => {
+          this.secLoading = false;
+          this.secErro =
+            e?.error?.detail ||
+            e?.message ||
+            'Falha ao cadastrar secretária (verifique permissões e dados).';
+        },
+      });
+  }
+
+  private applyCpfMask(v: string): string {
+    const raw = (v || '').replace(/\D/g, '').slice(0, 11);
+    return raw.length === 11
+      ? raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+      : raw;
+  }
+
+  isSenhaValida(s: string): boolean {
+    return (s || '').length >= 6;
+  }
+
+  isEmailValid(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || '').trim());
+  }
+
+  isCpfValido(cpf: string): boolean {
+    const digits = (cpf || '').replace(/\D/g, '');
+    if (digits.length !== 11) return false;
+    if (/^(\d)\1+$/.test(digits)) return false;
+
+    const calc = (base: string) => {
+      let sum = 0;
+      for (let i = 0; i < base.length; i++) {
+        sum += Number(base[i]) * (base.length + 1 - i);
+      }
+      const r = (sum * 10) % 11;
+      return r === 10 ? 0 : r;
+    };
+
+    const d1 = calc(digits.slice(0, 9));
+    const d2 = calc(digits.slice(0, 10));
+    return d1 === Number(digits[9]) && d2 === Number(digits[10]);
+  }
+
   // ========= Helpers =========
 
   matchBolsa(term: string, ...vals: (string | number | undefined | null)[]) {
@@ -257,7 +365,6 @@ export class ConfiguracoesComponent implements OnInit {
     return vals.some((v) => norm(v).includes(f));
   }
 
-  /** Exibe nome em Title Case (Felipe Souza Moreira) */
   toTitleCase(value?: string | null): string {
     if (!value) return '';
     return value

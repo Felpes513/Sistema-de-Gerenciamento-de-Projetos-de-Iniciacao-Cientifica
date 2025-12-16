@@ -201,3 +201,37 @@ nav a:focus-visible {
     margin-left: 4px;
   }
 }
+.help-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+
+  background: var(--uscs-blue-dark);
+  color: var(--white);
+
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+  z-index: 9999;
+
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.help-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.22);
+}
+
+.help-fab:active {
+  transform: translateY(0);
+}
+
+.help-fab:focus-visible {
+  outline: 3px solid rgba(30, 64, 175, 0.35);
+  outline-offset: 3px;
+}

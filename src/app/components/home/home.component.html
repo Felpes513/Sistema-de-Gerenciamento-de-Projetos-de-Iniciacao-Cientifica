@@ -4,10 +4,12 @@
       <div class="hero-badge">
         <span>Portal de Iniciação Científica</span>
       </div>
+
       <h1 class="hero-title">
         Bem-vindo(a) à Plataforma de
         <span class="highlight">Iniciação Científica</span>
       </h1>
+
       <p class="hero-description">
         Conectando alunos, professores e pesquisadores em projetos de excelência
         acadêmica. Faça parte da comunidade científica da USCS.
@@ -15,6 +17,7 @@
 
       <div class="hero-actions">
         <h3 class="access-title">Acesse como:</h3>
+
         <div class="access-buttons">
           <button
             class="access-btn professor"
@@ -24,6 +27,7 @@
             <i class="fas fa-chalkboard-teacher"></i>
             <span>Professor(a)</span>
           </button>
+
           <button
             class="access-btn funcionario"
             [routerLink]="['/login']"
@@ -32,6 +36,7 @@
             <i class="fas fa-user-tie"></i>
             <span>Funcionário(a)</span>
           </button>
+
           <button
             class="access-btn aluno"
             [routerLink]="['/login']"
@@ -44,11 +49,12 @@
       </div>
     </div>
 
-    <div class="hero-carousel">
+    <!-- ✅ Carousel só em desktop/notebook -->
+    <div class="hero-carousel" *ngIf="exibirCarousel">
       <swiper-container
+        #swiperRef
+        init="false"
         slides-per-view="1"
-        navigation="true"
-        pagination="true"
         loop="true"
         autoplay-delay="5000"
         autoplay-disable-on-interaction="false"
@@ -57,15 +63,13 @@
         class="carousel-swiper"
       >
         <swiper-slide *ngFor="let slide of slides">
-          <img class="slide-img" [src]="slide.img" [alt]="slide.title" />
-
-          <div class="slide-overlay"></div>
-
-          <div class="slide-content">
-            <i [class]="slide.icon" aria-hidden="true"></i>
-            <h3>{{ slide.title }}</h3>
-            <p>{{ slide.content }}</p>
-          </div>
+          <img
+            class="slide-img"
+            [src]="slide.img"
+            [alt]="slide.title"
+            loading="lazy"
+            decoding="async"
+          />
         </swiper-slide>
       </swiper-container>
     </div>
@@ -132,7 +136,7 @@
     <h2>Pronto para começar sua jornada científica?</h2>
     <p>Cadastre-se agora e faça parte da comunidade de pesquisa da USCS</p>
     <button class="btn btn-large" [routerLink]="['/cadastro']">
-      Criar Conta Gratuita
+      Criar Conta
       <i class="fas fa-arrow-right"></i>
     </button>
   </div>

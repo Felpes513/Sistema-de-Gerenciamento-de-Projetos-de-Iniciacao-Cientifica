@@ -106,25 +106,14 @@
   border-color: var(--uscs-orange);
 }
 
-.access-btn.professor:hover i {
-  color: var(--uscs-orange);
-}
-
-.access-btn.funcionario:hover i {
-  color: var(--uscs-orange);
-}
-
+.access-btn.professor:hover i,
+.access-btn.funcionario:hover i,
 .access-btn.aluno:hover i {
   color: var(--uscs-orange);
 }
 
-/* --- Estilos do Carrossel Hero --- */
-
+/* --- Carrossel só com imagem --- */
 .hero-carousel {
-  /* Usamos aspect-ratio para manter a proporção.
-     Ajuste conforme necessário (ex: 16/9, 4/3).
-     Isso substitui o min-height antigo.
-  */
   aspect-ratio: 16 / 10;
   width: 100%;
   border-radius: 12px;
@@ -137,121 +126,18 @@
   height: 100%;
 }
 
-/* Container de cada slide.
-  Usamos display: block pois o Swiper cuida do layout.
-*/
-.swiper-slide {
-  position: relative;
-  overflow: hidden;
-  display: block; /* Importante para o efeito de fade */
+/* ✅ garante que os custom elements não fiquem "inline" caso algo falhe */
+swiper-container,
+swiper-slide {
+  display: block;
 }
 
 .slide-img {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Cobre todo o slide sem distorcer */
-  z-index: 1;
-
-  /* Efeito "Ken Burns" (zoom sutil) */
-  transform: scale(1.15);
-  transition: transform 6s ease-out;
+  object-fit: cover;
+  display: block;
 }
-
-/* Quando o slide está ativo, o zoom diminui lentamente */
-.swiper-slide-active .slide-img {
-  transform: scale(1);
-}
-
-.slide-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* Gradiente para escurecer mais na parte de baixo, onde o texto está */
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.1) 20%,
-    rgba(0, 0, 0, 0.7) 100%
-  );
-  z-index: 2;
-}
-
-.slide-content {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 3;
-  color: #fff;
-  padding: 2.5rem; /* 40px */
-  width: 100%;
-  box-sizing: border-box; /* Garante que o padding não estoure a div */
-}
-
-.slide-content i {
-  font-size: 2.5rem; /* 40px */
-  margin-bottom: 1rem; /* 16px */
-  /* Recomendo usar a variável de cor da sua marca, se tiver */
-  color: var(--uscs-orange, #f39c12);
-}
-
-.slide-content h3 {
-  font-size: 2rem; /* 32px */
-  font-weight: 700;
-  margin-bottom: 0.75rem; /* 12px */
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.slide-content p {
-  font-size: 1.1rem; /* 18px */
-  line-height: 1.6;
-  max-width: 90%; /* Evita que o texto vá até a borda */
-  opacity: 0.9;
-}
-
-/* Estilização da Navegação (Setas)
-  Usamos ::part() para estilizar o Shadow DOM do Swiper Elements
-*/
-.carousel-swiper::part(button-prev),
-.carousel-swiper::part(button-next) {
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.25);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  transition: background-color 0.3s ease;
-}
-
-.carousel-swiper::part(button-prev):hover,
-.carousel-swiper::part(button-next):hover {
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-.carousel-swiper::part(button-prev) {
-  left: 20px;
-}
-.carousel-swiper::part(button-next) {
-  right: 20px;
-}
-
-/* Estilização da Paginação (Bullets)
-*/
-.carousel-swiper::part(pagination-bullet) {
-  background: rgba(255, 255, 255, 0.5);
-  width: 10px;
-  height: 10px;
-  opacity: 1;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.carousel-swiper::part(pagination-bullet-active) {
-  background: #ffffff;
-  transform: scale(1.2);
-}
-
 
 /* About Section */
 .about {
@@ -391,11 +277,14 @@
 /* Responsividade */
 @media (max-width: 1024px) {
   .hero-container {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: var(--spacing-2xl);
   }
 
-  /* Regra do carrossel antigo foi removida daqui */
+  /* fallback: tablet/celular */
+  .hero-carousel {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -444,24 +333,7 @@
     padding: var(--spacing-md);
   }
 
-  /* Regras do slide-content antigo foram removidas daqui */
-
   .section-title {
     font-size: var(--font-size-2xl);
   }
-
-  /* Ajuste de padding para o conteúdo do slide em telas menores */
-  .slide-content {
-    padding: 1.5rem; /* 24px */
-  }
-
-  .slide-content h3 {
-    font-size: 1.5rem; /* 24px */
-  }
-
-  .slide-content p {
-    font-size: 0.9rem; /* 14.4px */
-  }
 }
-
-/* Regras antigas de swiper-slide e slide-img foram removidas */

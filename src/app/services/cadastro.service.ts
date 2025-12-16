@@ -91,6 +91,22 @@ export class RegisterService {
     );
   }
 
+  registerSecretaria(data: {
+    nomeCompleto: string;
+    email: string;
+    cpf: string;
+    senha: string;
+  }): Observable<any> {
+    const payload = {
+      nome_completo: data.nomeCompleto,
+      email: data.email,
+      cpf: this.cleanCPF(data.cpf),
+      senha: data.senha,
+    };
+
+    return this.http.post<any>(`${this.baseUrl}/secretarias/`, payload);
+  }
+
   validateCPF(cpf: string): Observable<{ valid: boolean }> {
     return this.http.post<{ valid: boolean }>(`${this.baseUrl}/validate-cpf`, {
       cpf: this.cleanCPF(cpf),

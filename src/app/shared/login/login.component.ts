@@ -37,8 +37,10 @@ export class LoginComponent {
     if (this.isLoading) return;
     this.erro = null;
     this.isLoading = true;
+
     const email = this.email.trim();
     const senha = this.senha;
+
     let observable;
     if (this.perfil === 'aluno') {
       observable = this.loginService.loginAluno(email, senha);
@@ -47,22 +49,28 @@ export class LoginComponent {
     } else {
       observable = this.loginService.loginSecretaria(email, senha);
     }
+
     observable.subscribe({
       next: (res) => {
         this.loginService.setTokens(res.access_token, res.refresh_token);
         this.handleRememberMe();
+
         const role = this.loginService.getRole();
+
+        // ✅ Dashboard removido: Secretaria vai para "projetos"
         const redirects: Record<string, string> = {
           ALUNO: '/aluno/projetos',
           ORIENTADOR: '/orientador/projetos',
-          SECRETARIA: '/secretaria/dashboard',
+          SECRETARIA: '/secretaria/projetos',
         };
+
         const destino = (role && redirects[role]) || '/';
         this.isLoading = false;
         this.router.navigateByUrl(destino);
       },
       error: (e) => {
         const status = e?.status;
+
         if (status === 501 && this.perfil === 'secretaria') {
           this.erro =
             "Login da Secretaria usa SSO. Clique em 'Entrar com SSO'.";
@@ -72,6 +80,7 @@ export class LoginComponent {
             e?.error?.message ||
             'E-mail ou senha inválidos.';
         }
+
         this.isLoading = false;
       },
     });
@@ -109,11 +118,13 @@ export class LoginComponent {
       orientador: 'suporte.orientador@uscs.edu.br',
       secretaria: 'suporte.secretaria@uscs.edu.br',
     } as const;
+
     const email = supportEmails[this.perfil];
     const subject = `Suporte - Login ${
       this.perfil.charAt(0).toUpperCase() + this.perfil.slice(1)
     }`;
     const body = `Olá, preciso de ajuda com o login como ${this.perfil}.`;
+
     window.open(
       `mailto:${email}?subject=${encodeURIComponent(
         subject

@@ -41,10 +41,14 @@
           type="text"
           name="ori_cpf"
           [(ngModel)]="ori.cpf"
-          (blur)="applyCpfMask('ori')"
+          (blur)="touchCpf('ori'); applyCpfMask('ori')"
           placeholder="CPF"
           required
+          [class.invalid]="cpfOriTouched && !isCpfValido(ori.cpf)"
         />
+        <small class="field-error" *ngIf="cpfOriTouched && !isCpfValido(ori.cpf)">
+          CPF inválido
+        </small>
       </div>
 
       <div class="form-row">
@@ -62,10 +66,18 @@
           [type]="showPassOri ? 'text' : 'password'"
           name="ori_senha"
           [(ngModel)]="ori.senha"
+          (blur)="touchSenha('ori')"
           placeholder="Senha"
           minlength="6"
           required
+          [class.invalid]="senhaOriTouched && ori.senha && ori.senha.length < 6"
         />
+        <small
+          class="field-error"
+          *ngIf="senhaOriTouched && ori.senha && ori.senha.length < 6"
+        >
+          A senha deve ter no mínimo 6 caracteres
+        </small>
       </div>
 
       <div class="form-row">
@@ -73,9 +85,25 @@
           [type]="showPassOri ? 'text' : 'password'"
           name="ori_confirma"
           [(ngModel)]="ori.confirmar"
+          (blur)="touchConfirmar('ori')"
           placeholder="Confirmar senha"
           required
+          [class.invalid]="
+            confirmarOriTouched &&
+            !!ori.confirmar &&
+            ori.senha !== ori.confirmar
+          "
         />
+        <small
+          class="field-error"
+          *ngIf="
+            confirmarOriTouched &&
+            !!ori.confirmar &&
+            ori.senha !== ori.confirmar
+          "
+        >
+          As senhas não conferem
+        </small>
       </div>
 
       <label class="terms">
@@ -93,14 +121,18 @@
         class="cta"
         [disabled]="isLoading || !acceptTermsOri || ori.senha !== ori.confirmar"
       >
-        SIGNUP
+        Cadastrar
       </button>
 
       <div class="msg erro" *ngIf="erro">{{ erro }}</div>
       <div class="msg sucesso" *ngIf="sucesso">{{ sucesso }}</div>
     </form>
 
-    <form *ngIf="perfilSelecionado === 'aluno'" (ngSubmit)="onSubmitAluno()">
+    <form
+      *ngIf="perfilSelecionado === 'aluno'"
+      (ngSubmit)="onSubmitAluno()"
+      class="form"
+    >
       <ng-container *ngIf="step === 1">
         <div class="form-row">
           <input
@@ -117,10 +149,14 @@
             type="text"
             name="alu_cpf"
             [(ngModel)]="alu.cpf"
-            (blur)="applyCpfMask('alu')"
+            (blur)="touchCpf('alu'); applyCpfMask('alu')"
             placeholder="CPF"
             required
+            [class.invalid]="cpfAluTouched && !isCpfValido(alu.cpf)"
           />
+          <small class="field-error" *ngIf="cpfAluTouched && !isCpfValido(alu.cpf)">
+            CPF inválido
+          </small>
         </div>
 
         <div class="form-row">
@@ -138,10 +174,18 @@
             [type]="showPassAlu ? 'text' : 'password'"
             name="alu_senha"
             [(ngModel)]="alu.senha"
+            (blur)="touchSenha('alu')"
             placeholder="Senha"
             minlength="6"
             required
+            [class.invalid]="senhaAluTouched && alu.senha && alu.senha.length < 6"
           />
+          <small
+            class="field-error"
+            *ngIf="senhaAluTouched && alu.senha && alu.senha.length < 6"
+          >
+            A senha deve ter no mínimo 6 caracteres
+          </small>
         </div>
 
         <div class="form-row">
@@ -149,9 +193,25 @@
             [type]="showPassAlu ? 'text' : 'password'"
             name="alu_confirma"
             [(ngModel)]="alu.confirmar"
+            (blur)="touchConfirmar('alu')"
             placeholder="Confirmar senha"
             required
+            [class.invalid]="
+              confirmarAluTouched &&
+              !!alu.confirmar &&
+              alu.senha !== alu.confirmar
+            "
           />
+          <small
+            class="field-error"
+            *ngIf="
+              confirmarAluTouched &&
+              !!alu.confirmar &&
+              alu.senha !== alu.confirmar
+            "
+          >
+            As senhas não conferem
+          </small>
         </div>
 
         <div class="form-actions">
@@ -202,15 +262,26 @@
 
       <ng-container *ngIf="step === 3">
         <div class="upload">
-          <label class="file">
+          <label class="file" [class.invalid]="pdfTouched && !pdfFile">
             <input
               type="file"
               (change)="onPdfChange($event)"
               accept="application/pdf"
             />
-            <span>Enviar notas em PDF</span>
+            <span>
+              {{
+                pdfName
+                  ? ('Arquivo selecionado: ' + pdfName)
+                  : 'Enviar notas em PDF'
+              }}
+            </span>
           </label>
-          <small>Somente .pdf</small>
+
+          <small *ngIf="!pdfName">Somente .pdf</small>
+          <small class="ok" *ngIf="pdfName">✅ PDF anexado com sucesso</small>
+          <small class="field-error" *ngIf="pdfTouched && !pdfFile">
+            Envie um PDF válido
+          </small>
         </div>
 
         <div class="form-row inline">
@@ -256,10 +327,13 @@
             class="cta"
             [disabled]="isLoading || !pdfFile || !acceptTermsAlu"
           >
-            Finalizar
+            Cadastrar
           </button>
         </div>
       </ng-container>
+
+      <div class="msg erro" *ngIf="erro">{{ erro }}</div>
+      <div class="msg sucesso" *ngIf="sucesso">{{ sucesso }}</div>
     </form>
   </section>
 </div>

@@ -27,40 +27,6 @@
   margin-bottom: 6px;
   border-radius: var(--radius-lg);
 }
-.brand h3 {
-  margin: 0;
-  color: #0e7490;
-  font-weight: 600;
-}
-.brand h2 {
-  margin: 0.25rem 0 0 0;
-  color: #0ea5e9;
-  font-size: clamp(28px, 4vw, 42px);
-}
-
-.auth-left p {
-  color: #0f172a;
-  opacity: 0.8;
-  text-align: center;
-  margin: 8px 0 18px;
-}
-
-.dots {
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-sm);
-}
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--gray-400);
-  opacity: 0.5;
-}
-.dot.active {
-  opacity: 1;
-  background: #0ea5e9;
-}
 
 .auth-right {
   background: var(--white);
@@ -117,9 +83,11 @@
   width: 100%;
   max-width: 520px;
 }
+
 .form-row {
   margin-bottom: 12px;
 }
+
 .form-row input,
 .form-row select {
   width: 100%;
@@ -130,13 +98,36 @@
   outline: 0;
   background: var(--white);
   transition: border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
+  box-shadow var(--transition-fast);
   box-sizing: border-box;
 }
+
 .form-row input:focus,
 .form-row select:focus {
   border-color: var(--uscs-blue);
   box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
+}
+
+/* ✅ estado inválido (vermelho) */
+.invalid {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #991b1b;
+  text-align: left;
+}
+
+/* PDF feedback */
+.upload .ok {
+  display: block;
+  color: #166534;
+  margin-top: 6px;
+  font-weight: 600;
 }
 
 .form-row.inline {
@@ -217,36 +208,6 @@
   justify-content: flex-end;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 14px 0;
-  color: var(--gray-500);
-}
-.divider::before,
-.divider::after {
-  content: "";
-  height: 1px;
-  background: var(--gray-200);
-  flex: 1;
-}
-.divider span {
-  padding: 0 10px;
-}
-
-.socials {
-  display: flex;
-  gap: 10px;
-}
-.sc {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  background: #eef2ff;
-  cursor: pointer;
-}
-
 .upload .file {
   width: 100%;
   display: flex;
@@ -258,6 +219,9 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   background: var(--white);
+}
+.upload .file.invalid {
+  border-color: #ef4444;
 }
 .upload input[type="file"] {
   display: none;

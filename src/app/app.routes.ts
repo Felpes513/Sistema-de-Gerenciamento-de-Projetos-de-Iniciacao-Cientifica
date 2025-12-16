@@ -1,8 +1,9 @@
-import { ProjetoCadastro } from './shared/interfaces/projeto';
 import { Routes } from '@angular/router';
 import { orientadorGuard } from '@core/guards/orientador.guard';
 import { alunoGuard } from '@core/guards/aluno.guard';
+import { secretariaGuard } from '@core/guards/secretaria.guard';
 import { LandingRedirectGuard } from '@core/guards/landing-redirect.guard';
+import { projetoExistsGuard } from '@core/guards/exist-screen.guard';
 
 export const routes: Routes = [
   {
@@ -25,80 +26,73 @@ export const routes: Routes = [
         (m) => m.RegisterComponent
       ),
   },
-
-  // SECRETARIA
   {
     path: 'secretaria',
+    canActivate: [secretariaGuard],
     loadComponent: () =>
-      import('./shared/sidenav/sidenav-secretaria.component').then(
-        (m) => m.SidenavSecretariaComponent
+      import('@shared/sidenav/sidenav.component').then(
+        (m) => m.SidenavComponent
       ),
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      {
-        path: 'dashboard',
-        loadComponent: () =>
-          import('./features/secretaria/dashboard/dashboard.component').then(
-            (m) => m.DashboardComponent
-          ),
-      },
+      { path: '', redirectTo: 'projetos', pathMatch: 'full' },
+
       {
         path: 'configuracoes',
         loadComponent: () =>
           import(
             './features/secretaria/configuracoes/configuracoes.component'
-          ).then((m) => m.ConfiguracoesComponent),
+            ).then((m) => m.ConfiguracoesComponent),
       },
       {
         path: 'avaliadores',
         loadComponent: () =>
           import(
             './features/secretaria/listagem-avaliadores/listagem-avaliadores.component'
-          ).then((m) => m.ListagemAvaliadoresComponent),
+            ).then((m) => m.ListagemAvaliadoresComponent),
       },
       {
         path: 'avaliadores/novo',
         loadComponent: () =>
           import(
             './features/secretaria/formulario-avaliador/formulario-avaliador.component'
-          ).then((m) => m.FormularioAvaliadorComponent),
+            ).then((m) => m.FormularioAvaliadorComponent),
       },
       {
         path: 'notificacoes',
         loadComponent: () =>
           import(
             './features/secretaria/notificacoes/notificacoes.component'
-          ).then((m) => m.NotificacoesComponent),
+            ).then((m) => m.NotificacoesComponent),
       },
       {
         path: 'projetos',
         loadComponent: () =>
           import(
             './features/secretaria/listagem-projetos/listagem-projetos.component'
-          ).then((m) => m.ListagemProjetosComponent),
+            ).then((m) => m.ListagemProjetosComponent),
       },
       {
         path: 'projetos/novo',
         loadComponent: () =>
           import(
             './features/secretaria/formulario-projeto/formulario-projeto.component'
-          ).then((m) => m.FormularioProjetoComponent),
+            ).then((m) => m.FormularioProjetoComponent),
       },
       {
         path: 'projetos/editar/:id',
+        canActivate: [projetoExistsGuard],
         loadComponent: () =>
           import(
             './features/secretaria/formulario-projeto/formulario-projeto.component'
-          ).then((m) => m.FormularioProjetoComponent),
+            ).then((m) => m.FormularioProjetoComponent),
       },
-{
-  path: 'email',
-  loadComponent: () =>
-    import(
-      './features/secretaria/upload-certificados/upload-certificados.component'
-    ).then((m) => m.UploadCertificadosComponent),
-},
-
+      {
+        path: 'email',
+        loadComponent: () =>
+          import(
+            './features/secretaria/upload-certificados/upload-certificados.component'
+            ).then((m) => m.UploadCertificadosComponent),
+      },
       {
         path: 'relatorios',
         loadComponent: () =>
@@ -110,71 +104,75 @@ export const routes: Routes = [
         path: 'cadastros',
         loadComponent: () =>
           import('./features/secretaria/cadastros/cadastros.component').then(
-            (m) => m.CadastrosComponent // <- certo
+            (m) => m.CadastrosComponent
           ),
       },
     ],
   },
-
-  // ORIENTADOR
   {
     path: 'orientador',
     canActivate: [orientadorGuard],
     loadComponent: () =>
-      import('./shared/sidenav/sidenav-secretaria.component').then(
-        (m) => m.SidenavSecretariaComponent
+      import('@shared/sidenav/sidenav.component').then(
+        (m) => m.SidenavComponent
       ),
     children: [
+      { path: '', redirectTo: 'projetos', pathMatch: 'full' },
+
       {
         path: 'projetos',
         loadComponent: () =>
           import(
             './features/secretaria/listagem-projetos/listagem-projetos.component'
-          ).then((m) => m.ListagemProjetosComponent),
+            ).then((m) => m.ListagemProjetosComponent),
         data: { modo: 'ORIENTADOR' },
       },
       {
         path: 'projetos/:id',
+        canActivate: [projetoExistsGuard],
         loadComponent: () =>
           import(
             './features/secretaria/formulario-projeto/formulario-projeto.component'
-          ).then((m) => m.FormularioProjetoComponent),
+            ).then((m) => m.FormularioProjetoComponent),
         data: { modo: 'ORIENTADOR' },
       },
+
       { path: 'relatorios', redirectTo: 'projetos', pathMatch: 'full' },
       {
         path: 'relatorios/:projetoId',
+        canActivate: [projetoExistsGuard],
         loadComponent: () =>
           import(
             './features/orientador/relatorio-form/relatorio-form.component'
-          ).then((m) => m.RelatorioFormComponent),
+            ).then((m) => m.RelatorioFormComponent),
       },
-      { path: '', redirectTo: 'projetos', pathMatch: 'full' },
     ],
   },
-
   {
     path: 'aluno',
     canActivate: [alunoGuard],
     loadComponent: () =>
-      import('./shared/sidenav/sidenav-secretaria.component').then(
-        (m) => m.SidenavSecretariaComponent
+      import('@shared/sidenav/sidenav.component').then(
+        (m) => m.SidenavComponent
       ),
     children: [
       { path: '', redirectTo: 'projetos', pathMatch: 'full' },
+
       {
         path: 'projetos',
         loadComponent: () =>
           import(
             './features/secretaria/listagem-projetos/listagem-projetos.component'
-          ).then((m) => m.ListagemProjetosComponent),
+            ).then((m) => m.ListagemProjetosComponent),
+        data: { modo: 'ALUNO' },
       },
       {
         path: 'projetos/:id',
+        canActivate: [projetoExistsGuard],
         loadComponent: () =>
           import(
             './features/secretaria/formulario-projeto/formulario-projeto.component'
-          ).then((m) => m.FormularioProjetoComponent),
+            ).then((m) => m.FormularioProjetoComponent),
         data: { modo: 'ALUNO' },
       },
     ],

@@ -19,10 +19,10 @@ import { DialogService } from '@services/dialog.service';
   selector: 'app-sidenav',
   standalone: true,
   imports: [CommonModule, RouterModule, MatIconModule],
-  templateUrl: './sidenav-secretaria.component.html',
-  styleUrls: ['./sidenav-secretaria.component.css'],
+  templateUrl: './sidenav.component.html',
+  styleUrls: ['./sidenav.component.css'],
 })
-export class SidenavSecretariaComponent implements OnInit, OnDestroy {
+export class SidenavComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private auth = inject(AuthService);
   private notificacaoService = inject(NotificacaoService);
@@ -47,6 +47,23 @@ export class SidenavSecretariaComponent implements OnInit, OnDestroy {
     };
     return this.role ? map[this.role] : 'Usuário';
   });
+
+  private readonly helpUrls = {
+    secretaria:
+      'https://www.notion.so/Bem-vindo-ao-SGPIC-Secretaria-2ca0bb39d1c9807fb34fc03c6658a6b9',
+    orientador:
+      'https://www.notion.so/Bem-vindo-ao-SGPIC-Orientador-2ca0bb39d1c9803183a9cb6bf33bc378',
+    aluno:
+      'https://www.notion.so/Bem-vindo-ao-SGPIC-Aluno-2ca0bb39d1c9803baddcd78495552fa0',
+  } as const;
+
+  get ajudaUrl(): string {
+    if (this.isSecretaria) return this.helpUrls.secretaria;
+    if (this.isOrientador) return this.helpUrls.orientador;
+    if (this.isAluno) return this.helpUrls.aluno;
+    return this.helpUrls.aluno; // fallback seguro
+  }
+
 
   ngOnInit(): void {
     this.updateLayout();

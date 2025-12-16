@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { SidenavSecretariaComponent } from './sidenav-secretaria.component';
+import { SidenavComponent } from './sidenav.component';
 import { AuthService, Role } from '@services/auth.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NotificacaoService } from '@services/notificacao.service';
@@ -64,14 +64,14 @@ beforeAll(() => {
 /* ---------- TESTES ---------- */
 
 describe('SidenavSecretariaComponent', () => {
-  let component: SidenavSecretariaComponent;
+  let component: SidenavComponent;
   let auth: AuthServiceStub;
   let notifService: NotificacaoServiceStub;
   let dialog: DialogServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, SidenavSecretariaComponent],
+      imports: [RouterTestingModule, SidenavComponent],
       providers: [
         { provide: AuthService, useClass: AuthServiceStub },
         { provide: NotificacaoService, useClass: NotificacaoServiceStub },
@@ -79,7 +79,7 @@ describe('SidenavSecretariaComponent', () => {
       ],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(SidenavSecretariaComponent);
+    const fixture = TestBed.createComponent(SidenavComponent);
     component = fixture.componentInstance;
 
     auth = TestBed.inject(AuthService) as any;

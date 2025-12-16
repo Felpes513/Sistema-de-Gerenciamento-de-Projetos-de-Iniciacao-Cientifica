@@ -1,0 +1,117 @@
+<div class="layout">
+  <div
+    class="sidenav"
+    [class.role-secretaria]="isSecretaria"
+    [class.role-orientador]="isOrientador"
+  >
+    <button
+      class="brand-toggle"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="isMenuOpen"
+      [attr.aria-controls]="'sidenav-nav'"
+      aria-label="Alternar navegação"
+    >
+      <span class="icon">USCS</span>
+      <span class="role">{{ papelLegivel() }}</span>
+      <mat-icon class="chevron" aria-hidden="true" *ngIf="isMobile"
+      >expand_more</mat-icon
+      >
+    </button>
+
+    <!-- Navegação -->
+    <nav
+      id="sidenav-nav"
+      [class.open]="isMenuOpen"
+      [attr.aria-hidden]="!isMenuOpen && isMobile ? true : null"
+    >
+      <ng-container *ngIf="isSecretaria">
+        <a
+          routerLink="/secretaria/projetos"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>folder</mat-icon> Projetos
+        </a>
+
+        <a
+          routerLink="/secretaria/avaliadores"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>groups</mat-icon> Avaliadores
+        </a>
+
+        <a
+          routerLink="/secretaria/relatorios"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>bar_chart</mat-icon> Relatórios
+        </a>
+
+        <a
+          routerLink="/secretaria/email"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>mail</mat-icon> Certificados
+        </a>
+
+        <a
+          routerLink="/secretaria/notificacoes"
+          routerLinkActive="active"
+          (click)="marcarNotificacoesComoLidas(); onNavClick()"
+        >
+          <mat-icon>notifications</mat-icon> Notificações
+          <span *ngIf="exibirBadgeNotificacao" class="badge"></span>
+        </a>
+
+        <a
+          routerLink="/secretaria/configuracoes"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>settings</mat-icon> Configurações
+        </a>
+
+        <a
+          routerLink="/secretaria/cadastros"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>how_to_reg</mat-icon> Cadastros
+        </a>
+      </ng-container>
+
+      <ng-container *ngIf="isAluno">
+        <a
+          routerLink="/aluno/projetos"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>folder_open</mat-icon> Projetos
+        </a>
+      </ng-container>
+
+      <a href="#" (click)="confirmarSaida($event)">
+        <mat-icon>logout</mat-icon> Sair
+      </a>
+    </nav>
+  </div>
+
+  <div class="conteudo">
+    <router-outlet></router-outlet>
+  </div>
+
+  <a
+    *ngIf="ajudaUrl"
+    class="help-fab"
+    [href]="ajudaUrl"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Abrir central de ajuda"
+    title="Central de ajuda"
+  >
+    <mat-icon aria-hidden="true">help_outline</mat-icon>
+  </a>
+</div>

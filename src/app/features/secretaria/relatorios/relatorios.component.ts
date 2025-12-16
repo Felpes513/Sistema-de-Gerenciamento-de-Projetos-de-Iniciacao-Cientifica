@@ -28,6 +28,8 @@ export class RelatoriosComponent implements OnInit {
   carregandoMensal = false;
   erroMensal: string | null = null;
 
+  private readonly TZ = 'America/Sao_Paulo';
+
   private readonly lowerWords = new Set([
     'de',
     'da',
@@ -84,6 +86,7 @@ export class RelatoriosComponent implements OnInit {
             ? this.properCase(r.orientadorNome)
             : r?.orientadorNome,
         }));
+
         this.pendentes = (pendentes ?? []).map((p) => ({
           ...p,
           orientadorNome: (p as any)?.orientadorNome
@@ -104,20 +107,17 @@ export class RelatoriosComponent implements OnInit {
   }
 
   mudarMes(delta: number): void {
-    // Se por algum motivo o mes estiver vazio, volta para o mês atual
     if (!this.mes) {
       this.mes = this.toYYYYMM(new Date());
     }
 
     const [yStr, mStr] = this.mes.split('-');
     let year = Number(yStr);
-    let monthIndex = Number(mStr) - 1; // 0–11
+    let monthIndex = Number(mStr) - 1;
 
     if (Number.isNaN(year) || Number.isNaN(monthIndex)) {
-      // fallback seguro
       this.mes = this.toYYYYMM(new Date());
     } else {
-      // JS ajusta ano automaticamente quando passa de 0–11
       const novaData = new Date(year, monthIndex + delta, 1);
       this.mes = this.toYYYYMM(novaData);
     }
@@ -156,6 +156,7 @@ export class RelatoriosComponent implements OnInit {
   abrirDetalhe(r: RelatorioMensal) {
     const id = r?.projetoId ?? (r as any)?.id_projeto;
     if (!id) return;
+
     this.router.navigate(['/orientador/relatorios', id], {
       queryParams: { mes: r.referenciaMes, readonly: 1 },
     });
@@ -163,7 +164,21 @@ export class RelatoriosComponent implements OnInit {
 
   dataBr(iso?: string): string {
     if (!iso) return '—';
+
     const d = new Date(iso);
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+    if (Number.isNaN(d.getTime())) return '—';
+
+    const s = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: this.TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(d);
+
+    return s.replace(',', '');
   }
 }

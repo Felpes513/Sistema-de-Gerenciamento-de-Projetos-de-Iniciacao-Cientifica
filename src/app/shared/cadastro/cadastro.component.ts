@@ -40,8 +40,20 @@ export class RegisterComponent implements OnInit {
   };
   showPassAlu = false;
   acceptTermsAlu = false;
+
   pdfFile: File | null = null;
   pdfName = '';
+
+  // ✅ Flags para só pintar/vermelho após o usuário tocar no campo
+  cpfOriTouched = false;
+  senhaOriTouched = false;
+  confirmarOriTouched = false;
+
+  cpfAluTouched = false;
+  senhaAluTouched = false;
+  confirmarAluTouched = false;
+
+  pdfTouched = false;
 
   constructor(
     private registerService: RegisterService,
@@ -50,13 +62,11 @@ export class RegisterComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Lista de cursos (GET /cursos/)
     this.configService.listarCursos().subscribe({
       next: (res) => (this.cursos = res?.cursos || []),
       error: () => (this.cursos = []),
     });
 
-    // Lista de campus (GET /campus/)
     this.configService.listarCampus().subscribe({
       next: (res) => (this.campus = res?.campus || []),
       error: () => (this.campus = []),
@@ -68,6 +78,13 @@ export class RegisterComponent implements OnInit {
     this.erro = null;
     this.sucesso = null;
     this.step = 1;
+
+    // reset “touched”
+    this.cpfOriTouched = this.senhaOriTouched = this.confirmarOriTouched = false;
+    this.cpfAluTouched = this.senhaAluTouched = this.confirmarAluTouched = false;
+    this.pdfTouched = false;
+    this.pdfFile = null;
+    this.pdfName = '';
   }
 
   goStep(n: number) {
@@ -76,23 +93,63 @@ export class RegisterComponent implements OnInit {
     this.sucesso = null;
   }
 
+  touchCpf(kind: 'ori' | 'alu') {
+    if (kind === 'ori') this.cpfOriTouched = true;
+    else this.cpfAluTouched = true;
+  }
+
+  touchSenha(kind: 'ori' | 'alu') {
+    if (kind === 'ori') this.senhaOriTouched = true;
+    else this.senhaAluTouched = true;
+  }
+
+  touchConfirmar(kind: 'ori' | 'alu') {
+    if (kind === 'ori') this.confirmarOriTouched = true;
+    else this.confirmarAluTouched = true;
+  }
+
   applyCpfMask(kind: 'ori' | 'alu') {
     const raw = (kind === 'ori' ? this.ori.cpf : this.alu.cpf)
       .replace(/\D/g, '')
       .slice(0, 11);
+
     const masked =
       raw.length === 11
         ? raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
         : raw;
+
     if (kind === 'ori') this.ori.cpf = masked;
     else this.alu.cpf = masked;
   }
 
+  // ✅ CPF válido (dígitos verificadores)
+  isCpfValido(cpf: string): boolean {
+    const digits = (cpf || '').replace(/\D/g, '');
+    if (digits.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(digits)) return false;
+
+    const calc = (baseLen: number, factorStart: number) => {
+      let sum = 0;
+      for (let i = 0; i < baseLen; i++) {
+        sum += Number(digits.charAt(i)) * (factorStart - i);
+      }
+      const mod = sum % 11;
+      return mod < 2 ? 0 : 11 - mod;
+    };
+
+    const d1 = calc(9, 10);
+    if (d1 !== Number(digits.charAt(9))) return false;
+
+    const d2 = calc(10, 11);
+    if (d2 !== Number(digits.charAt(10))) return false;
+
+    return true;
+  }
+
   validStep1(): boolean {
-    const cpfDigits = this.alu.cpf.replace(/\D/g, '');
     return (
       this.alu.nomeCompleto.trim().length >= 3 &&
-      cpfDigits.length === 11 &&
+      this.isCpfValido(this.alu.cpf) &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.alu.email) &&
       this.alu.senha.length >= 6 &&
       this.alu.senha === this.alu.confirmar
@@ -100,18 +157,26 @@ export class RegisterComponent implements OnInit {
   }
 
   onPdfChange(ev: Event) {
+    this.pdfTouched = true;
+
     const input = ev.target as HTMLInputElement;
     const f = input.files?.[0] || null;
+
     if (!f) {
       this.pdfFile = null;
       this.pdfName = '';
       return;
     }
+
     if (!/\.pdf$/i.test(f.name)) {
       this.erro = 'Envie um arquivo .pdf válido.';
+      this.pdfFile = null;
+      this.pdfName = '';
       input.value = '';
       return;
     }
+
+    this.erro = null;
     this.pdfFile = f;
     this.pdfName = f.name;
   }
@@ -119,23 +184,42 @@ export class RegisterComponent implements OnInit {
   onSubmitOrientador() {
     this.erro = null;
     this.sucesso = null;
-    const cpfDigits = this.ori.cpf.replace(/\D/g, '');
-    if (
-      !this.ori.nomeCompleto.trim() ||
-      cpfDigits.length !== 11 ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.ori.email)
-    ) {
-      this.erro = 'Preencha os campos corretamente.';
+
+    // marca touched pra pintar quando tentar enviar
+    this.cpfOriTouched = true;
+    this.senhaOriTouched = true;
+    this.confirmarOriTouched = true;
+
+    if (!this.ori.nomeCompleto.trim()) {
+      this.erro = 'Preencha o nome completo.';
       return;
     }
-    if (this.ori.senha.length < 6 || this.ori.senha !== this.ori.confirmar) {
-      this.erro = 'Senha inválida ou diferente da confirmação.';
+
+    if (!this.isCpfValido(this.ori.cpf)) {
+      this.erro = 'CPF inválido.';
       return;
     }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.ori.email)) {
+      this.erro = 'E-mail inválido.';
+      return;
+    }
+
+    if (this.ori.senha.length < 6) {
+      this.erro = 'A senha deve ter no mínimo 6 caracteres.';
+      return;
+    }
+
+    if (this.ori.senha !== this.ori.confirmar) {
+      this.erro = 'Senha diferente da confirmação.';
+      return;
+    }
+
     if (!this.acceptTermsOri) {
       this.erro = 'Você deve aceitar os termos.';
       return;
     }
+
     this.isLoading = true;
     this.registerService
       .registerOrientador({
@@ -165,16 +249,39 @@ export class RegisterComponent implements OnInit {
 
   onSubmitAluno() {
     if (this.step !== 3) return;
+
     this.erro = null;
     this.sucesso = null;
+
+    // marca touched pra pintar quando tentar enviar
+    this.cpfAluTouched = true;
+    this.senhaAluTouched = true;
+    this.confirmarAluTouched = true;
+    this.pdfTouched = true;
+
+    if (!this.validStep1()) {
+      this.erro =
+        'Verifique os dados: CPF deve ser válido e a senha deve ter no mínimo 6 caracteres.';
+      this.goStep(1);
+      return;
+    }
+
+    if (!this.alu.idCurso) {
+      this.erro = 'Selecione um curso.';
+      this.goStep(2);
+      return;
+    }
+
     if (!this.pdfFile) {
       this.erro = 'Envie o PDF de notas.';
       return;
     }
+
     if (!this.acceptTermsAlu) {
       this.erro = 'Você deve aceitar os termos.';
       return;
     }
+
     this.isLoading = true;
     this.registerService
       .registerAluno({
