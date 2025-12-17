@@ -175,7 +175,6 @@ export class ProjetoService {
         const raw = lista.find((p: any) => Number(p.id_projeto ?? p.id) === Number(id));
 
         if (!raw) {
-          // em vez de "throw puro" sem shape, mando um erro com shape consistente
           throw { status: 404, message: 'Projeto não encontrado' };
         }
 
@@ -203,7 +202,6 @@ export class ProjetoService {
           id_orientador: orientador.id,
           id_campus: formulario.id_campus,
           cod_projeto: (formulario as any).cod_projeto,
-          // não envia ideia inicial em update
         };
 
         return this.http
@@ -507,11 +505,9 @@ export class ProjetoService {
     );
   }
 
-  // ✅ Mais robusto: aceita HttpErrorResponse OU erro “manual” (status/message)
   private handleError = (error: any): Observable<never> => {
     const status: number = Number(error?.status ?? 0);
 
-    // pode ser HttpErrorResponse
     const body = error?.error ?? null;
 
     let message = 'Erro inesperado';
@@ -527,7 +523,6 @@ export class ProjetoService {
         message = body?.detail || error.message || `Erro ${status}`;
       }
     } else {
-      // erro “manual” do tipo: throw {status, message}
       message = error?.message || body?.detail || `Erro ${status || ''}`.trim();
     }
 
@@ -576,7 +571,6 @@ export class ProjetoService {
   }
 
   cancelarProjeto(idProjeto: number) {
-    // padronizei pra usar apiUrlProjetos
     return this.http
       .put<{ mensagem: string }>(`${this.apiUrlProjetos}${idProjeto}/cancelar`, {})
       .pipe(catchError(this.handleError));
