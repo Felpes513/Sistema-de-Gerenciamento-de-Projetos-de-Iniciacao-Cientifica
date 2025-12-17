@@ -2,7 +2,8 @@ import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { ProjetoService } from '@services/projeto.service';
 import { DialogService } from '@services/dialog.service';
@@ -11,15 +12,23 @@ import type { Orientador } from '@interfaces/orientador';
 import type { Aluno } from '@interfaces/aluno';
 import type { Campus } from '@interfaces/configuracao';
 import { ListagemAlunosComponent } from '../listagem-alunos/listagem-alunos.component';
-import {DocumentoHistorico} from '@interfaces/projeto';
-import type { EtapaDocumento, StatusEnvio } from '@interfaces/projeto';
-
+import type {
+  EtapaDocumento,
+  StatusEnvio,
+  DocumentoHistorico,
+} from '@interfaces/projeto';
 
 type ProjetoCadastroExt = ProjetoCadastro & {
   tipo_bolsa?: string | null;
   cod_projeto?: string;
   ideia_inicial_b64?: string;
   ideia_inicial_pdf_b64?: string;
+};
+
+type UploadResultado = {
+  tipo: 'docx' | 'pdf';
+  ok: boolean;
+  mensagem?: string;
 };
 
 @Component({
@@ -68,13 +77,14 @@ export class FormularioProjetoComponent implements OnInit {
   modoEdicao = false;
   projetoId = 0;
 
+  // 🔽 Inputs de UPLOAD (pós-cadastro) — agora o envio acontece no botão "Atualizar Projeto"
   @ViewChild('docxInput') docxInput!: ElementRef<HTMLInputElement>;
   @ViewChild('pdfInput') pdfInput!: ElementRef<HTMLInputElement>;
+
   arquivoDocx?: File;
   arquivoPdf?: File;
 
   currentEtapaUpload: EtapaDocumento = 'PARCIAL';
-
   podeAvancar = false;
 
   historico: DocumentoHistorico[] = [
@@ -193,6 +203,9 @@ export class FormularioProjetoComponent implements OnInit {
           },
         ];
 
+        // Etapa atual:
+        // - se já tem PARCIAL, o próximo envio é FINAL
+        // - se não tem PARCIAL, fica em PARCIAL
         if (hasFinalPdf) {
           this.currentEtapaUpload = 'FINAL';
         } else if (hasParcialPdf) {
@@ -317,6 +330,7 @@ export class FormularioProjetoComponent implements OnInit {
     this.carregando = true;
     this.erro = null;
 
+    // Cadastro: mantém ideia inicial em Base64 (como já está)
     if (!this.modoEdicao) {
       if (!this.arquivoDocx || !this.arquivoPdf) {
         await this.dialog.alert(
@@ -360,22 +374,152 @@ export class FormularioProjetoComponent implements OnInit {
 
     operacao.subscribe({
       next: async () => {
+        // ✅ Cadastro termina aqui
         if (!this.modoEdicao) {
           await this.dialog.alert('Projeto cadastrado com sucesso!', 'Sucesso');
           this.carregando = false;
           this.voltar();
           return;
-        } else {
-          await this.dialog.alert('Projeto atualizado com sucesso!', 'Sucesso');
         }
-        this.carregando = false;
+
+        // ✅ Edição: se tiver arquivos selecionados, envia na etapa atual (PARCIAL/FINAL)
+        const uploads = this.montarUploadsSelecionados();
+        if (!uploads.length) {
+          await this.dialog.alert('Projeto atualizado com sucesso!', 'Sucesso');
+          this.carregando = false;
+          return;
+        }
+
+        forkJoin(uploads).subscribe({
+          next: async (resultados: UploadResultado[]) => {
+            const falhas = resultados.filter((r) => !r.ok);
+            const okPdf = resultados.some((r) => r.ok && r.tipo === 'pdf');
+            const okDocx = resultados.some((r) => r.ok && r.tipo === 'docx');
+
+            if (falhas.length) {
+              const detalhe = falhas
+                .map(
+                  (f) => `${f.tipo.toUpperCase()}: ${f.mensagem || 'falhou'}`
+                )
+                .join('\n');
+
+              await this.dialog.alert(
+                `Projeto atualizado, mas houve erro no envio:\n\n${detalhe}`,
+                'Atualização parcial'
+              );
+              this.carregando = false;
+              return;
+            }
+
+            this.atualizarHistoricoParaEtapa(
+              this.currentEtapaUpload,
+              okDocx ? this.arquivoDocx : undefined,
+              okPdf ? this.arquivoPdf : undefined
+            );
+
+            this.podeAvancar = this.currentEtapaUpload === 'PARCIAL' && okPdf;
+
+            this.limparInputsUpload();
+
+            await this.dialog.alert(
+              'Projeto atualizado e documentos enviados com sucesso!',
+              'Sucesso'
+            );
+
+            // opcional: recarrega flags do backend (has_mon_parcial_pdf / has_mon_final_pdf)
+            this.carregarProjeto(this.projetoId);
+
+            this.carregando = false;
+          },
+          error: async (err: any) => {
+            await this.dialog.alert(
+              `Projeto atualizado, mas falhou ao enviar documentos: ${
+                err?.message || err
+              }`,
+              'Erro no upload'
+            );
+            this.carregando = false;
+          },
+        });
       },
       error: async (error) => {
         this.erro = error?.message || 'Erro ao salvar projeto';
         this.carregando = false;
-        await this.dialog.alert(this.erro || 'Erro ao salvar projeto', 'Erro ao salvar projeto');
+        await this.dialog.alert(
+          this.erro || 'Erro ao salvar projeto',
+          'Erro ao salvar projeto'
+        );
       },
     });
+  }
+
+  private montarUploadsSelecionados() {
+    const uploads: any[] = [];
+
+    // Só permite upload pós-cadastro
+    if (!this.projetoId) return uploads;
+
+    // IDEIA não é por upload (apenas no cadastro)
+    if (this.currentEtapaUpload === 'IDEIA') return uploads;
+
+    if (this.arquivoDocx) {
+      uploads.push(
+        this.chamarUpload(this.currentEtapaUpload, 'docx', this.arquivoDocx)
+      );
+    }
+    if (this.arquivoPdf) {
+      uploads.push(
+        this.chamarUpload(this.currentEtapaUpload, 'pdf', this.arquivoPdf)
+      );
+    }
+
+    return uploads;
+  }
+
+  private chamarUpload(
+    etapa: EtapaDocumento,
+    tipo: 'docx' | 'pdf',
+    arquivo: File
+  ) {
+    let metodo$;
+
+    if (etapa === 'PARCIAL') {
+      metodo$ =
+        tipo === 'docx'
+          ? this.projetoService.uploadMonografiaParcialDocx(
+              this.projetoId,
+              arquivo
+            )
+          : this.projetoService.uploadMonografiaParcialPdf(
+              this.projetoId,
+              arquivo
+            );
+    } else if (etapa === 'FINAL') {
+      metodo$ =
+        tipo === 'docx'
+          ? this.projetoService.uploadMonografiaFinalDocx(
+              this.projetoId,
+              arquivo
+            )
+          : this.projetoService.uploadMonografiaFinalPdf(
+              this.projetoId,
+              arquivo
+            );
+    } else {
+      // IDEIA não deveria cair aqui
+      metodo$ = of(null);
+    }
+
+    return metodo$.pipe(
+      map((): UploadResultado => ({ tipo, ok: true })),
+      catchError((err: any) =>
+        of({
+          tipo,
+          ok: false,
+          mensagem: err?.error?.detail || err?.message || 'Erro no upload',
+        } as UploadResultado)
+      )
+    );
   }
 
   async onFileSelected(event: Event, tipo: 'docx' | 'pdf'): Promise<void> {
@@ -383,16 +527,25 @@ export class FormularioProjetoComponent implements OnInit {
     if (!input.files?.length) return;
 
     const file = input.files[0];
+
     if (tipo === 'docx' && file.name.toLowerCase().endsWith('.docx')) {
       this.arquivoDocx = file;
-    } else if (tipo === 'pdf' && file.name.toLowerCase().endsWith('.pdf')) {
-      this.arquivoPdf = file;
-    } else {
-      await this.dialog.alert(
-        `Formato inválido. Envie um arquivo ${tipo.toUpperCase()}.`,
-        'Formato inválido'
-      );
+      return;
     }
+    if (tipo === 'pdf' && file.name.toLowerCase().endsWith('.pdf')) {
+      this.arquivoPdf = file;
+      return;
+    }
+
+    // inválido
+    if (tipo === 'docx') this.arquivoDocx = undefined;
+    if (tipo === 'pdf') this.arquivoPdf = undefined;
+    input.value = '';
+
+    await this.dialog.alert(
+      `Formato inválido. Envie um arquivo ${tipo.toUpperCase()}.`,
+      'Formato inválido'
+    );
   }
 
   get tituloUploadAtual(): string {
@@ -404,89 +557,11 @@ export class FormularioProjetoComponent implements OnInit {
   }
 
   get labelBotaoAvancar(): string {
-    if (this.currentEtapaUpload === 'PARCIAL') {
+    if (this.currentEtapaUpload === 'PARCIAL')
       return 'Avançar para Monografia Final';
-    }
-    if (this.currentEtapaUpload === 'FINAL') {
+    if (this.currentEtapaUpload === 'FINAL')
       return 'Todas as etapas concluídas';
-    }
     return 'Avançar';
-  }
-
-  async enviarArquivo(tipo: 'docx' | 'pdf'): Promise<void> {
-    if (this.isReadOnly) return;
-    if (!this.projetoId) {
-      await this.dialog.alert(
-        'Salve o projeto antes de enviar arquivos.',
-        'Projeto não salvo'
-      );
-      return;
-    }
-
-    const arquivo = tipo === 'docx' ? this.arquivoDocx : this.arquivoPdf;
-    if (!arquivo) {
-      await this.dialog.alert(
-        `Selecione um arquivo ${tipo.toUpperCase()} primeiro.`,
-        'Arquivo obrigatório'
-      );
-      return;
-    }
-
-    let metodo;
-
-    if (this.currentEtapaUpload === 'PARCIAL') {
-      metodo =
-        tipo === 'docx'
-          ? this.projetoService.uploadMonografiaParcialDocx(
-              this.projetoId,
-              arquivo
-            )
-          : this.projetoService.uploadMonografiaParcialPdf(
-              this.projetoId,
-              arquivo
-            );
-    } else if (this.currentEtapaUpload === 'FINAL') {
-      metodo =
-        tipo === 'docx'
-          ? this.projetoService.uploadMonografiaFinalDocx(
-              this.projetoId,
-              arquivo
-            )
-          : this.projetoService.uploadMonografiaFinalPdf(
-              this.projetoId,
-              arquivo
-            );
-    } else {
-      await this.dialog.alert(
-        'O envio da ideia inicial é feito apenas no cadastro do projeto. Use as etapas de Monografia Parcial e Final para novos uploads.',
-        'Etapa inválida'
-      );
-      return;
-    }
-
-    metodo.subscribe({
-      next: async () => {
-        await this.dialog.alert(
-          `${tipo.toUpperCase()} enviado com sucesso!`,
-          'Upload concluído'
-        );
-
-        if (tipo === 'pdf') {
-          this.atualizarHistoricoParaEtapa(
-            this.currentEtapaUpload,
-            this.arquivoDocx,
-            this.arquivoPdf
-          );
-          this.podeAvancar = this.currentEtapaUpload === 'PARCIAL';
-        }
-      },
-      error: async (err: any) => {
-        await this.dialog.alert(
-          `Erro ao enviar ${tipo.toUpperCase()}: ${err?.message || err}`,
-          'Erro no upload'
-        );
-      },
-    });
   }
 
   async baixarArquivo(
@@ -524,7 +599,7 @@ export class FormularioProjetoComponent implements OnInit {
         const a = document.createElement('a');
         a.href = url;
 
-        let nomeBase =
+        const nomeBase =
           etapaAlvo === 'PARCIAL'
             ? 'monografia_parcial'
             : etapaAlvo === 'FINAL'
@@ -571,10 +646,13 @@ export class FormularioProjetoComponent implements OnInit {
       return;
     }
 
+    // ✅ Só permite avançar se o PDF da etapa atual já foi enviado
     const histAtual = this.historico.find(
       (h) => h.etapa === this.currentEtapaUpload
     );
-    if (!histAtual || histAtual.status !== 'ENVIADO') {
+    const temPdf = !!histAtual?.arquivos?.pdf;
+
+    if (!temPdf) {
       await this.dialog.alert(
         'Envie o PDF desta etapa antes de avançar.',
         'Envio obrigatório'
@@ -606,15 +684,25 @@ export class FormularioProjetoComponent implements OnInit {
     pdf?: File
   ) {
     const idx = this.historico.findIndex((h) => h.etapa === etapa);
+
+    // ✅ Tipagem explícita evita o "union" que tava quebrando o TS
     const novo: DocumentoHistorico =
-      idx >= 0 ? { ...this.historico[idx] } : { etapa, status: 'NAO_ENVIADO' };
-    novo.arquivos = novo.arquivos || {};
+      idx >= 0
+        ? { ...this.historico[idx] }
+        : { etapa, status: 'NAO_ENVIADO' as StatusEnvio, arquivos: {} };
+
+    novo.arquivos = novo.arquivos ?? {};
+
     if (docx) novo.arquivos.docx = { nome: docx.name };
     if (pdf) novo.arquivos.pdf = { nome: pdf.name };
-    if (novo.arquivos.docx || novo.arquivos.pdf) {
-      novo.status = 'ENVIADO';
-      novo.dataEnvio = new Date();
-    }
+
+    const temPdf = !!novo.arquivos.pdf;
+
+    novo.status = (temPdf ? 'ENVIADO' : 'NAO_ENVIADO') as StatusEnvio;
+
+    if (temPdf) novo.dataEnvio = new Date();
+    else delete novo.dataEnvio;
+
     if (idx >= 0) this.historico[idx] = novo;
     else this.historico.push(novo);
   }
@@ -660,6 +748,7 @@ export class FormularioProjetoComponent implements OnInit {
 
   limparFormulario(): void {
     if (this.isReadOnly) return;
+
     this.projeto = {
       titulo_projeto: '',
       resumo: '',
@@ -672,6 +761,7 @@ export class FormularioProjetoComponent implements OnInit {
       ideia_inicial_b64: '',
       ideia_inicial_pdf_b64: '',
     };
+
     this.orientadorSelecionadoId = 0;
     this.emailOrientador = '';
     this.buscaOrientador = '';
@@ -679,8 +769,9 @@ export class FormularioProjetoComponent implements OnInit {
     this.alunosInscritos = [];
     this.campusSelecionadoId = 0;
     this.erro = null;
-    this.arquivoDocx = undefined;
-    this.arquivoPdf = undefined;
+
+    this.limparInputsUpload();
+
     this.podeAvancar = false;
     this.currentEtapaUpload = 'PARCIAL';
     this.historico = [
@@ -698,6 +789,14 @@ export class FormularioProjetoComponent implements OnInit {
 
   get textoBotao(): string {
     if (this.viewMode !== 'SECRETARIA') return 'Salvar seleção';
-    return this.modoEdicao ? 'Atualizar Projeto' : 'Cadastrar Projeto';
+
+    if (this.modoEdicao) {
+      const temArquivos = !!this.arquivoDocx || !!this.arquivoPdf;
+      return temArquivos
+        ? 'Atualizar e Enviar Documentos'
+        : 'Atualizar Projeto';
+    }
+
+    return 'Cadastrar Projeto';
   }
 }
