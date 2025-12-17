@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   frontend:
     build:
@@ -6,9 +6,9 @@ services:
       dockerfile: Dockerfile
     container_name: fronttcc-frontend
     ports:
-    - "5467:80"
+      - "8080:80"
     environment:
-    - NODE_ENV=production
+      - NODE_ENV=production
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
@@ -17,8 +17,8 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - netinova
+      - fronttcc-network
 
 networks:
-  netinova:
-    external: true
+  fronttcc-network:
+    driver: bridge
