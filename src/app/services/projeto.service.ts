@@ -31,6 +31,12 @@ import {
 
 import { environment } from '@environments/environment';
 
+type UploadResultado = {
+  tipo: 'docx' | 'pdf';
+  ok: boolean;
+  mensagem?: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ProjetoService {
   private readonly apiUrl = environment.apiBaseUrl;
@@ -446,48 +452,43 @@ export class ProjetoService {
     );
   }
 
-  uploadMonografiaParcialDocx(
+  private extrairMsgErro(err: any): string {
+    return (
+      err?.error?.detail ||
+      err?.error?.message ||
+      err?.message ||
+      'Erro no upload'
+    );
+  }
+
+  uploadDocumentosMonografia(
     idProjeto: number,
-    arquivo: File
-  ): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(
-        `${this.apiUrlProjetos}${idProjeto}/monografia-parcial/docx`,
-        formData
-      )
-      .pipe(catchError(this.handleError));
-  }
+    etapa: 'PARCIAL' | 'FINAL',
+    arquivos: { docx?: File; pdf?: File }
+  ): Observable<UploadResultado[]> {
+    const tasks: Observable<UploadResultado>[] = [];
 
-  uploadMonografiaParcialPdf(
-    idProjeto: number,
-    arquivo: File
-  ): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(
-        `${this.apiUrlProjetos}${idProjeto}/monografia-parcial/pdf`,
-        formData
-      )
-      .pipe(catchError(this.handleError));
-  }
+    const base =
+      etapa === 'PARCIAL'
+        ? `${this.apiUrlProjetos}${idProjeto}/monografia-parcial/`
+        : `${this.apiUrlProjetos}${idProjeto}/monografia-final/`;
 
-  uploadMonografiaFinalDocx(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-final/docx`, formData)
-      .pipe(catchError(this.handleError));
-  }
+    const putArquivo = (tipo: 'docx' | 'pdf', file: File) => {
+      const formData = new FormData();
+      formData.append('arquivo', file);
 
-  uploadMonografiaFinalPdf(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-final/pdf`, formData)
-      .pipe(catchError(this.handleError));
+      return this.http.put(`${base}${tipo}`, formData).pipe(
+        map(() => ({ tipo, ok: true } as UploadResultado)),
+        catchError((err) =>
+          of({ tipo, ok: false, mensagem: this.extrairMsgErro(err) })
+        )
+      );
+    };
+
+    if (arquivos?.docx) tasks.push(putArquivo('docx', arquivos.docx));
+    if (arquivos?.pdf) tasks.push(putArquivo('pdf', arquivos.pdf));
+
+    return tasks.length ? forkJoin(tasks) : of([]);
   }
 
   downloadMonografiaParcialDocx(idProjeto: number): Observable<Blob> {

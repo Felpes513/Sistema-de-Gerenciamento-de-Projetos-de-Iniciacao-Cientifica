@@ -2,8 +2,7 @@ import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 import { ProjetoService } from '@services/projeto.service';
 import { DialogService } from '@services/dialog.service';
@@ -77,7 +76,6 @@ export class FormularioProjetoComponent implements OnInit {
   modoEdicao = false;
   projetoId = 0;
 
-  // 🔽 Inputs de UPLOAD (pós-cadastro) — agora o envio acontece no botão "Atualizar Projeto"
   @ViewChild('docxInput') docxInput!: ElementRef<HTMLInputElement>;
   @ViewChild('pdfInput') pdfInput!: ElementRef<HTMLInputElement>;
 
@@ -323,6 +321,14 @@ export class FormularioProjetoComponent implements OnInit {
     return true;
   }
 
+  private enviarUploadsEtapaAtual() {
+    return this.projetoService.uploadDocumentosMonografia(
+      this.projetoId,
+      this.currentEtapaUpload as 'PARCIAL' | 'FINAL',
+      { docx: this.arquivoDocx, pdf: this.arquivoPdf }
+    );
+  }
+
   async salvarProjeto(): Promise<void> {
     if (this.isReadOnly) return;
     if (!(await this.validarFormulario())) return;
@@ -330,7 +336,81 @@ export class FormularioProjetoComponent implements OnInit {
     this.carregando = true;
     this.erro = null;
 
-    // Cadastro: mantém ideia inicial em Base64 (como já está)
+    // ✅ MODO EDIÇÃO: se tiver arquivos, faz upload direto e sai (não depende do PUT /projetos/{id})
+    if (this.modoEdicao) {
+      const temArquivos = !!this.arquivoDocx || !!this.arquivoPdf;
+
+      if (temArquivos) {
+        if (!this.projetoId) {
+          this.carregando = false;
+          await this.dialog.alert('Projeto não identificado.', 'Erro');
+          return;
+        }
+
+        if (
+          this.currentEtapaUpload !== 'PARCIAL' &&
+          this.currentEtapaUpload !== 'FINAL'
+        ) {
+          this.carregando = false;
+          await this.dialog.alert('Etapa inválida para upload.', 'Erro');
+          return;
+        }
+
+        this.enviarUploadsEtapaAtual().subscribe({
+          next: async (resultados: UploadResultado[]) => {
+            const falhas = (resultados || []).filter((r) => !r.ok);
+
+            if (falhas.length) {
+              const detalhe = falhas
+                .map((f) => `${f.tipo.toUpperCase()}: ${f.mensagem || 'falhou'}`)
+                .join('\n');
+
+              await this.dialog.alert(
+                `Falha no envio:\n\n${detalhe}`,
+                'Erro no upload'
+              );
+              this.carregando = false;
+              return;
+            }
+
+            // atualiza histórico local
+            this.atualizarHistoricoParaEtapa(
+              this.currentEtapaUpload,
+              this.arquivoDocx,
+              this.arquivoPdf
+            );
+
+            const histAtual = this.historico.find(
+              (h) => h.etapa === this.currentEtapaUpload
+            );
+            const temPdfAtual = !!histAtual?.arquivos?.pdf;
+
+            this.podeAvancar =
+              this.currentEtapaUpload === 'PARCIAL' && temPdfAtual;
+
+            await this.dialog.alert(
+              'Documentos enviados com sucesso!\n\nSe você também alterou dados do projeto (título/resumo/orientador/campus), clique em "Atualizar Projeto" sem arquivos selecionados.',
+              'Sucesso'
+            );
+
+            this.limparInputsUpload();
+            this.carregarProjeto(this.projetoId);
+            this.carregando = false;
+          },
+          error: async (err: any) => {
+            await this.dialog.alert(
+              `Falha ao enviar documentos: ${err?.message || err}`,
+              'Erro no upload'
+            );
+            this.carregando = false;
+          },
+        });
+
+        return; // 👈 não continua pro PUT /projetos/{id}
+      }
+    }
+
+    // ✅ CADASTRO: mantém ideia inicial em Base64
     if (!this.modoEdicao) {
       if (!this.arquivoDocx || !this.arquivoPdf) {
         await this.dialog.alert(
@@ -361,7 +441,7 @@ export class FormularioProjetoComponent implements OnInit {
     }
 
     const operacao = this.modoEdicao
-      ? this.projetoService.atualizarProjeto(this.projetoId, this.projeto)
+      ? this.projetoService.atualizarProjeto(this.projetoId, this.projeto as any)
       : this.projetoService.cadastrarProjetoCompleto(
           {
             ...this.projeto,
@@ -374,7 +454,6 @@ export class FormularioProjetoComponent implements OnInit {
 
     operacao.subscribe({
       next: async () => {
-        // ✅ Cadastro termina aqui
         if (!this.modoEdicao) {
           await this.dialog.alert('Projeto cadastrado com sucesso!', 'Sucesso');
           this.carregando = false;
@@ -382,65 +461,9 @@ export class FormularioProjetoComponent implements OnInit {
           return;
         }
 
-        // ✅ Edição: se tiver arquivos selecionados, envia na etapa atual (PARCIAL/FINAL)
-        const uploads = this.montarUploadsSelecionados();
-        if (!uploads.length) {
-          await this.dialog.alert('Projeto atualizado com sucesso!', 'Sucesso');
-          this.carregando = false;
-          return;
-        }
-
-        forkJoin(uploads).subscribe({
-          next: async (resultados: UploadResultado[]) => {
-            const falhas = resultados.filter((r) => !r.ok);
-            const okPdf = resultados.some((r) => r.ok && r.tipo === 'pdf');
-            const okDocx = resultados.some((r) => r.ok && r.tipo === 'docx');
-
-            if (falhas.length) {
-              const detalhe = falhas
-                .map(
-                  (f) => `${f.tipo.toUpperCase()}: ${f.mensagem || 'falhou'}`
-                )
-                .join('\n');
-
-              await this.dialog.alert(
-                `Projeto atualizado, mas houve erro no envio:\n\n${detalhe}`,
-                'Atualização parcial'
-              );
-              this.carregando = false;
-              return;
-            }
-
-            this.atualizarHistoricoParaEtapa(
-              this.currentEtapaUpload,
-              okDocx ? this.arquivoDocx : undefined,
-              okPdf ? this.arquivoPdf : undefined
-            );
-
-            this.podeAvancar = this.currentEtapaUpload === 'PARCIAL' && okPdf;
-
-            this.limparInputsUpload();
-
-            await this.dialog.alert(
-              'Projeto atualizado e documentos enviados com sucesso!',
-              'Sucesso'
-            );
-
-            // opcional: recarrega flags do backend (has_mon_parcial_pdf / has_mon_final_pdf)
-            this.carregarProjeto(this.projetoId);
-
-            this.carregando = false;
-          },
-          error: async (err: any) => {
-            await this.dialog.alert(
-              `Projeto atualizado, mas falhou ao enviar documentos: ${
-                err?.message || err
-              }`,
-              'Erro no upload'
-            );
-            this.carregando = false;
-          },
-        });
+        await this.dialog.alert('Projeto atualizado com sucesso!', 'Sucesso');
+        this.carregando = false;
+        this.carregarProjeto(this.projetoId);
       },
       error: async (error) => {
         this.erro = error?.message || 'Erro ao salvar projeto';
@@ -451,75 +474,6 @@ export class FormularioProjetoComponent implements OnInit {
         );
       },
     });
-  }
-
-  private montarUploadsSelecionados() {
-    const uploads: any[] = [];
-
-    // Só permite upload pós-cadastro
-    if (!this.projetoId) return uploads;
-
-    // IDEIA não é por upload (apenas no cadastro)
-    if (this.currentEtapaUpload === 'IDEIA') return uploads;
-
-    if (this.arquivoDocx) {
-      uploads.push(
-        this.chamarUpload(this.currentEtapaUpload, 'docx', this.arquivoDocx)
-      );
-    }
-    if (this.arquivoPdf) {
-      uploads.push(
-        this.chamarUpload(this.currentEtapaUpload, 'pdf', this.arquivoPdf)
-      );
-    }
-
-    return uploads;
-  }
-
-  private chamarUpload(
-    etapa: EtapaDocumento,
-    tipo: 'docx' | 'pdf',
-    arquivo: File
-  ) {
-    let metodo$;
-
-    if (etapa === 'PARCIAL') {
-      metodo$ =
-        tipo === 'docx'
-          ? this.projetoService.uploadMonografiaParcialDocx(
-              this.projetoId,
-              arquivo
-            )
-          : this.projetoService.uploadMonografiaParcialPdf(
-              this.projetoId,
-              arquivo
-            );
-    } else if (etapa === 'FINAL') {
-      metodo$ =
-        tipo === 'docx'
-          ? this.projetoService.uploadMonografiaFinalDocx(
-              this.projetoId,
-              arquivo
-            )
-          : this.projetoService.uploadMonografiaFinalPdf(
-              this.projetoId,
-              arquivo
-            );
-    } else {
-      // IDEIA não deveria cair aqui
-      metodo$ = of(null);
-    }
-
-    return metodo$.pipe(
-      map((): UploadResultado => ({ tipo, ok: true })),
-      catchError((err: any) =>
-        of({
-          tipo,
-          ok: false,
-          mensagem: err?.error?.detail || err?.message || 'Erro no upload',
-        } as UploadResultado)
-      )
-    );
   }
 
   async onFileSelected(event: Event, tipo: 'docx' | 'pdf'): Promise<void> {
@@ -537,7 +491,6 @@ export class FormularioProjetoComponent implements OnInit {
       return;
     }
 
-    // inválido
     if (tipo === 'docx') this.arquivoDocx = undefined;
     if (tipo === 'pdf') this.arquivoPdf = undefined;
     input.value = '';
@@ -646,7 +599,6 @@ export class FormularioProjetoComponent implements OnInit {
       return;
     }
 
-    // ✅ Só permite avançar se o PDF da etapa atual já foi enviado
     const histAtual = this.historico.find(
       (h) => h.etapa === this.currentEtapaUpload
     );
@@ -685,7 +637,6 @@ export class FormularioProjetoComponent implements OnInit {
   ) {
     const idx = this.historico.findIndex((h) => h.etapa === etapa);
 
-    // ✅ Tipagem explícita evita o "union" que tava quebrando o TS
     const novo: DocumentoHistorico =
       idx >= 0
         ? { ...this.historico[idx] }
@@ -697,7 +648,6 @@ export class FormularioProjetoComponent implements OnInit {
     if (pdf) novo.arquivos.pdf = { nome: pdf.name };
 
     const temPdf = !!novo.arquivos.pdf;
-
     novo.status = (temPdf ? 'ENVIADO' : 'NAO_ENVIADO') as StatusEnvio;
 
     if (temPdf) novo.dataEnvio = new Date();
