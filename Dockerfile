@@ -11,7 +11,7 @@ FROM nginx:1.27-alpine
 
 RUN apk add --no-cache curl
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.frontend.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/dist/FrontTCC/browser /usr/share/nginx/html
 

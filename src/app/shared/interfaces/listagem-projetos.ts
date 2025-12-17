@@ -5,6 +5,7 @@ export interface ListagemResponse {
   capacidadeMaxima: number;
   totalInscritos: number;
   totalAprovados: number;
+  concluido?: boolean;
   itens: Inscricao[];
   paginacao: {
     pagina: number;

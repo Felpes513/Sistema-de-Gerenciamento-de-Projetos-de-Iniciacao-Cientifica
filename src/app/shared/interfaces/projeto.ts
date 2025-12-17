@@ -41,9 +41,10 @@ export interface ProjetoRequest {
   resumo: string;
   id_orientador: number;
   id_campus: number;
-  cod_projeto?: string; // código do projeto
-  ideia_inicial_b64?: string; // base64 do DOCX da ideia inicial
-  ideia_inicial_pdf_b64?: string; // base64 do PDF da ideia inicial
+  cod_projeto?: string;
+  ideia_inicial_b64?: string;
+  ideia_inicial_pdf_b64?: string;
+  concluido?: boolean;
 }
 
 export interface ProjetoFormulario {
@@ -63,8 +64,6 @@ export interface ProjetoCadastro {
   quantidadeMaximaAlunos: number;
   tipo_bolsa?: string | null;
 }
-
-/** Card/listagem simples (view model para listas) */
 export interface Projeto {
   id: number;
   nomeProjeto: string;
@@ -73,12 +72,9 @@ export interface Projeto {
   nomeOrientador: string;
   nomesAlunos: string[];
   inscritosTotal?: number;
-  status?: StatusProjeto;
-  notas?: number[];
-  mediaNota?: number;
+  concluido?: boolean;
 }
 
-/** Detalhes completos do projeto */
 export interface ProjetoDetalhado {
   id: number;
   nomeProjeto: string;
@@ -94,7 +90,7 @@ export interface ProjetoDetalhado {
   id_campus: number;
   data_criacao?: string;
   data_atualizacao?: string;
-  status?: string;
+  concluido?: boolean;
   tipo_bolsa?: string | null;
 }
 

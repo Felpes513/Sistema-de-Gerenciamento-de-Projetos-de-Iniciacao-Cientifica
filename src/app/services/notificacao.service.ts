@@ -16,10 +16,11 @@ export class NotificacaoService {
       .set('page', 1)
       .set('size', 1000);
 
-    return this.http
+     var teste = this.http
       .get<any>(this.apiUrlNotificacoes, { params })
       .pipe(map((res) => res.items ?? []));
-  }
+    
+    return teste;} 
 
   getNotificacoesPaginado(
     destinatario: string,

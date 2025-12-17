@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
 
@@ -26,6 +30,12 @@ import {
 } from '@interfaces/avaliacao';
 
 import { environment } from '@environments/environment';
+
+type UploadResultado = {
+  tipo: 'docx' | 'pdf';
+  ok: boolean;
+  mensagem?: string;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ProjetoService {
@@ -89,7 +99,9 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  private processarDadosECadastrar(formulario: ProjetoFormulario): Observable<any> {
+  private processarDadosECadastrar(
+    formulario: ProjetoFormulario
+  ): Observable<any> {
     return this.buscarOrientadorPorNome(formulario.orientador_nome).pipe(
       switchMap((orientador: Orientador) => {
         const payload: ProjetoRequest = {
@@ -118,19 +130,26 @@ export class ProjetoService {
 
   listarProjetos(): Observable<Projeto[]> {
     return this.http.get<any>(this.apiUrlProjetos).pipe(
-      map((res) => this.extractProjetos(res).map((p) => this.normalizarProjeto(p))),
+      map((res) =>
+        this.extractProjetos(res).map((p) => this.normalizarProjeto(p))
+      ),
       catchError(this.handleError)
     );
   }
 
-  updateAlunosProjeto(dto: UpdateProjetoAlunosDTO): Observable<{ mensagem: string }> {
+  updateAlunosProjeto(
+    dto: UpdateProjetoAlunosDTO
+  ): Observable<{ mensagem: string }> {
     const payload = {
       id_projeto: dto.id_projeto,
       id_alunos: dto.ids_alunos_aprovados,
     };
 
     return this.http
-      .post<{ mensagem: string }>(`${this.apiUrlProjetos}update-alunos`, payload)
+      .post<{ mensagem: string }>(
+        `${this.apiUrlProjetos}update-alunos`,
+        payload
+      )
       .pipe(catchError(this.handleError));
   }
 
@@ -145,7 +164,8 @@ export class ProjetoService {
 
     return this.updateAlunosProjeto(dto).pipe(
       switchMap((res) => {
-        if (!rejeitadas.length) return of({ mensagem: res.mensagem, excluidos: [] });
+        if (!rejeitadas.length)
+          return of({ mensagem: res.mensagem, excluidos: [] });
 
         return this.http
           .request('DELETE', `${this.apiUrlInscricoes}/_batch`, {
@@ -153,7 +173,9 @@ export class ProjetoService {
           })
           .pipe(
             map(() => ({ mensagem: res.mensagem, excluidos: rejeitadas })),
-            catchError(() => of({ mensagem: res.mensagem, excluidos: rejeitadas }))
+            catchError(() =>
+              of({ mensagem: res.mensagem, excluidos: rejeitadas })
+            )
           );
       })
     );
@@ -161,7 +183,9 @@ export class ProjetoService {
 
   listarAlunosDoProjeto(idProjeto: number): Observable<any[]> {
     return this.http
-      .get<{ id_projeto: number; alunos: any[] }>(`${this.apiUrlProjetos}${idProjeto}/alunos`)
+      .get<{ id_projeto: number; alunos: any[] }>(
+        `${this.apiUrlProjetos}${idProjeto}/alunos`
+      )
       .pipe(
         map((res) => res.alunos ?? []),
         catchError(this.handleError)
@@ -172,7 +196,9 @@ export class ProjetoService {
     return this.http.get<any>(this.apiUrlProjetos).pipe(
       map((res) => {
         const lista = this.extractProjetos(res);
-        const raw = lista.find((p: any) => Number(p.id_projeto ?? p.id) === Number(id));
+        const raw = lista.find(
+          (p: any) => Number(p.id_projeto ?? p.id) === Number(id)
+        );
 
         if (!raw) {
           throw { status: 404, message: 'Projeto não encontrado' };
@@ -188,7 +214,9 @@ export class ProjetoService {
     return this.http.get<any>(`${this.apiUrlProjetos}${id}/detalhado`).pipe(
       map((p) => this.normalizarProjetoDetalhado(p)),
       catchError(() =>
-        this.getProjetoPorId(id).pipe(map((p) => this.normalizarProjetoDetalhado(p)))
+        this.getProjetoPorId(id).pipe(
+          map((p) => this.normalizarProjetoDetalhado(p))
+        )
       )
     );
   }
@@ -212,19 +240,22 @@ export class ProjetoService {
   }
 
   listarProjetosRaw() {
-    return this.http
-      .get<any>(this.apiUrlProjetos)
-      .pipe(
-        map((res) => this.extractProjetos(res)),
-        catchError(this.handleError)
-      );
+    return this.http.get<any>(this.apiUrlProjetos).pipe(
+      map((res) => this.extractProjetos(res)),
+      catchError(this.handleError)
+    );
   }
 
   concluirProjeto(id: number): Observable<{ mensagem: string }> {
     return this.http
-      .put<{ success?: boolean; message?: string }>(`${this.apiUrlProjetos}${id}/concluir`, {})
+      .put<{ success?: boolean; message?: string }>(
+        `${this.apiUrlProjetos}${id}/concluir`,
+        {}
+      )
       .pipe(
-        map((res) => ({ mensagem: res?.message || 'Projeto concluído com sucesso.' })),
+        map((res) => ({
+          mensagem: res?.message || 'Projeto concluído com sucesso.',
+        })),
         catchError(this.handleError)
       );
   }
@@ -243,7 +274,9 @@ export class ProjetoService {
 
   buscarOrientadorPorNome(nome: string): Observable<Orientador> {
     return this.http
-      .get<Orientador>(`${this.apiUrlOrientadores}/buscar?nome=${encodeURIComponent(nome)}`)
+      .get<Orientador>(
+        `${this.apiUrlOrientadores}/buscar?nome=${encodeURIComponent(nome)}`
+      )
       .pipe(catchError(this.handleError));
   }
 
@@ -256,7 +289,9 @@ export class ProjetoService {
 
   buscarCampusPorNome(nome: string): Observable<Campus> {
     return this.http
-      .get<Campus>(`${this.apiUrlCampus}/buscar?nome=${encodeURIComponent(nome)}`)
+      .get<Campus>(
+        `${this.apiUrlCampus}/buscar?nome=${encodeURIComponent(nome)}`
+      )
       .pipe(catchError(this.handleError));
   }
 
@@ -266,7 +301,9 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  listarInscricoesPorProjeto(idProjeto: number): Observable<ProjetoInscricaoApi[]> {
+  listarInscricoesPorProjeto(
+    idProjeto: number
+  ): Observable<ProjetoInscricaoApi[]> {
     return this.http
       .get<any[]>(`${this.apiUrlProjetos}${idProjeto}/inscricoes`)
       .pipe(
@@ -281,7 +318,8 @@ export class ProjetoService {
             const idAluno = i.aluno?.id ?? i.id_aluno ?? 0;
             const key = `${idInscricao}|${idAluno}`;
 
-            if (seen.has(key)) duplicadas.push({ idInscricao, idAluno, raw: i });
+            if (seen.has(key))
+              duplicadas.push({ idInscricao, idAluno, raw: i });
             else seen.add(key);
           }
 
@@ -335,12 +373,12 @@ export class ProjetoService {
   }
 
   listarProjetosDoOrientador(): Observable<Projeto[]> {
-    return this.http
-      .get<any>(`${this.apiUrlProjetos}me`)
-      .pipe(
-        map((res) => this.extractProjetos(res).map((p) => this.normalizarProjeto(p))),
-        catchError(this.handleError)
-      );
+    return this.http.get<any>(`${this.apiUrlProjetos}me`).pipe(
+      map((res) =>
+        this.extractProjetos(res).map((p) => this.normalizarProjeto(p))
+      ),
+      catchError(this.handleError)
+    );
   }
 
   listarProjetosDoAlunoSelecionado(
@@ -354,7 +392,9 @@ export class ProjetoService {
     return this.http
       .get<any>(`${this.apiUrlProjetos}aluno/me`, { params })
       .pipe(
-        map((res) => this.extractProjetos(res).map((p) => this.normalizarProjeto(p))),
+        map((res) =>
+          this.extractProjetos(res).map((p) => this.normalizarProjeto(p))
+        ),
         catchError(this.handleError)
       );
   }
@@ -365,8 +405,10 @@ export class ProjetoService {
       nomeProjeto: dados.nomeProjeto || dados.titulo_projeto || 'Sem título',
       campus: dados.campus || '',
       quantidadeMaximaAlunos: dados.quantidade_alunos || 0,
-      nomeOrientador: dados.nomeOrientador || dados.orientador || 'Não informado',
+      nomeOrientador:
+        dados.nomeOrientador || dados.orientador || 'Não informado',
       nomesAlunos: dados.nomesAlunos || [],
+      concluido: Boolean(dados?.concluido),
     };
   }
 
@@ -377,7 +419,8 @@ export class ProjetoService {
       titulo_projeto: dados.titulo_projeto || dados.nomeProjeto || '',
       resumo: dados.resumo || '',
       campus: dados.campus || '',
-      quantidadeMaximaAlunos: dados.quantidadeMaximaAlunos ?? dados.quantidade_alunos ?? 0,
+      quantidadeMaximaAlunos:
+        dados.quantidadeMaximaAlunos ?? dados.quantidade_alunos ?? 0,
       nomeOrientador: dados.nomeOrientador || '',
       orientador_email: dados.orientador_email || '',
       nomesAlunos: dados.nomesAlunos || [],
@@ -386,77 +429,102 @@ export class ProjetoService {
       id_campus: dados.id_campus || 0,
       data_criacao: dados.data_criacao || '',
       data_atualizacao: dados.data_atualizacao || '',
-      status: dados.status || '',
+      concluido: dados.status || '',
       tipo_bolsa: dados.tipo_bolsa ?? null,
     };
   }
 
   downloadDocx(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/ideia-inicial.docx`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/ideia-inicial.docx`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
   downloadPdf(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/ideia-inicial.pdf`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/ideia-inicial.pdf`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
-  uploadMonografiaParcialDocx(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-parcial/docx`, formData)
-      .pipe(catchError(this.handleError));
+  private extrairMsgErro(err: any): string {
+    return (
+      err?.error?.detail ||
+      err?.error?.message ||
+      err?.message ||
+      'Erro no upload'
+    );
   }
 
-  uploadMonografiaParcialPdf(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-parcial/pdf`, formData)
-      .pipe(catchError(this.handleError));
-  }
+  uploadDocumentosMonografia(
+    idProjeto: number,
+    etapa: 'PARCIAL' | 'FINAL',
+    arquivos: { docx?: File; pdf?: File }
+  ): Observable<UploadResultado[]> {
+    const tasks: Observable<UploadResultado>[] = [];
 
-  uploadMonografiaFinalDocx(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-final/docx`, formData)
-      .pipe(catchError(this.handleError));
-  }
+    const base =
+      etapa === 'PARCIAL'
+        ? `${this.apiUrlProjetos}${idProjeto}/monografia-parcial/`
+        : `${this.apiUrlProjetos}${idProjeto}/monografia-final/`;
 
-  uploadMonografiaFinalPdf(idProjeto: number, arquivo: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
-    return this.http
-      .put(`${this.apiUrlProjetos}${idProjeto}/monografia-final/pdf`, formData)
-      .pipe(catchError(this.handleError));
+    const putArquivo = (tipo: 'docx' | 'pdf', file: File) => {
+      const formData = new FormData();
+      formData.append('arquivo', file);
+
+      return this.http.put(`${base}${tipo}`, formData).pipe(
+        map(() => ({ tipo, ok: true } as UploadResultado)),
+        catchError((err) =>
+          of({ tipo, ok: false, mensagem: this.extrairMsgErro(err) })
+        )
+      );
+    };
+
+    if (arquivos?.docx) tasks.push(putArquivo('docx', arquivos.docx));
+    if (arquivos?.pdf) tasks.push(putArquivo('pdf', arquivos.pdf));
+
+    return tasks.length ? forkJoin(tasks) : of([]);
   }
 
   downloadMonografiaParcialDocx(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/monografia-parcial.docx`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-parcial.docx`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
   downloadMonografiaParcialPdf(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/monografia-parcial.pdf`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-parcial.pdf`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
   downloadMonografiaFinalDocx(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/monografia-final.docx`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-final.docx`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
   downloadMonografiaFinalPdf(idProjeto: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrlProjetos}${idProjeto}/monografia-final.pdf`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrlProjetos}${idProjeto}/monografia-final.pdf`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
   listarProjetosParaAvaliacao(): Observable<ProjetoBasico[]> {
@@ -474,9 +542,14 @@ export class ProjetoService {
       );
   }
 
-  enviarConvitesDeAvaliacao(payload: { envios: AvaliacaoEnvio[] }): Observable<ConviteAvaliacaoResponse> {
+  enviarConvitesDeAvaliacao(payload: {
+    envios: AvaliacaoEnvio[];
+  }): Observable<ConviteAvaliacaoResponse> {
     return this.http
-      .post<ConviteAvaliacaoResponse>(`${this.apiUrl}/avaliacoes/convites`, payload)
+      .post<ConviteAvaliacaoResponse>(
+        `${this.apiUrl}/avaliacoes/convites`,
+        payload
+      )
       .pipe(catchError(this.handleError));
   }
 
@@ -486,19 +559,31 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  salvarAvaliacaoPorToken(token: string, dto: AvaliacaoSalvarDTO): Observable<{ mensagem: string }> {
+  salvarAvaliacaoPorToken(
+    token: string,
+    dto: AvaliacaoSalvarDTO
+  ): Observable<{ mensagem: string }> {
     return this.http
-      .post<{ mensagem: string }>(`${this.apiUrl}/avaliacoes/form/${token}`, dto)
+      .post<{ mensagem: string }>(
+        `${this.apiUrl}/avaliacoes/form/${token}`,
+        dto
+      )
       .pipe(catchError(this.handleError));
   }
 
-  listarProjetosComPdf(): Observable<Array<{ id: number; titulo: string; has_pdf: boolean }>> {
+  listarProjetosComPdf(): Observable<
+    Array<{ id: number; titulo: string; has_pdf: boolean }>
+  > {
     return this.http.get<any>(this.apiUrlProjetos).pipe(
       map((res) =>
         this.extractProjetos(res).map((p: any) => ({
           id: p.id_projeto ?? p.id,
           titulo: p.titulo_projeto || p.nome || 'Projeto',
-          has_pdf: !!(p.has_mon_final_pdf || p.has_mon_parcial_pdf || p.has_ideia_inicial_pdf),
+          has_pdf: !!(
+            p.has_mon_final_pdf ||
+            p.has_mon_parcial_pdf ||
+            p.has_ideia_inicial_pdf
+          ),
         }))
       ),
       catchError(this.handleError)
@@ -572,7 +657,10 @@ export class ProjetoService {
 
   cancelarProjeto(idProjeto: number) {
     return this.http
-      .put<{ mensagem: string }>(`${this.apiUrlProjetos}${idProjeto}/cancelar`, {})
+      .put<{ mensagem: string }>(
+        `${this.apiUrlProjetos}${idProjeto}/cancelar`,
+        {}
+      )
       .pipe(catchError(this.handleError));
   }
 }
