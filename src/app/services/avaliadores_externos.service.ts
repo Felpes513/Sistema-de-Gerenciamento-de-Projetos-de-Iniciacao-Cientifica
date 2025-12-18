@@ -8,14 +8,19 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { AvaliadorExterno } from '@interfaces/avaliador_externo';
+import { EnvioProjeto } from '@interfaces/avaliador_externo';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AvaliadoresExternosService {
   private readonly apiUrl = environment.apiBaseUrl;
+
   private readonly apiUrlAvaliadoresExternos = `${this.apiUrl}/avaliadores-externos`;
   private readonly apiUrlProjetos = `${this.apiUrl}/projetos`;
+
+  // ✅ NOVO
+  private readonly apiUrlEnvios = `${this.apiUrl}/envios`;
 
   constructor(private http: HttpClient) {}
 
@@ -26,9 +31,7 @@ export class AvaliadoresExternosService {
       localStorage.getItem('auth_token') ||
       localStorage.getItem('token_secretaria');
 
-    if (!token) {
-      return new HttpHeaders();
-    }
+    if (!token) return new HttpHeaders();
 
     return new HttpHeaders({
       Authorization: `Bearer ${token}`,
@@ -42,21 +45,17 @@ export class AvaliadoresExternosService {
 
   criarAvaliador(a: AvaliadorExterno): Observable<{ id_avaliador: number }> {
     return this.http
-      .post<{ id_avaliador: number }>(
-        this.apiUrlAvaliadoresExternos,
-        a,
-        { headers: this.getAuthHeaders() }
-      )
+      .post<{ id_avaliador: number }>(this.apiUrlAvaliadoresExternos, a, {
+        headers: this.getAuthHeaders(),
+      })
       .pipe(catchError((error) => this.handleError(error)));
   }
 
   atualizarAvaliador(id: number, a: AvaliadorExterno): Observable<void> {
     return this.http
-      .put<void>(
-        `${this.apiUrlAvaliadoresExternos}/${id}`,
-        a,
-        { headers: this.getAuthHeaders() }
-      )
+      .put<void>(`${this.apiUrlAvaliadoresExternos}/${id}`, a, {
+        headers: this.getAuthHeaders(),
+      })
       .pipe(catchError((error) => this.handleError(error)));
   }
 
@@ -93,11 +92,26 @@ export class AvaliadoresExternosService {
     const body = { destinatarios, mensagem, assunto };
 
     return this.http
-      .post<{ mensagem: string }>(
-        `${this.apiUrlProjetos}/${idProjeto}/enviar`,
-        body,
-        { headers: this.getAuthHeaders() }
-      )
+      .post<{ mensagem: string }>(`${this.apiUrlProjetos}/${idProjeto}/enviar`, body, {
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(catchError((error) => this.handleError(error)));
+  }
+
+
+  listarEnvios(): Observable<EnvioProjeto[]> {
+    return this.http
+      .get<EnvioProjeto[]>(this.apiUrlEnvios, {
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(catchError((error) => this.handleError(error)));
+  }
+
+  obterEnvioPorId(idEnvio: number): Observable<EnvioProjeto> {
+    return this.http
+      .get<EnvioProjeto>(`${this.apiUrlEnvios}/${idEnvio}`, {
+        headers: this.getAuthHeaders(),
+      })
       .pipe(catchError((error) => this.handleError(error)));
   }
 }

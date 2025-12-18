@@ -1,5 +1,10 @@
 <div class="modal-backdrop" (click)="fechar()"></div>
-<div class="modal-card" role="dialog" aria-modal="true">
+<div
+  class="modal-card"
+  [class.compact]="carregando || !!sucesso"
+  role="dialog"
+  aria-modal="true"
+>
   <header>
     <h3>Enviar projeto (.pdf) aos avaliadores</h3>
     <button class="close" (click)="fechar()" aria-label="Fechar">×</button>
@@ -65,7 +70,12 @@
 
   <footer>
     <button class="ghost" (click)="fechar()">Cancelar</button>
-    <button class="primary" [disabled]="!podeEnviar" (click)="enviar()">
+    <button
+      class="primary"
+      *ngIf="!carregando"
+      [disabled]="!podeEnviar"
+      (click)="enviar()"
+    >
       Enviar
     </button>
   </footer>

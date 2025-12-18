@@ -4,8 +4,9 @@
   <div class="editor-grid">
     <div class="col-form">
       <form class="form-container" (ngSubmit)="salvarProjeto()" *ngIf="projeto">
-
-        <label for="codProjeto"><i class="fas fa-hashtag"></i> Código do Projeto</label>
+        <label for="codProjeto"
+          ><i class="fas fa-hashtag"></i> Código do Projeto</label
+        >
         <input
           id="codProjeto"
           type="text"
@@ -15,7 +16,9 @@
           [disabled]="isReadOnly"
         />
 
-        <label for="titulo"><i class="fas fa-book"></i> Título do Projeto</label>
+        <label for="titulo"
+          ><i class="fas fa-book"></i> Título do Projeto</label
+        >
         <input
           id="titulo"
           type="text"
@@ -25,7 +28,9 @@
           [disabled]="isReadOnly"
         />
 
-        <label for="resumo"><i class="fas fa-align-left"></i> Resumo do Projeto</label>
+        <label for="resumo"
+          ><i class="fas fa-align-left"></i> Resumo do Projeto</label
+        >
         <textarea
           id="resumo"
           [(ngModel)]="projeto.resumo"
@@ -34,7 +39,9 @@
           [disabled]="isReadOnly"
         ></textarea>
 
-        <label for="buscaOrientador"><i class="fas fa-search"></i> Buscar Orientador</label>
+        <label for="buscaOrientador"
+          ><i class="fas fa-search"></i> Buscar Orientador</label
+        >
         <input
           id="buscaOrientador"
           type="text"
@@ -45,7 +52,9 @@
           [disabled]="isReadOnly"
         />
 
-        <label for="selectOrientador"><i class="fas fa-user-tie"></i> Selecionar Orientador</label>
+        <label for="selectOrientador"
+          ><i class="fas fa-user-tie"></i> Selecionar Orientador</label
+        >
         <select
           id="selectOrientador"
           [(ngModel)]="orientadorSelecionadoId"
@@ -59,11 +68,13 @@
             *ngFor="let orientador of orientadoresFiltrados"
             [value]="orientador.id"
           >
-            {{ orientador.nome_completo }}
+            {{ formatarNomeCompleto(orientador.nome_completo) }}
           </option>
         </select>
 
-        <label for="email_orientador"><i class="fas fa-envelope"></i> E-mail do Orientador</label>
+        <label for="email_orientador"
+          ><i class="fas fa-envelope"></i> E-mail do Orientador</label
+        >
         <input
           id="email_orientador"
           type="email"
@@ -93,7 +104,8 @@
         <!-- DOCX inicial (apenas no cadastro / não aparece em read-only) -->
         <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">
           <label for="docxIdeia">
-            <i class="fas fa-file-word"></i> Documento inicial (.docx) - Ideia do Projeto
+            <i class="fas fa-file-word"></i> Documento inicial (.docx) - Ideia
+            do Projeto
           </label>
           <div class="upload-controls">
             <input
@@ -106,14 +118,16 @@
             />
           </div>
           <small class="hint">
-            Obrigatório no cadastro. Será armazenado como versão editável da ideia inicial.
+            Obrigatório no cadastro. Será armazenado como versão editável da
+            ideia inicial.
           </small>
         </div>
 
         <!-- PDF inicial (apenas no cadastro / não aparece em read-only) -->
         <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">
           <label for="pdfIdeia">
-            <i class="fas fa-file-pdf"></i> Documento inicial (.pdf) - Ideia do Projeto
+            <i class="fas fa-file-pdf"></i> Documento inicial (.pdf) - Ideia do
+            Projeto
           </label>
           <div class="upload-controls">
             <input
@@ -126,7 +140,8 @@
             />
           </div>
           <small class="hint">
-            Também obrigatório no cadastro. Será armazenado como versão em PDF da ideia inicial.
+            Também obrigatório no cadastro. Será armazenado como versão em PDF
+            da ideia inicial.
           </small>
         </div>
 
@@ -134,7 +149,12 @@
         <div class="upload-section" *ngIf="!isReadOnly && projetoId > 0">
           <div
             class="card-header"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: var(--spacing-lg);
+            "
           >
             <div>
               <h3 style="margin: 0">
@@ -146,7 +166,8 @@
               </small>
               <div>
                 <small class="hint">
-                  Selecione os arquivos e clique em <strong>Atualizar Projeto</strong> para enviar.
+                  Selecione os arquivos e clique em
+                  <strong>Atualizar Projeto</strong> para enviar.
                 </small>
               </div>
             </div>
@@ -177,7 +198,8 @@
               />
             </div>
             <small class="hint" *ngIf="!arquivoDocx">
-              Selecione um arquivo .docx (o envio acontece ao clicar em Atualizar Projeto).
+              Selecione um arquivo .docx (o envio acontece ao clicar em
+              Atualizar Projeto).
             </small>
           </div>
 
@@ -196,12 +218,14 @@
               />
             </div>
             <small class="hint" *ngIf="!arquivoPdf">
-              Selecione um arquivo .pdf (o envio acontece ao clicar em Atualizar Projeto).
+              Selecione um arquivo .pdf (o envio acontece ao clicar em Atualizar
+              Projeto).
             </small>
           </div>
 
           <small class="hint" *ngIf="!podeAvancar">
-            Para avançar de etapa, envie o PDF desta fase (selecione e clique em Atualizar Projeto).
+            Para avançar de etapa, envie o PDF desta fase (selecione e clique em
+            Atualizar Projeto).
           </small>
         </div>
 
@@ -218,11 +242,15 @@
                 </div>
               </div>
 
-              <div class="status" [class.nao-enviado]="h.status === 'NAO_ENVIADO'">
+              <div
+                class="status"
+                [class.nao-enviado]="h.status === 'NAO_ENVIADO'"
+              >
                 <ng-container *ngIf="h.status === 'ENVIADO'; else naoEnviado">
                   {{
                     h.dataEnvio
-                      ? "Enviado em " + (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
+                      ? "Enviado em " +
+                        (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
                       : "Enviado"
                   }}
                 </ng-container>
@@ -267,7 +295,6 @@
             <i class="fas fa-arrow-left"></i> Voltar
           </button>
         </div>
-
       </form>
     </div>
 

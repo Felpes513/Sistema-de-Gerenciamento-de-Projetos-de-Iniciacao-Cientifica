@@ -30,7 +30,6 @@ h2 {
   background: var(--white);
 }
 
-/* botões de navegação do mês – similar à paginação */
 .mes-picker .btn-icon {
   border: 1px solid var(--gray-300);
   background: #f8fafc;
@@ -43,11 +42,9 @@ h2 {
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: background 0.15s ease, transform 0.05s ease,
-    box-shadow 0.15s ease;
+  transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
-/* garante que o ícone fique visível */
 .mes-picker .btn-icon mat-icon {
   font-size: 20px;
   color: var(--uscs-blue);
@@ -65,7 +62,6 @@ h2 {
   box-shadow: none;
 }
 
-/* grid/card */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -98,6 +94,23 @@ h2 {
   font-size: 1.05rem;
 }
 
+.card header h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.2;
+}
+
+.card header h3 mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .badge {
   background: var(--gray-900);
   color: var(--white);
@@ -110,12 +123,11 @@ h2 {
   background: var(--error);
 }
 
-/* tabela geral */
 table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-} /* fixed = colunas mais previsíveis */
+}
 
 thead th {
   text-align: center;
@@ -182,30 +194,43 @@ thead th.nowrap {
   font-weight: 400;
 }
 
-/* ===== Scroll horizontal “pegável” ===== */
+tr.row-link {
+  cursor: pointer;
+}
+
+tr.row-link:hover td {
+  background: var(--gray-50);
+}
+
+tr.row-link:focus {
+  outline: none;
+}
+
+tr.row-link:focus-visible td {
+  outline: 2px solid rgba(30, 64, 175, 0.35);
+  outline-offset: -2px;
+}
+
 .table-scroll {
   border: 1px solid var(--gray-200);
   border-radius: 12px;
   background: var(--white);
   box-shadow: inset 8px 0 8px -8px rgba(0, 0, 0, 0.06),
     inset -8px 0 8px -8px rgba(0, 0, 0, 0.06);
-  /* nada de overflow aqui; fica no .scroller */
-  padding-bottom: 0; /* sem padding para não “tapar” a barra */
+  padding-bottom: 0;
 }
 
 .table-scroll .scroller {
-  overflow-x: auto; /* barra fica aqui */
+  overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable; /* reserva espaço p/ barra */
+  scrollbar-gutter: stable;
 }
 
-/* força scroll em telas estreitas */
 .table-scroll .scroller table {
   min-width: 900px;
 }
 
-/* WebKit */
 .table-scroll .scroller::-webkit-scrollbar {
   height: 14px;
 }
@@ -224,7 +249,6 @@ thead th.nowrap {
   background: #b2bccb;
 }
 
-/* Firefox */
 .table-scroll .scroller {
   scrollbar-width: thin;
   scrollbar-color: #c7ced9 #eef2f7;
