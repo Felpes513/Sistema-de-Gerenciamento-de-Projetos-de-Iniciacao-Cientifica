@@ -10,7 +10,7 @@ import type { ProjetoCadastro } from '@shared/models/projeto';
 import type { Orientador } from '@shared/models/orientador';
 import type { Aluno } from '@shared/models/aluno';
 import type { Campus } from '@shared/models/configuracao';
-import { ListagemAlunosComponent } from '@sec/listagem-alunos/pages/listagem-alunos.component';
+import { ListagemAlunosComponent } from '@secretaria/listagem-alunos/pages/listagem-alunos.component';
 import type {
   EtapaDocumento,
   StatusEnvio,

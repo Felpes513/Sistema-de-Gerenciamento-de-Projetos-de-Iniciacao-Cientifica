@@ -20,15 +20,11 @@
     "paths": {
       "@core/*": ["app/core/*"],
       "@guards/*": ["app/core/guards/*"],
-
       "@services/*": ["app/core/data-access/*"],
-      "@interfaces/*": ["app/shared/models/interfaces/*"],
 
       "@shared/*": ["app/shared/*"],
       "@features/*": ["app/features/*"],
-
-      "@sec/*": ["app/features/secretaria/*"],
-      "@ori/*": ["app/features/orientador/*"],
+      "@interfaces/*": ["app/shared/models/*"],
 
       "@secretaria/*": ["app/features/secretaria/*"],
       "@orientador/*": ["app/features/orientador/*"],

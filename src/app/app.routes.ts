@@ -40,7 +40,7 @@ export const routes: Routes = [
       {
         path: 'configuracoes',
         loadComponent: () =>
-          import('@sec/configuracoes/pages/configuracoes.component').then(
+          import('@secretaria/configuracoes/pages/configuracoes.component').then(
             (m) => m.ConfiguracoesComponent
           ),
       },
@@ -49,7 +49,7 @@ export const routes: Routes = [
         path: 'avaliadores',
         loadComponent: () =>
           import(
-            '@sec/listagem-avaliadores/pages/listagem-avaliadores.component'
+            '@secretaria/listagem-avaliadores/pages/listagem-avaliadores.component'
           ).then((m) => m.ListagemAvaliadoresComponent),
       },
 
@@ -57,14 +57,14 @@ export const routes: Routes = [
         path: 'avaliadores/novo',
         loadComponent: () =>
           import(
-            '@sec/formulario-avaliador/pages/formulario-avaliador.component'
+            '@secretaria/formulario-avaliador/pages/formulario-avaliador.component'
           ).then((m) => m.FormularioAvaliadorComponent),
       },
 
       {
         path: 'notificacoes',
         loadComponent: () =>
-          import('@sec/notificacoes/pages/notificacoes.component').then(
+          import('@secretaria/notificacoes/pages/notificacoes.component').then(
             (m) => m.NotificacoesComponent
           ),
       },
@@ -101,14 +101,14 @@ export const routes: Routes = [
         path: 'email',
         loadComponent: () =>
           import(
-            '@sec/upload-certificados/pages/upload-certificados.component'
+            '@secretaria/upload-certificados/pages/upload-certificados.component'
           ).then((m) => m.UploadCertificadosComponent),
       },
 
       {
         path: 'relatorios',
         loadComponent: () =>
-          import('@sec/relatorios/pages/relatorios.component').then(
+          import('@secretaria/relatorios/pages/relatorios.component').then(
             (m) => m.RelatoriosComponent
           ),
       },
@@ -116,7 +116,7 @@ export const routes: Routes = [
       {
         path: 'cadastros',
         loadComponent: () =>
-          import('@sec/cadastros/pages/cadastros.component').then(
+          import('@secretaria/cadastros/pages/cadastros.component').then(
             (m) => m.CadastrosComponent
           ),
       },
@@ -158,7 +158,7 @@ export const routes: Routes = [
         canActivate: [projetoExistsGuard],
         loadComponent: () =>
           import(
-            '@ori/relatorios/pages/relatorio-form/relatorio-form.component'
+            '@orientador/relatorios/pages/relatorio-form/relatorio-form.component'
           ).then((m) => m.RelatorioFormComponent),
       },
     ],
