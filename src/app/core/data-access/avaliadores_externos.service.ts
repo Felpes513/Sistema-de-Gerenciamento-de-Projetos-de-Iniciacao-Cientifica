@@ -19,8 +19,7 @@ export class AvaliadoresExternosService {
   private readonly apiUrlAvaliadoresExternos = `${this.apiUrl}/avaliadores-externos`;
   private readonly apiUrlProjetos = `${this.apiUrl}/projetos`;
 
-  // ✅ NOVO
-  private readonly apiUrlEnvios = `${this.apiUrl}/envios`;
+  private readonly apiUrlEnvios = `${this.apiUrl}/envios/`;
 
   constructor(private http: HttpClient) {}
 
@@ -92,12 +91,15 @@ export class AvaliadoresExternosService {
     const body = { destinatarios, mensagem, assunto };
 
     return this.http
-      .post<{ mensagem: string }>(`${this.apiUrlProjetos}/${idProjeto}/enviar`, body, {
-        headers: this.getAuthHeaders(),
-      })
+      .post<{ mensagem: string }>(
+        `${this.apiUrlProjetos}/${idProjeto}/enviar`,
+        body,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      )
       .pipe(catchError((error) => this.handleError(error)));
   }
-
 
   listarEnvios(): Observable<EnvioProjeto[]> {
     return this.http
@@ -109,7 +111,7 @@ export class AvaliadoresExternosService {
 
   obterEnvioPorId(idEnvio: number): Observable<EnvioProjeto> {
     return this.http
-      .get<EnvioProjeto>(`${this.apiUrlEnvios}/${idEnvio}`, {
+      .get<EnvioProjeto>(`${this.apiUrlEnvios}${idEnvio}`, {
         headers: this.getAuthHeaders(),
       })
       .pipe(catchError((error) => this.handleError(error)));

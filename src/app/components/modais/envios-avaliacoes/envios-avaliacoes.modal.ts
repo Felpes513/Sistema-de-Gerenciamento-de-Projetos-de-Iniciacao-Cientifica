@@ -1,15 +1,26 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
+import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
+import { AvaliadorExterno } from '@shared/models/avaliador_externo';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
-import { EnvioProjeto } from '@shared/models/avaliador_externo';
+import { ProjetoService } from '@services/projeto.service';
 
 type EnvioView = {
   id: number;
   titulo: string;
-  assunto: string;
-  enviadoEm: string;
-  destinatarios: string[];
-  raw: EnvioProjeto;
+  avaliadorNome: string;
+  enviadoEm?: string;
+  raw?: any;
 };
 
 @Component({
@@ -20,29 +31,33 @@ type EnvioView = {
   styleUrls: ['./envios-avaliacoes.modal.css'],
 })
 export class EnviosAvaliacoesModalComponent implements OnInit {
-  @Output() closed = new EventEmitter<boolean>();
+  @Input() avaliador?: AvaliadorExterno;
+  @Output() closed = new EventEmitter<void>();
+
+  private enviosService = inject(AvaliadoresExternosService);
+  private projetoService = inject(ProjetoService);
+  private router = inject(Router);
 
   carregando = false;
   erro = '';
+
   envios: EnvioView[] = [];
-
   selecionadoId: number | null = null;
-  detalhe: EnvioProjeto | null = null;
-  carregandoDetalhe = false;
-  destinario: string[] = [];
 
-  constructor(private service: AvaliadoresExternosService) {}
+  carregandoDetalhe = false;
+  detalhe: any = null;
+
+  projetoIdSelecionado: number | null = null;
+
+  private byCod = new Map<string, number>();
+  private byTitleUnique = new Map<string, number>();
 
   ngOnInit(): void {
     this.carregar();
   }
 
-  fechar(reload = false): void {
-    this.closed.emit(reload);
-  }
-
-  normalizarDestinatarios(v: string | string[]) {
-    return Array.isArray(v) ? v : v ? v.split(',').map((s) => s.trim()) : [];
+  fechar(): void {
+    this.closed.emit();
   }
 
   carregar(): void {
@@ -51,101 +66,146 @@ export class EnviosAvaliacoesModalComponent implements OnInit {
     this.envios = [];
     this.selecionadoId = null;
     this.detalhe = null;
+    this.projetoIdSelecionado = null;
 
-    this.service.listarEnvios().subscribe({
-      next: (rows) => {
-        const lista = Array.isArray(rows) ? rows : [];
-        this.envios = lista
-          .map((r) => this.normalizeEnvio(r))
-          .filter((x) => x.id > 0);
-        this.carregando = false;
-      },
-      error: (err: any) => {
-        this.erro =
-          err?.error?.detail || err?.message || 'Falha ao listar envios';
-        this.carregando = false;
-      },
-    });
+    forkJoin({
+      envios: this.enviosService
+        .listarEnvios()
+        .pipe(catchError(() => of([] as any[]))),
+      projetos: this.projetoService
+        .listarProjetosRaw()
+        .pipe(catchError(() => of([] as any[]))),
+    })
+      .pipe(
+        map(({ envios, projetos }) => {
+          this.indexarProjetos(projetos || []);
+
+          const nomeAvaliador = this.norm(this.avaliador?.nome || '');
+
+          const lista = (envios || [])
+            .map((e: any) => {
+              const idEnvio = Number(e?.id_envio ?? e?.id ?? 0);
+              if (!idEnvio) return null;
+
+              const avaliadorNome = String(e?.avaliador_nome ?? '');
+              const titulo = String(e?.titulo_projeto ?? '—');
+              const enviadoEm = String(e?.data_envio ?? '');
+
+              if (nomeAvaliador && this.norm(avaliadorNome) !== nomeAvaliador)
+                return null;
+
+              const view: EnvioView = {
+                id: idEnvio,
+                titulo,
+                avaliadorNome,
+                enviadoEm,
+                raw: e,
+              };
+
+              return view;
+            })
+            .filter(Boolean) as EnvioView[];
+
+          lista.sort((a, b) =>
+            this.norm(String(b.enviadoEm || '')).localeCompare(
+              this.norm(String(a.enviadoEm || ''))
+            )
+          );
+
+          return lista;
+        })
+      )
+      .subscribe({
+        next: (rows) => {
+          this.envios = rows;
+          this.carregando = false;
+        },
+        error: (err: any) => {
+          this.erro = err?.message || 'Falha ao carregar envios';
+          this.carregando = false;
+        },
+      });
   }
 
-  async abrirDetalhe(item: EnvioView): Promise<void> {
-    this.selecionadoId = item.id;
-    this.detalhe = null;
+  abrirDetalhe(e: EnvioView): void {
+    this.selecionadoId = e.id;
     this.carregandoDetalhe = true;
+    this.detalhe = null;
+    this.projetoIdSelecionado = null;
 
-    this.service.obterEnvioPorId(item.id).subscribe({
-      next: (envio) => {
-        this.detalhe = envio || item.raw;
-        this.carregandoDetalhe = false;
-      },
-      error: () => {
-        this.detalhe = item.raw;
-        this.carregandoDetalhe = false;
-      },
-    });
+    // como a API atual já traz tudo em /envios, usamos o raw
+    const det = e.raw || e;
+    this.detalhe = det;
+
+    this.projetoIdSelecionado = this.resolverProjetoId(det);
+    this.carregandoDetalhe = false;
   }
 
-  private normalizeEnvio(r: EnvioProjeto): EnvioView {
-    const id = Number((r as any).id_envio ?? (r as any).id ?? 0);
+  abrirProjeto(): void {
+    if (!this.projetoIdSelecionado) return;
 
-    const titulo =
-      (r as any).titulo_projeto ||
-      (r as any).projeto_titulo ||
-      (r as any).titulo ||
-      '—';
-
-    const assunto = ((r as any).assunto ?? '')?.toString().trim() || '—';
-
-    const enviadoEm =
-      (r as any).enviado_em ||
-      (r as any).data_envio ||
-      (r as any).created_at ||
-      '';
-
-    const destinatarios = this.normalizeDestinatarios((r as any).destinatarios);
-
-    return {
-      id,
-      titulo,
-      assunto,
-      enviadoEm,
-      destinatarios,
-      raw: r,
-    };
+    this.router.navigate([
+      '/secretaria/projetos/editar',
+      this.projetoIdSelecionado,
+    ]);
   }
 
-  private normalizeDestinatarios(v: any): string[] {
-    if (!v) return [];
+  dataBr(v?: string): string {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(
+      d.getHours()
+    )}:${pad(d.getMinutes())}`;
+  }
 
-    if (Array.isArray(v)) {
-      return v.map((x) => String(x).trim()).filter(Boolean);
-    }
+  private norm(s: any): string {
+    return String(s ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
 
-    if (typeof v === 'string') {
-      const s = v.trim();
-      if (
-        (s.startsWith('[') && s.endsWith(']')) ||
-        (s.startsWith('{') && s.endsWith('}'))
-      ) {
-        try {
-          const parsed = JSON.parse(s);
-          if (Array.isArray(parsed))
-            return parsed.map((x) => String(x).trim()).filter(Boolean);
-        } catch {}
+  private indexarProjetos(projetos: any[]): void {
+    this.byCod.clear();
+    this.byTitleUnique.clear();
+
+    const titleCount = new Map<string, { id: number; count: number }>();
+
+    for (const p of projetos || []) {
+      const id = Number(p?.id_projeto ?? p?.id);
+      if (!id) continue;
+
+      const cod = this.norm(p?.cod_projeto);
+      const titulo = this.norm(p?.titulo_projeto || p?.nomeProjeto || p?.nome);
+
+      if (cod) this.byCod.set(cod, id);
+
+      if (titulo) {
+        const cur = titleCount.get(titulo);
+        if (!cur) titleCount.set(titulo, { id, count: 1 });
+        else titleCount.set(titulo, { id: cur.id, count: cur.count + 1 });
       }
-      return s
-        .split(',')
-        .map((x) => x.trim())
-        .filter(Boolean);
     }
 
-    return [];
+    for (const [titulo, info] of titleCount.entries()) {
+      if (info.count === 1) this.byTitleUnique.set(titulo, info.id);
+    }
   }
 
-  dataBr(iso?: string | null): string {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return String(iso);
-    return d.toLocaleString('pt-BR');
+  private resolverProjetoId(det: any): number | null {
+    const direct = Number(det?.id_projeto ?? det?.projeto_id ?? 0);
+    if (direct) return direct;
+
+    const cod = this.norm(det?.cod_projeto ?? det?.codigo_projeto ?? '');
+    if (cod && this.byCod.has(cod)) return this.byCod.get(cod)!;
+
+    const titulo = this.norm(det?.titulo_projeto ?? det?.titulo ?? '');
+    if (titulo && this.byTitleUnique.has(titulo))
+      return this.byTitleUnique.get(titulo)!;
+
+    return null;
   }
 }

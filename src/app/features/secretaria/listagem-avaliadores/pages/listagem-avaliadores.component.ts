@@ -1,5 +1,3 @@
-// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\listagem-avaliadores\listagem-avaliadores.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -13,11 +11,17 @@ import { AvaliadorExterno } from '@shared/models/avaliador_externo';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 import { EnviarAvaliacoesModalComponent } from '../../../../components/modais/enviar-avaliacoes/enviar-avaliacoes.modal';
 import { DialogService } from '@services/dialog.service';
+import { EnviosAvaliacoesModalComponent } from '../../../../components/modais/envios-avaliacoes/envios-avaliacoes.modal';
 
 @Component({
   selector: 'app-listagem-avaliadores',
   standalone: true,
-  imports: [CommonModule, RouterModule, EnviarAvaliacoesModalComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    EnviarAvaliacoesModalComponent,
+    EnviosAvaliacoesModalComponent,
+  ],
   templateUrl: './listagem-avaliadores.component.html',
   styleUrls: ['./listagem-avaliadores.component.css'],
 })
@@ -31,6 +35,10 @@ export class ListagemAvaliadoresComponent implements OnInit {
   icPlus = faPlus;
   icEdit = faEdit;
   icTrash = faTrash;
+
+  selectedAvaliador: AvaliadorExterno | null = null;
+  showEnviosModal = false;
+  avaliadorSelecionado: AvaliadorExterno | null = null;
 
   constructor(
     private service: AvaliadoresExternosService,
@@ -50,7 +58,6 @@ export class ListagemAvaliadoresComponent implements OnInit {
       next: (lista: AvaliadorExterno[]) => {
         this.avaliadores = (lista || []).map((a: AvaliadorExterno) => ({
           ...a,
-          // garante compatibilidade com possíveis campos diferentes do back
           link_lattes: (a as any).link_lattes ?? (a as any).lattes_link ?? '',
         }));
         this.carregando = false;
@@ -75,6 +82,16 @@ export class ListagemAvaliadoresComponent implements OnInit {
     this.router.navigate(['/secretaria/avaliadores/novo'], {
       state: { avaliador: a },
     });
+  }
+
+  abrirEnvios(a: AvaliadorExterno): void {
+    this.selectedAvaliador = a;
+    this.showEnviosModal = true;
+  }
+
+  onEnviosModalClosed(): void {
+    this.showEnviosModal = false;
+    this.selectedAvaliador = null;
   }
 
   async excluir(id?: number): Promise<void> {

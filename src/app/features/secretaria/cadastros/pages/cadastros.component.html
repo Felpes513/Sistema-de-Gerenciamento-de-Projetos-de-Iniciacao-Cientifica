@@ -100,14 +100,14 @@
           <button
             class="btn btn-approve"
             (click)="aprovar(a.id)"
-            [disabled]="a.status === 'APROVADO' || a.status === 'REPROVADO'"
+            [disabled]="a.status === 'APROVADO'"
           >
             Aprovar
           </button>
           <button
             class="btn btn-reject"
             (click)="reprovar(a.id)"
-            [disabled]="a.status === 'APROVADO' || a.status === 'REPROVADO'"
+            [disabled]="a.status === 'REPROVADO'"
           >
             Reprovar
           </button>
@@ -123,7 +123,6 @@
     </tbody>
   </table>
 
-  <!-- ORIENTADORES -->
   <table
     class="table"
     *ngIf="!carregando && aba === 'APROVACoes' && tipo === 'ORIENTADORES'"
@@ -173,14 +172,15 @@
           <button
             class="btn btn-approve"
             (click)="aprovar(o.id)"
-            [disabled]="o.status === 'APROVADO' || o.status === 'REPROVADO'"
+            [disabled]="o.status === 'APROVADO'"
           >
             Aprovar
           </button>
+
           <button
             class="btn btn-reject"
             (click)="reprovar(o.id)"
-            [disabled]="o.status === 'APROVADO' || o.status === 'REPROVADO'"
+            [disabled]="o.status === 'REPROVADO'"
           >
             Reprovar
           </button>
@@ -189,7 +189,6 @@
     </tbody>
   </table>
 
-  <!-- INADIMPLENTES -->
   <ng-container *ngIf="!carregando && aba === 'INADIMPLENTES'">
     <h3 class="inad-section-title">Alunos</h3>
     <table class="table inad-table">

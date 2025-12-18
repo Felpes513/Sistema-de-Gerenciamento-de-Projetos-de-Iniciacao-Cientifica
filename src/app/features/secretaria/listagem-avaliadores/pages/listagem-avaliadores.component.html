@@ -35,12 +35,21 @@
         </td>
         <td class="actions" data-label="Ações:">
           <button
+            class="btn btn-info btn-sm"
+            (click)="abrirEnvios(a)"
+            title="Ver envios"
+          >
+            <i class="fa-solid fa-inbox"></i>
+          </button>
+
+          <button
             class="btn btn-warning btn-sm"
             (click)="editar(a)"
             title="Editar"
           >
             <i class="fa-solid fa-edit"></i>
           </button>
+
           <button
             class="btn btn-danger btn-sm"
             (click)="excluir(a.id)"
@@ -59,3 +68,9 @@
   (closed)="onModalClosed($event)"
 >
 </app-enviar-avaliacoes-modal>
+<app-envios-avaliacoes-modal
+  *ngIf="showEnviosModal && selectedAvaliador"
+  [avaliador]="selectedAvaliador"
+  (closed)="onEnviosModalClosed()"
+>
+</app-envios-avaliacoes-modal>

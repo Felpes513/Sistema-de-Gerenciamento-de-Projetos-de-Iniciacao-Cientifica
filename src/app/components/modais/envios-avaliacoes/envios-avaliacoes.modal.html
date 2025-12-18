@@ -25,11 +25,11 @@
               <thead>
                 <tr>
                   <th>Projeto</th>
-                  <th>Destinatários</th>
-                  <th>Assunto</th>
+                  <th>Avaliador</th>
                   <th>Enviado em</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr
                   *ngFor="let e of envios"
@@ -40,8 +40,7 @@
                   (keyup.enter)="abrirDetalhe(e)"
                 >
                   <td class="left">{{ e.titulo }}</td>
-                  <td class="nowrap">{{ e.destinatarios.length }}</td>
-                  <td class="left">{{ e.assunto }}</td>
+                  <td class="left">{{ e.avaliadorNome || "—" }}</td>
                   <td class="nowrap">{{ dataBr(e.enviadoEm) }}</td>
                 </tr>
               </tbody>
@@ -52,55 +51,47 @@
         <div class="detail">
           <div class="detail-head">
             <strong>Detalhes</strong>
+
+            <button
+              class="btn-mini"
+              (click)="abrirProjeto()"
+              [disabled]="!projetoIdSelecionado"
+              title="Abrir projeto no formulário"
+            >
+              Abrir projeto
+            </button>
           </div>
 
-          <div *ngIf="!selecionadoId" class="empty">
+          <div *ngIf="!selecionadoId" class="empty empty-center">
             Selecione um envio na lista.
           </div>
 
           <div *ngIf="carregandoDetalhe" class="hint">Carregando detalhes…</div>
 
           <div *ngIf="detalhe && !carregandoDetalhe" class="detail-body">
-            <div class="kv">
-              <span class="k">ID do envio</span>
-              <span class="v">{{ detalhe.id_envio || detalhe.id }}</span>
-            </div>
 
             <div class="kv">
               <span class="k">Projeto</span>
               <span class="v"
-                >{{ detalhe.titulo_projeto || detalhe.projeto_titulo ||
-                detalhe.titulo || "—" }}</span
+                >{{ detalhe.titulo_projeto || detalhe.titulo || "—" }}</span
               >
             </div>
 
             <div class="kv">
-              <span class="k">Assunto</span>
-              <span class="v">{{ detalhe.assunto || "—" }}</span>
+              <span class="k">Avaliador</span>
+              <span class="v">{{ detalhe.avaliador_nome || "—" }}</span>
             </div>
 
             <div class="kv">
               <span class="k">Enviado em</span>
               <span class="v"
-                >{{ dataBr(detalhe.enviado_em || detalhe.data_envio ||
+                >{{ dataBr(detalhe.data_envio || detalhe.enviado_em ||
                 detalhe.created_at) }}</span
               >
             </div>
 
-            <div class="kv block">
-              <span class="k">Mensagem</span>
-              <span class="v pre">{{ detalhe.mensagem || "—" }}</span>
-            </div>
-
-            <div class="kv block">
-              <span class="k">Destinatários</span>
-              <span class="v">
-                <ul class="emails">
-                  <li *ngFor="let d of (detalhe.destinatarios || []) as any">
-                    {{ d }}
-                  </li>
-                </ul>
-              </span>
+            <div *ngIf="!projetoIdSelecionado" class="empty empty-center">
+              Não consegui vincular este envio a um projeto automaticamente.
             </div>
           </div>
         </div>
