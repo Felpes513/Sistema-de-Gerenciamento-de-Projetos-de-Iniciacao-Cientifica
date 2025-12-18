@@ -57,7 +57,6 @@ Gera o bundle otimizado em `dist/` usando as configurações de produção do An
 ### Compose (recomendado)
 ```bash
 docker compose up --build
-# ou em background
 docker compose up -d --build
 ```
 Aplicação disponível em `http://localhost:8080`.
