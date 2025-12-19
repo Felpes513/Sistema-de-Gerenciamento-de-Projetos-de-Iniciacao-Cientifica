@@ -70,4 +70,14 @@ describe('NotificacoesComponent', () => {
     component.proxima();
     expect(service.getNotificacoesPaginado).toHaveBeenCalledTimes(1);
   });
+
+  it('should expose a flag when there are unread notifications', () => {
+    component.notificacoes = [
+      { id: 1, mensagem: 'Oi', data: '1/1/2024', hora: '10:00', tipo: 'Aviso', lida: false },
+    ] as any;
+    expect(component.novasNotificacoes).toBeTrue();
+
+    component.notificacoes[0].lida = true;
+    expect(component.novasNotificacoes).toBeFalse();
+  });
 });

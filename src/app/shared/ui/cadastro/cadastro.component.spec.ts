@@ -118,4 +118,18 @@ describe('RegisterComponent', () => {
   it('should start the wizard on the first step', () => {
     expect(component.step).toBe(1);
   });
+
+  it('should reset state when selecting a profile', () => {
+    component.step = 3;
+    component.pdfName = 'arquivo.pdf';
+    component.erro = 'Erro';
+    component.sucesso = 'Ok';
+
+    component.selecionarPerfil('orientador');
+
+    expect(component.step).toBe(1);
+    expect(component.pdfName).toBe('');
+    expect(component.erro).toBeNull();
+    expect(component.sucesso).toBeNull();
+  });
 });

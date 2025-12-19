@@ -114,4 +114,27 @@ describe('FormularioAvaliadorComponent', () => {
       })
     );
   });
+
+  it('should hydrate evaluator from history state', () => {
+    history.replaceState(
+      {
+        avaliador: {
+          id: 2,
+          nome: 'Ana',
+          email: 'ana@mail.com',
+          especialidade: 'Bio',
+          subespecialidade: 'Quim',
+          link_lattes: 'link',
+        },
+      },
+      ''
+    );
+
+    component.ngOnInit();
+
+    expect(component.edicao).toBeTrue();
+    expect(component.avaliador.nome).toBe('Ana');
+
+    history.replaceState({}, '');
+  });
 });

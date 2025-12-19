@@ -71,4 +71,9 @@ describe('RelatoriosComponent', () => {
     expect(service.baixarRelatorioAlunos).toHaveBeenCalled();
     expect(component.baixando).toBeFalse();
   });
+
+  it('should return placeholder when date is invalid', () => {
+    expect(component.dataBr('invalid-date')).toBe('—');
+    expect(component.dataBr()).toBe('—');
+  });
 });

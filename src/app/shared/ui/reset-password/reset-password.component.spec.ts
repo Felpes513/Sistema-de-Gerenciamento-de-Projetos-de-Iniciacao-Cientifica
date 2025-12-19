@@ -116,4 +116,14 @@ describe('ResetPasswordComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
+
+  it('should block password reset when token is missing', () => {
+    component.token = null;
+    component.novaSenha = '123456';
+    component.confirmacao = '123456';
+
+    component.salvarNovaSenha();
+
+    expect(component.erro).toBe('Token ausente ou inválido.');
+  });
 });

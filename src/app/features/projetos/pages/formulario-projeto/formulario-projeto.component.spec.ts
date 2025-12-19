@@ -173,4 +173,9 @@ describe('FormularioProjetoComponent', () => {
     expect(component['currentEtapaUpload']).toBe('FINAL');
     expect(component.podeAvancar).toBeFalse();
   });
+
+  it('should format orientador names using title case and roman numerals', () => {
+    const formatted = component.formatarNomeCompleto('joao da silva ii');
+    expect(formatted).toBe('Joao da Silva II');
+  });
 });

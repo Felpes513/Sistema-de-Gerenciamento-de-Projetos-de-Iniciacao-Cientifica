@@ -107,4 +107,13 @@ describe('ListagemAlunosComponent', () => {
 
     expect(component.selecionados.has(1)).toBeFalse();
   });
+
+  it('should disable checkbox when the selection limit is reached', () => {
+    component.modo = 'ORIENTADOR';
+    component.selecionados = new Set([1]);
+    component.limite = 1;
+    const inscricao: any = { id_aluno: 2, aluno: { nome: 'Aluno 2' } };
+
+    expect(component.disabledCheckbox(inscricao)).toBeTrue();
+  });
 });

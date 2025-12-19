@@ -85,4 +85,15 @@ describe('ListagemAvaliadoresComponent', () => {
 
     expect(service.listarAvaliadoresExternos).toHaveBeenCalledTimes(2);
   });
+
+  it('should open and close the envios modal', () => {
+    const avaliador: any = { id: 10, nome: 'Avaliador Teste' };
+    component.abrirEnvios(avaliador);
+    expect(component.showEnviosModal).toBeTrue();
+    expect(component.selectedAvaliador).toBe(avaliador);
+
+    component.onEnviosModalClosed();
+    expect(component.showEnviosModal).toBeFalse();
+    expect(component.selectedAvaliador).toBeNull();
+  });
 });

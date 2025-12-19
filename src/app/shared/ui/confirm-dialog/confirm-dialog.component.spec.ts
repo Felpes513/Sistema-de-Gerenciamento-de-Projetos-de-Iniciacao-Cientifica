@@ -42,4 +42,9 @@ describe('ConfirmDialogComponent', () => {
     component.onClose();
     expect(dialogRefSpy.close).toHaveBeenCalledWith(false);
   });
+
+  it('should expose the injected dialog data', () => {
+    expect(component.data.modo).toBe('confirm');
+    expect(component.data.titulo).toBe('Aviso');
+  });
 });

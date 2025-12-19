@@ -20,6 +20,7 @@ describe('AppComponent', () => {
         provideRouter([
           { path: '', component: HomeDummy },
           { path: 'home', component: HomeDummy },
+          { path: 'login', component: HomeDummy },
           { path: 'secretaria/dashboard', component: SecretariaDashboardDummy },
         ]),
       ],
@@ -62,6 +63,15 @@ describe('AppComponent', () => {
     await fixture.ngZone!.run(() =>
       router.navigateByUrl('/secretaria/dashboard')
     );
+    fixture.detectChanges();
+    expect(app.showFooter).toBeFalse();
+  });
+
+  it('should hide the footer on authentication routes', async () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+
+    await fixture.ngZone!.run(() => router.navigateByUrl('/login'));
     fixture.detectChanges();
     expect(app.showFooter).toBeFalse();
   });
