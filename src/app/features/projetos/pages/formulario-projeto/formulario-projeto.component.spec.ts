@@ -29,11 +29,10 @@ class ProjetoServiceStub {
     .createSpy('cadastrarProjetoCompleto')
     .and.returnValue(of({ id_projeto: 1 }));
 
-  atualizarProjeto = jasmine
-    .createSpy('atualizarProjeto')
-    .and.returnValue(of({}));
+  uploadDocumentosMonografia = jasmine
+    .createSpy('uploadDocumentosMonografia')
+    .and.returnValue(of([{ tipo: 'pdf', ok: true }]));
 
-  // Uploads usados no componente
   uploadMonografiaParcialDocx = jasmine
     .createSpy('uploadMonografiaParcialDocx')
     .and.returnValue(of({}));
@@ -107,7 +106,9 @@ describe('FormularioProjetoComponent', () => {
     const fixture = TestBed.createComponent(FormularioProjetoComponent);
     component = fixture.componentInstance;
     service = TestBed.inject(ProjetoService) as unknown as ProjetoServiceStub;
-    dialogService = TestBed.inject(DialogService) as unknown as DialogServiceStub;
+    dialogService = TestBed.inject(
+      DialogService
+    ) as unknown as DialogServiceStub;
     fixture.detectChanges(); // dispara ngOnInit
   });
 
@@ -140,19 +141,30 @@ describe('FormularioProjetoComponent', () => {
     expect(component['currentEtapaUpload']).toBe('PARCIAL');
   });
 
-  it('should send PARCIAL PDF using the proper service method', () => {
+  it('should send PARCIAL PDF using uploadDocumentosMonografia when editing', async () => {
+    // garantir que passa na validação do formulário
+    component.projeto.titulo_projeto = 'Titulo';
+    component.projeto.resumo = 'Resumo';
+    component.projeto.orientador_nome = 'Maria Souza';
+    component.orientadorSelecionadoId = 1;
+    component.projeto.id_campus = 1;
+
+    // modo edição + id do projeto (upload só roda no modo edição)
+    component.modoEdicao = true;
     component.projetoId = 123;
-    (component as any).currentEtapaUpload = 'PARCIAL';
+    component.currentEtapaUpload = 'PARCIAL';
+
     const fakePdf = new File(['pdf'], 'monografia_parcial.pdf', {
       type: 'application/pdf',
     });
     component.arquivoPdf = fakePdf;
 
-    component.enviarArquivo('pdf');
+    await component.salvarProjeto();
 
-    expect(service.uploadMonografiaParcialPdf).toHaveBeenCalledWith(
+    expect(service.uploadDocumentosMonografia).toHaveBeenCalledWith(
       123,
-      fakePdf
+      'PARCIAL',
+      { docx: undefined, pdf: fakePdf }
     );
   });
 
@@ -160,17 +172,26 @@ describe('FormularioProjetoComponent', () => {
     dialogService.confirm.and.returnValue(Promise.resolve(true));
 
     component.projetoId = 1;
-    // deixa o histórico indicando que PARCIAL já foi enviado
+    component.currentEtapaUpload = 'PARCIAL';
+
     component['historico'] = [
       { etapa: 'IDEIA', status: 'NAO_ENVIADO' },
-      { etapa: 'PARCIAL', status: 'ENVIADO' },
+      {
+        etapa: 'PARCIAL',
+        status: 'ENVIADO',
+        arquivos: { pdf: { nome: 'monografia_parcial.pdf' } },
+      },
       { etapa: 'FINAL', status: 'NAO_ENVIADO' },
     ];
-    (component as any).currentEtapaUpload = 'PARCIAL';
 
     await component.avancarEtapa();
 
-    expect(component['currentEtapaUpload']).toBe('FINAL');
+    expect(component.currentEtapaUpload).toBe('FINAL');
     expect(component.podeAvancar).toBeFalse();
+  });
+
+  it('should format orientador names using title case and roman numerals', () => {
+    const formatted = component.formatarNomeCompleto('joao da silva ii');
+    expect(formatted).toBe('Joao da Silva II');
   });
 });

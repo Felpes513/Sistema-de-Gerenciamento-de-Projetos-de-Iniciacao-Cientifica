@@ -109,4 +109,11 @@ describe('ListagemProjetosComponent', () => {
   it('should expose readonly mode when user lacks orientador role', () => {
     expect(component.readonlyMode).toBeTrue();
   });
+
+  it('should return trimmed student name previews', () => {
+    const nomes = component.getNomesAlunos({
+      nomesAlunos: ['maria da silva', 'JOAO de souza'],
+    } as any);
+    expect(nomes).toEqual(['Maria da', 'Joao de']);
+  });
 });

@@ -270,4 +270,16 @@ describe('ConfiguracoesComponent', () => {
     // termo vazio => sempre true
     expect(component.matchBolsa('', 'qualquer coisa')).toBeTrue();
   });
+
+  it('should validate secretaria fields before submission', () => {
+    component.sec = {
+      nomeCompleto: 'Secretaria Teste',
+      email: 'secretaria@teste.com',
+      cpf: '529.982.247-25',
+      senha: '123456',
+      confirmar: '123456',
+    };
+
+    expect(component.canSubmitSecretaria()).toBeTrue();
+  });
 });

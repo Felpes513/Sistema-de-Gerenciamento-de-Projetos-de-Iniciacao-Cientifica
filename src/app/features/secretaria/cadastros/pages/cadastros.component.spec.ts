@@ -76,4 +76,10 @@ describe('CadastrosComponent', () => {
     await component.reprovar(4);
     expect(service.reprovarOrientador).toHaveBeenCalledWith(4);
   });
+
+  it('should load inadimplentes when switching the tab', () => {
+    component.setAba('INADIMPLENTES');
+    expect(service.listarAlunosInadimplentes).toHaveBeenCalled();
+    expect(service.listarOrientadoresInadimplentes).toHaveBeenCalled();
+  });
 });

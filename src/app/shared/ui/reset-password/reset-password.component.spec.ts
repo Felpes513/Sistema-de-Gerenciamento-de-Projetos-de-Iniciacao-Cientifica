@@ -4,8 +4,6 @@ import { ResetPasswordComponent } from './reset-password.component';
 import { PasswordService } from '@services/password.service';
 import { ActivatedRoute, Router } from '@angular/router';
 
-/* ---------- STUBS ---------- */
-
 class PasswordServiceStub {
   forgotPassword = jasmine
     .createSpy('forgotPassword')
@@ -25,7 +23,6 @@ const activatedRouteStub: Partial<ActivatedRoute> = {
     data: { perfil: 'aluno' },
     queryParamMap: {
       get: (key: string) => {
-        // para esses testes não precisamos do token; pode ser null
         if (key === 'token') return null;
         if (key === 'perfil') return 'aluno';
         return null;
@@ -33,8 +30,6 @@ const activatedRouteStub: Partial<ActivatedRoute> = {
     } as any,
   } as any,
 };
-
-/* ---------- TESTES ---------- */
 
 describe('ResetPasswordComponent', () => {
   let component: ResetPasswordComponent;
@@ -76,7 +71,7 @@ describe('ResetPasswordComponent', () => {
   });
 
   it('should avoid calling API when email is empty', () => {
-    component.email = '   '; // vazio com espaços
+    component.email = '   ';
 
     component.enviar();
 
@@ -111,9 +106,22 @@ describe('ResetPasswordComponent', () => {
     });
   });
 
-  it('should go to login without perfil when irParaLogin is called', () => {
+  it('should go to login with perfil when irParaLogin is called', () => {
+    component.perfil = 'aluno';
     component.irParaLogin();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { perfil: 'aluno' },
+    });
+  });
+
+  it('should block password reset when token is missing', () => {
+    component.token = null;
+    component.novaSenha = '123456';
+    component.confirmacao = '123456';
+
+    component.salvarNovaSenha();
+
+    expect(component.erro).toBe('Token ausente ou inválido.');
   });
 });

@@ -94,4 +94,17 @@ describe('RelatorioFormComponent', () => {
     component.salvar();
     expect(service.confirmar).toHaveBeenCalled();
   });
+
+  it('should avoid saving when the form is read-only', () => {
+    component.readOnly = true;
+    component.form.patchValue({
+      referenciaMes: '2024-01',
+      resumo: 'Resumo válido',
+      ok: true,
+    });
+
+    component.salvar();
+
+    expect(service.confirmar).not.toHaveBeenCalled();
+  });
 });

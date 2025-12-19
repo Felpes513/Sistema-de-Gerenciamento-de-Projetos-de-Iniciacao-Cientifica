@@ -61,8 +61,6 @@ beforeAll(() => {
   });
 });
 
-/* ---------- TESTES ---------- */
-
 describe('SidenavSecretariaComponent', () => {
   let component: SidenavComponent;
   let auth: AuthServiceStub;
@@ -139,5 +137,9 @@ describe('SidenavSecretariaComponent', () => {
 
     expect(component.isMobile).toBeTrue();
     expect(component.isMenuOpen).toBeFalse();
+  });
+
+  it('should point to the secretaria help URL', () => {
+    expect(component.ajudaUrl).toContain('Bem-vindo-ao-SGPIC-Secretaria');
   });
 });

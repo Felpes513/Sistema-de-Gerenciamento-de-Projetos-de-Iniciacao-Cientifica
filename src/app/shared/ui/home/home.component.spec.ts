@@ -26,4 +26,10 @@ describe('HomeComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelectorAll('.access-btn').length).toBe(3);
   });
+
+  it('should default to showing the carousel on desktop', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    expect(component.exibirCarousel).toBeTrue();
+  });
 });

@@ -89,4 +89,10 @@ describe('LoginComponent', () => {
   it('should default to the aluno profile', () => {
     expect(component.perfil).toBe('aluno');
   });
+
+  it('should toggle the password visibility', () => {
+    expect(component.showPassword).toBeFalse();
+    component.togglePassword();
+    expect(component.showPassword).toBeTrue();
+  });
 });

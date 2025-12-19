@@ -92,4 +92,12 @@ describe('EnviarAvaliacoesModalComponent', () => {
 
     expect(component.erro).toContain('Selecione um projeto com PDF');
   });
+
+  it('should enable sending when there is a project and at least one email', () => {
+    component.projetoSelecionadoId = 1;
+    component.emailsSelecionados = new Set(['a@mail.com']);
+    component.carregando = false;
+
+    expect(component.podeEnviar).toBeTrue();
+  });
 });
