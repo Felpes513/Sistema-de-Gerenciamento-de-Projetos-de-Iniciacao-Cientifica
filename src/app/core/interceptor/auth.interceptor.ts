@@ -1,13 +1,22 @@
 import { inject } from '@angular/core';
 import {
+  HttpBackend,
   HttpClient,
   HttpErrorResponse,
+  HttpEvent,
+  HttpHandlerFn,
   HttpInterceptorFn,
   HttpRequest,
-  HttpBackend,
-  HttpHandlerFn,
 } from '@angular/common/http';
-import { catchError, switchMap, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  finalize,
+  map,
+  shareReplay,
+  switchMap,
+  throwError,
+} from 'rxjs';
 
 const REFRESH_URL = '/api/refresh-token';
 
@@ -21,10 +30,18 @@ function normalizePath(u: string): string {
   }
 }
 
+type RefreshResponse = {
+  access_token: string;
+  token_type?: string;
+};
+
+// ✅ 1 refresh por vez (tipado corretamente)
+let refreshInFlight$: Observable<string> | null = null;
+
 export const authInterceptor: HttpInterceptorFn = (
-  req: HttpRequest<any>,
+  req: HttpRequest<unknown>,
   next: HttpHandlerFn
-) => {
+): Observable<HttpEvent<unknown>> => {
   const backend = inject(HttpBackend);
   const rawHttp = new HttpClient(backend);
 
@@ -40,63 +57,55 @@ export const authInterceptor: HttpInterceptorFn = (
 
   const access = localStorage.getItem('access_token');
 
-  if (access && isApi && !isAuthEndpoint) {
-    console.debug('[AUTH-INT] Authorization anexado em', path);
-  }
-
   const authReq =
     access && isApi && !isAuthEndpoint
       ? req.clone({ setHeaders: { Authorization: `Bearer ${access}` } })
       : req;
 
   return next(authReq).pipe(
-    catchError((err: HttpErrorResponse) => {
-      if (err.status === 403) {
-        console.warn('[AUTH-INT] Acesso negado para', path);
-      }
+    catchError((err: unknown) => {
+      const httpErr = err as HttpErrorResponse;
 
-      if (err.status >= 500 || err.status === 0) {
-        console.error('[AUTH-INT] Erro de servidor ao acessar', path, err);
-      }
-
-      if (err.status !== 401 || isAuthEndpoint) {
-        return throwError(() => err);
+      if (httpErr.status !== 401 || isAuthEndpoint) {
+        return throwError(() => httpErr);
       }
 
       const refresh = localStorage.getItem('refresh_token');
       if (!refresh) {
-        console.debug('[AUTH-INT] 401 sem refresh_token → abort');
-        return throwError(() => err);
+        return throwError(() => httpErr);
       }
 
-      console.debug('[AUTH-INT] 401 em', path, '→ tentando refresh');
+      // ✅ se já tem refresh rodando, só espera ele
+      if (!refreshInFlight$) {
+        refreshInFlight$ = rawHttp
+          .post<RefreshResponse>(REFRESH_URL, { refresh_token: refresh })
+          .pipe(
+            map((res) => {
+              if (!res?.access_token) throw httpErr;
+              localStorage.setItem('access_token', res.access_token);
+              return res.access_token; // <- string
+            }),
+            shareReplay({ bufferSize: 1, refCount: false }),
+            finalize(() => {
+              refreshInFlight$ = null;
+            })
+          );
+      }
 
-      // refresh SEM Authorization
-      return rawHttp
-        .post<{ access_token: string; token_type: string }>(REFRESH_URL, {
-          refresh_token: refresh,
+      return refreshInFlight$.pipe(
+        switchMap((newAccess) => {
+          const retried = req.clone({
+            setHeaders: { Authorization: `Bearer ${newAccess}` },
+          });
+          return next(retried);
+        }),
+        catchError((refreshErr: unknown) => {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('role');
+          return throwError(() => refreshErr);
         })
-        .pipe(
-          switchMap((res) => {
-            if (!res?.access_token) {
-              console.debug('[AUTH-INT] refresh sem access_token');
-              throw err;
-            }
-            localStorage.setItem('access_token', res.access_token);
-            const retried = req.clone({
-              setHeaders: { Authorization: `Bearer ${res.access_token}` },
-            });
-            console.debug('[AUTH-INT] refresh OK, re-tentando', path);
-            return next(retried);
-          }),
-          catchError((refreshErr) => {
-            console.debug('[AUTH-INT] refresh falhou → limpando storage');
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('role');
-            return throwError(() => refreshErr);
-          })
-        );
+      );
     })
   );
 };

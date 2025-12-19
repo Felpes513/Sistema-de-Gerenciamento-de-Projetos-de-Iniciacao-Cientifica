@@ -1,0 +1,76 @@
+<div class="container avl">
+  <h2><i class="fa-solid fa-users"></i> Avaliadores Externos</h2>
+
+  <div class="avl-toolbar">
+    <div class="spacer"></div>
+    <a class="btn btn-primary" [routerLink]="['/secretaria/avaliadores/novo']">
+      <i class="fa-solid fa-plus"></i> Novo Avaliador
+    </a>
+    <button class="btn btn-primary" (click)="abrirModal()">
+      <i class="fa-solid fa-paper-plane"></i> Enviar avaliação
+    </button>
+  </div>
+  <table class="table table-striped avl-table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Especialidade</th>
+        <th>Subespecialidade</th>
+        <th>Lattes</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let a of avaliadores">
+        <td data-label="Nome:">{{ a.nome }}</td>
+        <td data-label="E-mail:">{{ a.email }}</td>
+        <td data-label="Especialidade:">{{ a.especialidade }}</td>
+        <td data-label="Subespecialidade:">{{ a.subespecialidade }}</td>
+        <td data-label="Lattes:">
+          <a [href]="a.link_lattes" target="_blank" *ngIf="a.link_lattes">
+            Ver Lattes
+          </a>
+          <span *ngIf="!a.link_lattes" class="text-muted">Não informado</span>
+        </td>
+        <td class="actions" data-label="Ações:">
+          <button
+            class="btn btn-info btn-sm"
+            (click)="abrirEnvios(a)"
+            title="Ver envios"
+          >
+            <i class="fa-solid fa-inbox"></i>
+          </button>
+
+          <button
+            class="btn btn-warning btn-sm"
+            (click)="editar(a)"
+            title="Editar"
+          >
+            <i class="fa-solid fa-edit"></i>
+          </button>
+
+          <button
+            class="btn btn-danger btn-sm"
+            (click)="excluir(a.id)"
+            title="Excluir"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<app-enviar-avaliacoes-modal
+  *ngIf="showModal"
+  [avaliadores]="avaliadores"
+  (closed)="onModalClosed($event)"
+>
+</app-enviar-avaliacoes-modal>
+<app-envios-avaliacoes-modal
+  *ngIf="showEnviosModal && selectedAvaliador"
+  [avaliador]="selectedAvaliador"
+  (closed)="onEnviosModalClosed()"
+>
+</app-envios-avaliacoes-modal>

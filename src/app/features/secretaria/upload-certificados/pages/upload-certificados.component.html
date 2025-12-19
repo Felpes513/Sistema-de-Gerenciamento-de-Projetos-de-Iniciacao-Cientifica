@@ -1,0 +1,68 @@
+<!-- src/app/features/secretaria/upload-certificados/upload-certificados.component.html -->
+<div class="upload-container">
+  <!-- Mensagem para o usuário -->
+  <div class="upload-instruction">
+    <p>
+      Por favor, anexe um arquivo Excel contendo os dados necessários para a
+      emissão do certificado.
+    </p>
+    <p>
+      O arquivo deve estar no formato <strong>.xlsx</strong> e conter as colunas
+      obrigatórias conforme o modelo disponibilizado.
+    </p>
+    <a
+      class="download-template"
+      href="/api/exportar-exemplo-excel"
+      download
+      target="_blank"
+      rel="noopener"
+      (click)="baixarModeloExcel($event)"
+    >
+      📄 Baixar modelo de Excel
+    </a>
+  </div>
+
+  <div
+    class="upload-area"
+    *ngIf="!fileName"
+    (dragover)="onDragOver($event)"
+    (drop)="onDrop($event)"
+  >
+    <label>
+      <mat-icon>cloud_upload</mat-icon>
+      <span>Clique ou arraste um arquivo aqui</span>
+      <input type="file" hidden (change)="onFileSelected($event)" />
+    </label>
+  </div>
+
+  <div *ngIf="fileName" class="file-info">
+    <span
+      >Arquivo: <strong>{{ fileName }}</strong></span
+    >
+    <button
+      mat-icon-button
+      color="warn"
+      (click)="removeFile()"
+      aria-label="Remover"
+      type="button"
+    >
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <button
+    mat-raised-button
+    color="primary"
+    class="submit-btn"
+    (click)="onSubmit()"
+    [disabled]="loading || !file"
+    type="button"
+  >
+    <ng-container *ngIf="!loading; else loadingTpl">
+      <span>Enviar arquivo</span>
+    </ng-container>
+    <ng-template #loadingTpl>
+      <span>Enviando...</span>
+    </ng-template>
+  </button>
+</div>

@@ -1,0 +1,105 @@
+<div class="modal-backdrop" (click)="fechar()"></div>
+
+<div class="modal-card" role="dialog" aria-modal="true">
+  <header>
+    <h3>Envios de projetos para avaliadores</h3>
+    <button class="close" (click)="fechar()" aria-label="Fechar">×</button>
+  </header>
+
+  <section class="body">
+    <div *ngIf="carregando" class="hint">Carregando…</div>
+    <div *ngIf="erro" class="erro">{{ erro }}</div>
+
+    <ng-container *ngIf="!carregando && !erro">
+      <div *ngIf="!envios.length" class="empty">Nenhum envio encontrado.</div>
+
+      <div class="grid" *ngIf="envios.length">
+        <div class="list">
+          <div class="list-head">
+            <span class="muted">Clique em um envio para ver detalhes</span>
+            <button class="btn-mini" (click)="carregar()">Recarregar</button>
+          </div>
+
+          <div class="table-wrap" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Projeto</th>
+                  <th>Avaliador</th>
+                  <th>Enviado em</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr
+                  *ngFor="let e of envios"
+                  class="row-link"
+                  [class.active]="e.id === selecionadoId"
+                  (click)="abrirDetalhe(e)"
+                  tabindex="0"
+                  (keyup.enter)="abrirDetalhe(e)"
+                >
+                  <td class="left">{{ e.titulo }}</td>
+                  <td class="left">{{ e.avaliadorNome || "—" }}</td>
+                  <td class="nowrap">{{ dataBr(e.enviadoEm) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="detail">
+          <div class="detail-head">
+            <strong>Detalhes</strong>
+
+            <button
+              class="btn-mini"
+              (click)="abrirProjeto()"
+              [disabled]="!projetoIdSelecionado"
+              title="Abrir projeto no formulário"
+            >
+              Abrir projeto
+            </button>
+          </div>
+
+          <div *ngIf="!selecionadoId" class="empty empty-center">
+            Selecione um envio na lista.
+          </div>
+
+          <div *ngIf="carregandoDetalhe" class="hint">Carregando detalhes…</div>
+
+          <div *ngIf="detalhe && !carregandoDetalhe" class="detail-body">
+
+            <div class="kv">
+              <span class="k">Projeto</span>
+              <span class="v"
+                >{{ detalhe.titulo_projeto || detalhe.titulo || "—" }}</span
+              >
+            </div>
+
+            <div class="kv">
+              <span class="k">Avaliador</span>
+              <span class="v">{{ detalhe.avaliador_nome || "—" }}</span>
+            </div>
+
+            <div class="kv">
+              <span class="k">Enviado em</span>
+              <span class="v"
+                >{{ dataBr(detalhe.data_envio || detalhe.enviado_em ||
+                detalhe.created_at) }}</span
+              >
+            </div>
+
+            <div *ngIf="!projetoIdSelecionado" class="empty empty-center">
+              Não consegui vincular este envio a um projeto automaticamente.
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </section>
+
+  <footer>
+    <button class="ghost" (click)="fechar()">Fechar</button>
+  </footer>
+</div>

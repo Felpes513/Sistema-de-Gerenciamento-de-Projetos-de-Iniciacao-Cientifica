@@ -23,6 +23,8 @@ export const environment = {
 
   ssoRedirectUrl: resolveUrl('/api/sso/redirect?provider=empresa'),
 
+  exportAlunosBaseUrl: resolveUrl('/api/exportar-exemplo-excel'),
+
   emailApiBaseUrl: resolveUrl('/api/email-service'),
 
   enableErrorLogging: false,

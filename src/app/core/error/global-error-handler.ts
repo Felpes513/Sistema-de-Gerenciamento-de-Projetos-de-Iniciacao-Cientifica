@@ -28,7 +28,6 @@ export class GlobalErrorHandler implements ErrorHandler {
         }),
         keepalive: true,
       }).catch(() => {
-        // Evita que falhas ao notificar o coletor interrompam o fluxo da aplicação.
       });
     }
   }

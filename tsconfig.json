@@ -18,18 +18,18 @@
 
     "baseUrl": "src",
     "paths": {
-      "@interfaces/*": ["app/shared/interfaces/*"],
-      "@services/*": ["app/services/*"],
       "@core/*": ["app/core/*"],
       "@guards/*": ["app/core/guards/*"],
-      "@auth/*": ["app/auth/*"],
-      "@aluno/*": ["app/aluno/*"],
-      "@orientador/*": ["app/features/orientador/*"],
-      "@secretaria/*": ["app/features/secretaria/*"],
-      "@avaliador-externo/*": ["app/features/avaliador-externo/*"],
+      "@services/*": ["app/core/data-access/*"],
+
       "@shared/*": ["app/shared/*"],
+      "@features/*": ["app/features/*"],
+      "@interfaces/*": ["app/shared/models/*"],
+
+      "@secretaria/*": ["app/features/secretaria/*"],
+      "@orientador/*": ["app/features/orientador/*"],
+
       "@environments/*": ["environments/*"]
-      
     }
   },
   "angularCompilerOptions": {
