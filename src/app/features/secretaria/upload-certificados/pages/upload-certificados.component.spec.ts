@@ -4,16 +4,21 @@ import { of } from 'rxjs';
 import { UploadCertificadosComponent } from './upload-certificados.component';
 import { UploadService } from '@services/upload.service';
 import { MatDialog } from '@angular/material/dialog';
+import { RelatorioService } from '@services/relatorio.service';
 
 class UploadServiceStub {
-  enviarArquivo = jasmine
-    .createSpy('enviarArquivo')
-    .and.returnValue(
-      of({
-        message: 'ok',
-        data: { quantidade_enviada: 1 },
-      } as any)
-    );
+  enviarArquivo = jasmine.createSpy('enviarArquivo').and.returnValue(
+    of({
+      message: 'ok',
+      data: { quantidade_enviada: 1 },
+    } as any)
+  );
+}
+
+class RelatorioServiceStub {
+  baixarModeloExcelImportacaoAlunos = jasmine
+    .createSpy('baixarModeloExcelImportacaoAlunos')
+    .and.returnValue(of({} as any));
 }
 
 class MatDialogStub {
@@ -33,6 +38,7 @@ describe('UploadCertificadosComponent', () => {
       imports: [UploadCertificadosComponent],
       providers: [
         { provide: UploadService, useClass: UploadServiceStub },
+        { provide: RelatorioService, useClass: RelatorioServiceStub },
         { provide: MatDialog, useClass: MatDialogStub },
       ],
     }).compileComponents();

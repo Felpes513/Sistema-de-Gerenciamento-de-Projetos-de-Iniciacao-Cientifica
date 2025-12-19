@@ -61,8 +61,6 @@ beforeAll(() => {
   });
 });
 
-/* ---------- TESTES ---------- */
-
 describe('SidenavSecretariaComponent', () => {
   let component: SidenavComponent;
   let auth: AuthServiceStub;
