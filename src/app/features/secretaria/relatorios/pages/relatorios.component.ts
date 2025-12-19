@@ -112,8 +112,8 @@ export class RelatoriosComponent implements OnInit {
     }
 
     const [yStr, mStr] = this.mes.split('-');
-    let year = Number(yStr);
-    let monthIndex = Number(mStr) - 1;
+    const year = Number(yStr);
+    const monthIndex = Number(mStr) - 1;
 
     if (Number.isNaN(year) || Number.isNaN(monthIndex)) {
       this.mes = this.toYYYYMM(new Date());
@@ -125,28 +125,88 @@ export class RelatoriosComponent implements OnInit {
     this.carregarMensal();
   }
 
+  private extrairFilename(
+    contentDisposition: string,
+    fallback: string
+  ): string {
+    const cd = contentDisposition || '';
+    const m = /filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i.exec(cd);
+    const raw = m?.[1] || m?.[2];
+
+    if (!raw) return fallback;
+
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
+
+  private isXlsxZip(buffer: ArrayBuffer): boolean {
+    // XLSX é ZIP: começa com "PK" (0x50 0x4B)
+    const bytes = new Uint8Array(buffer);
+    return bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b;
+  }
+
   async baixarAlunosXlsx() {
     this.baixando = true;
-    this.relatorioService.baixarRelatorioAlunos().subscribe({
-      next: (res) => {
-        const blob = res.body as Blob;
+
+    this.relatorioService.baixarModeloExcelImportacaoAlunos().subscribe({
+      next: async (res) => {
+        const buf = res.body;
+
+        if (!buf || buf.byteLength === 0) {
+          this.baixando = false;
+          await this.dialog.alert('O arquivo retornou vazio.', 'Erro');
+          return;
+        }
+
+        const contentType = res.headers.get('Content-Type') || '';
         const cd = res.headers.get('Content-Disposition') || '';
-        const m = /filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i.exec(cd);
-        const filename = decodeURIComponent(
-          m?.[1] || m?.[2] || 'relatorio_alunos.xlsx'
-        );
+
+        // ✅ validação REAL do XLSX (ZIP)
+        const okZip = this.isXlsxZip(buf);
+
+        if (!okZip) {
+          // provavelmente HTML/JSON (rota errada, auth, etc.)
+          const preview = new TextDecoder('utf-8').decode(
+            new Uint8Array(buf).slice(0, 350)
+          );
+
+          console.error('Download NÃO é XLSX.');
+          console.error('Content-Type:', contentType);
+          console.error('Content-Disposition:', cd);
+          console.error('Preview (início):', preview);
+
+          this.baixando = false;
+          await this.dialog.alert(
+            'O servidor não retornou um arquivo Excel válido. Verifique a rota/baseUrl ou autenticação.',
+            'Erro'
+          );
+          return;
+        }
+
+        const filename = this.extrairFilename(cd, 'exemplo_importacao.xlsx');
+
+        const blob = new Blob([buf], {
+          type:
+            contentType ||
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
-        window.URL.revokeObjectURL(url);
+
+        setTimeout(() => window.URL.revokeObjectURL(url), 250);
         this.baixando = false;
       },
       error: async () => {
         this.baixando = false;
         await this.dialog.alert(
-          'Não foi possível gerar o relatório de alunos.',
+          'Não foi possível baixar o modelo de importação.',
           'Erro'
         );
       },

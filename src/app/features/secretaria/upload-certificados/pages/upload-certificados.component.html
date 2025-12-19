@@ -12,16 +12,16 @@
     </p>
     <a
       class="download-template"
-      href="emails_certificado_workshop.xlsx"
+      href="/api/exportar-exemplo-excel"
       download
       target="_blank"
       rel="noopener"
+      (click)="baixarModeloExcel($event)"
     >
       📄 Baixar modelo de Excel
     </a>
   </div>
 
-  <!-- Área de Upload -->
   <div
     class="upload-area"
     *ngIf="!fileName"
@@ -35,9 +35,10 @@
     </label>
   </div>
 
-  <!-- Arquivo selecionado -->
   <div *ngIf="fileName" class="file-info">
-    <span>Arquivo: <strong>{{ fileName }}</strong></span>
+    <span
+      >Arquivo: <strong>{{ fileName }}</strong></span
+    >
     <button
       mat-icon-button
       color="warn"
@@ -49,7 +50,6 @@
     </button>
   </div>
 
-  <!-- Botão de envio -->
   <button
     mat-raised-button
     color="primary"
@@ -59,7 +59,6 @@
     type="button"
   >
     <ng-container *ngIf="!loading; else loadingTpl">
-      <mat-icon class="btn-icon">send</mat-icon>
       <span>Enviar arquivo</span>
     </ng-container>
     <ng-template #loadingTpl>

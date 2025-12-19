@@ -16,9 +16,7 @@
   border-radius: 8px;
   text-align: center;
   cursor: pointer;
-  transition:
-    border-color 0.3s ease,
-    background-color 0.3s ease;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
   background-color: #f9f9f9;
 }
 
@@ -67,6 +65,10 @@
 
 .submit-btn {
   margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   padding: 0.75rem 2rem;
   font-size: 1rem;
   border-radius: 6px;
@@ -74,9 +76,16 @@
   background-color: #007bff;
   color: #fff;
   cursor: pointer;
-  transition:
-    background-color 0.3s,
-    transform 0.1s ease;
+  transition: background-color 0.3s, transform 0.1s ease;
+}
+
+.submit-btn .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  vertical-align: middle;
 }
 
 .submit-btn:hover:enabled {

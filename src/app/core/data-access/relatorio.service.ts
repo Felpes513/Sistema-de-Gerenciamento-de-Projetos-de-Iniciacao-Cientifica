@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
   RelatorioMensal,
@@ -11,6 +11,7 @@ import { environment } from '@environments/environment';
 @Injectable({ providedIn: 'root' })
 export class RelatorioService {
   private readonly apiUrl = environment.apiBaseUrl;
+  private readonly exportAlunosUrl = environment.exportAlunosBaseUrl; // ✅ URL completa
 
   constructor(private http: HttpClient) {}
 
@@ -66,10 +67,14 @@ export class RelatorioService {
     );
   }
 
-  baixarRelatorioAlunos() {
-    return this.http.get(`${this.apiUrl}/relatorio-alunos`, {
-      responseType: 'blob',
+  /**
+   * ✅ Baixar MODELO (exemplo) Excel: /api/exportar-exemplo-excel
+   * Usando URL completa do environment: exportAlunosBaseUrl
+   */
+  baixarModeloExcelImportacaoAlunos(): Observable<HttpResponse<ArrayBuffer>> {
+    return this.http.get(this.exportAlunosUrl, {
       observe: 'response',
+      responseType: 'arraybuffer',
     });
   }
 
