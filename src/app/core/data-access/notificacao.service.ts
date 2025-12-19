@@ -5,22 +5,23 @@ import { environment } from '@environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacaoService {
-  private readonly apiUrl = environment.apiBaseUrl;
-  private readonly apiUrlNotificacoes = `${this.apiUrl}/notificacoes`;
+  private readonly apiBaseUrl = environment.apiBaseUrl;
+
+  // IMPORTANTE: barra final para evitar 307 (redirect) e Mixed Content em produção
+  private readonly notificacoesUrl = `${this.apiBaseUrl}/notificacoes/`;
 
   constructor(private http: HttpClient) {}
 
   getNotificacoes(destinatario: string): Observable<any[]> {
     const params = new HttpParams()
       .set('destinatario', destinatario)
-      .set('page', 1)
-      .set('size', 1000);
+      .set('page', '1')
+      .set('size', '1000');
 
-     var teste = this.http
-      .get<any>(this.apiUrlNotificacoes, { params })
+    return this.http
+      .get<any>(this.notificacoesUrl, { params })
       .pipe(map((res) => res.items ?? []));
-    
-    return teste;} 
+  }
 
   getNotificacoesPaginado(
     destinatario: string,
@@ -29,19 +30,19 @@ export class NotificacaoService {
   ): Observable<{ items: any[]; page: number; size: number; total: number }> {
     const params = new HttpParams()
       .set('destinatario', destinatario)
-      .set('page', page)
-      .set('size', size);
+      .set('page', String(page))
+      .set('size', String(size));
 
     return this.http.get<{
       items: any[];
       page: number;
       size: number;
       total: number;
-    }>(this.apiUrlNotificacoes, { params });
+    }>(this.notificacoesUrl, { params });
   }
 
   marcarTodasComoLidas(dest: 'secretaria' | 'orientador' | 'aluno') {
-    return this.http.put(`${this.apiUrlNotificacoes}/mark-all`, null, {
+    return this.http.put(`${this.notificacoesUrl}mark-all`, null, {
       params: { destinatario: dest },
     });
   }
