@@ -27,10 +27,10 @@ type EnvioView = {
   selector: 'app-envios-avaliacoes-modal',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './envios-avaliacoes.modal.html',
-  styleUrls: ['./envios-avaliacoes.modal.css'],
+  templateUrl: './reviews-sended.component.html',
+  styleUrls: ['./reviews-sended.component.css'],
 })
-export class EnviosAvaliacoesModalComponent implements OnInit {
+export class ReviewsSendedComponent implements OnInit {
   @Input() avaliador?: AvaliadorExterno;
   @Output() closed = new EventEmitter<void>();
 

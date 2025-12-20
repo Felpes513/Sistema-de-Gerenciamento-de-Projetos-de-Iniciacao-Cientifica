@@ -54,14 +54,6 @@ export const routes: Routes = [
       },
 
       {
-        path: 'avaliadores/novo',
-        loadComponent: () =>
-          import(
-            '@secretaria/formulario-avaliador/pages/formulario-avaliador.component'
-          ).then((m) => m.FormularioAvaliadorComponent),
-      },
-
-      {
         path: 'notificacoes',
         loadComponent: () =>
           import('@secretaria/notificacoes/pages/notificacoes.component').then(

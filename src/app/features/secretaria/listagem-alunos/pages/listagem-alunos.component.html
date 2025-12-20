@@ -4,7 +4,6 @@
     <h3 *ngIf="modo === 'ORIENTADOR'">Selecionar alunos ({{ total() }})</h3>
   </header>
 
-  <!-- Loading -->
   <ng-container *ngIf="loading(); else conteudo">
     <div class="skeleton">
       <div
@@ -15,7 +14,6 @@
   </ng-container>
 
   <ng-template #conteudo>
-    <!-- ======== MODO SECRETARIA ======== -->
     <ng-container *ngIf="modo === 'SECRETARIA'">
       <ng-container *ngIf="lista().length; else vazio">
         <ul class="lista" role="list">
@@ -65,9 +63,7 @@
       </ng-container>
     </ng-container>
 
-    <!-- ======== MODO ORIENTADOR (seleção) ======== -->
     <ng-container *ngIf="modo === 'ORIENTADOR'">
-      <!-- Aprovados -->
       <div *ngIf="aprovadas.length; else nenhumAprovado">
         <h4>Aprovados pela Secretaria</h4>
 
@@ -96,7 +92,6 @@
                 <strong class="nome" [title]="alunoNome(i)">
                   <mat-icon class="avatar-icon">person</mat-icon>
                   <span class="nome-texto">{{ alunoNome(i) }}</span>
-                  <!-- 👆 Removido o badge Remunerado aqui -->
                 </strong>
 
                 <div class="mini">
@@ -109,7 +104,6 @@
               </div>
             </label>
 
-            <!-- linha de separação entre alunos -->
             <mat-divider *ngIf="!last"></mat-divider>
           </li>
         </ul>
@@ -119,7 +113,6 @@
         <p class="muted">Nenhum aluno aprovado pela Secretaria ainda.</p>
       </ng-template>
 
-      <!-- Ações -->
       <div class="form-actions" style="margin-top: 12px">
         <button
           type="button"
@@ -156,7 +149,6 @@
     </ng-container>
   </ng-template>
 
-  <!-- Estado vazio (SECRETARIA) -->
   <ng-template #vazio>
     <div class="vazio">
       <h4>Nenhum aluno inscrito ainda</h4>

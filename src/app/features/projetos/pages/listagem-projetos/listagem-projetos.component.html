@@ -26,12 +26,29 @@
       <mat-icon>description</mat-icon>
       Todos
     </button>
+
+    <button
+      (click)="setFiltroStatus('EM_EXECUCAO')"
+      [class.active]="filtroStatus === 'EM_EXECUCAO'"
+    >
+      <mat-icon>hourglass_top</mat-icon>
+      Em execução
+    </button>
+
     <button
       (click)="setFiltroStatus('CONCLUIDO')"
       [class.active]="filtroStatus === 'CONCLUIDO'"
     >
       <mat-icon>check_circle</mat-icon>
       Concluídos
+    </button>
+
+    <button
+      (click)="setFiltroStatus('CANCELADO')"
+      [class.active]="filtroStatus === 'CANCELADO'"
+    >
+      <mat-icon>block</mat-icon>
+      Cancelados
     </button>
   </div>
 
@@ -116,15 +133,6 @@
                 Tornar Orientador Inadimplente
               </button>
               <button
-                class="menu-item danger"
-                type="button"
-                role="menuitem"
-                (click)="tornarTodosInadimplentes(projeto.id)"
-              >
-                <mat-icon>cancel</mat-icon>
-                Tornar Todos Inadimplentes
-              </button>
-              <button
                 class="menu-item success"
                 type="button"
                 role="menuitem"
@@ -136,8 +144,9 @@
             </div>
           </div>
 
+          <!-- ✅ TÍTULO com helper + tooltip completo -->
           <h3 class="titulo" [title]="projeto.nomeProjeto">
-            {{ projeto.nomeProjeto }}
+            {{ truncarTituloProjeto(projeto.nomeProjeto) }}
           </h3>
 
           <div class="orientador-info">
@@ -205,13 +214,28 @@
                 <mat-icon>assignment</mat-icon>
                 Relatórios
               </a>
-              <a
-                class="btn-edit"
-                [routerLink]="['/orientador/projetos', projeto.id]"
+
+              <ng-container
+                *ngIf="orientadorSelecaoFinalizada(projeto); else btnSelecionar"
               >
-                <mat-icon>group_add</mat-icon>
-                Selecionar Alunos
-              </a>
+                <a
+                  class="btn-report"
+                  [routerLink]="['/orientador/projetos', projeto.id]"
+                >
+                  <mat-icon>visibility</mat-icon>
+                  Ver Projeto
+                </a>
+              </ng-container>
+
+              <ng-template #btnSelecionar>
+                <a
+                  class="btn-edit"
+                  [routerLink]="['/orientador/projetos', projeto.id]"
+                >
+                  <mat-icon>group_add</mat-icon>
+                  Selecionar Alunos
+                </a>
+              </ng-template>
             </ng-container>
 
             <ng-template #orientadorDisabled>
@@ -228,12 +252,17 @@
 
           <ng-container *ngIf="isAluno">
             <ng-container *ngIf="temIdValido(projeto); else alunoDisabled">
-              <a class="btn-report" [routerLink]="['/aluno/projetos', projeto.id]">
+              <a
+                class="btn-report"
+                [routerLink]="['/aluno/projetos', projeto.id]"
+              >
                 <mat-icon>visibility</mat-icon>
                 Ver Projeto
               </a>
 
-              <ng-container *ngIf="foiSelecionado(projeto.id); else blocoInscricao">
+              <ng-container
+                *ngIf="foiSelecionado(projeto.id); else blocoInscricao"
+              >
                 <button
                   type="button"
                   class="btn-add btn-inscrito"
@@ -251,7 +280,9 @@
                   class="btn-add"
                   [class.btn-inscrito]="jaInscrito(projeto.id)"
                   (click)="inscrever(projeto)"
-                  [disabled]="inscrevendoId === projeto.id || jaInscrito(projeto.id)"
+                  [disabled]="
+                    inscrevendoId === projeto.id || jaInscrito(projeto.id)
+                  "
                   [title]="
                     jaInscrito(projeto.id)
                       ? 'Você já está inscrito neste projeto'
@@ -260,7 +291,9 @@
                 >
                   <mat-icon>check_circle</mat-icon>
 
-                  <ng-container *ngIf="inscrevendoId === projeto.id; else labelInscricao">
+                  <ng-container
+                    *ngIf="inscrevendoId === projeto.id; else labelInscricao"
+                  >
                     Inscrevendo...
                   </ng-container>
 
@@ -272,10 +305,10 @@
             </ng-container>
 
             <ng-template #alunoDisabled>
-              <a class="btn-report" disabled>
+              <button class="btn-report" disabled>
                 <mat-icon>visibility</mat-icon>
                 Ver Projeto
-              </a>
+              </button>
               <button type="button" class="btn-add" disabled>
                 <mat-icon>check_circle</mat-icon>
                 Inscrever-se
@@ -286,14 +319,21 @@
       </div>
     </div>
 
-    <div *ngIf="!carregando && !erro && projetos.length === 0" class="no-projects">
+    <div
+      *ngIf="!carregando && !erro && projetos.length === 0"
+      class="no-projects"
+    >
       <h3>
         <mat-icon>folder</mat-icon>
         Nenhum projeto encontrado
       </h3>
       <p *ngIf="isSecretaria">Comece criando seu primeiro projeto!</p>
-      <p *ngIf="!isSecretaria && isOrientador">Você ainda não está vinculado a um projeto.</p>
-      <p *ngIf="!isSecretaria && !isOrientador">Não há projetos disponíveis no momento.</p>
+      <p *ngIf="!isSecretaria && isOrientador">
+        Você ainda não está vinculado a um projeto.
+      </p>
+      <p *ngIf="!isSecretaria && !isOrientador">
+        Não há projetos disponíveis no momento.
+      </p>
       <button
         class="btn-add"
         *ngIf="isSecretaria"
@@ -330,7 +370,11 @@
   </div>
 
   <div class="pagination">
-    <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+    <button
+      class="page-btn"
+      (click)="prevPage()"
+      [disabled]="currentPage === 1"
+    >
       ‹
     </button>
     <span class="page-label">Página {{ currentPage }} / {{ totalPages }}</span>

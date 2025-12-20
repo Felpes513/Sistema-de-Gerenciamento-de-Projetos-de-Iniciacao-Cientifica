@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { EnviarAvaliacoesModalComponent } from './enviar-avaliacoes.modal';
+import { SendReviewsComponent } from './send-reviews.component';
 import { ProjetoService } from '@services/projeto.service';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 
@@ -17,20 +17,20 @@ class AvaliadoresExternosServiceStub {
 }
 
 describe('EnviarAvaliacoesModalComponent', () => {
-  let component: EnviarAvaliacoesModalComponent;
+  let component: SendReviewsComponent;
   let projService: ProjetoServiceStub;
   let avaliadoresService: AvaliadoresExternosServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EnviarAvaliacoesModalComponent],
+      imports: [SendReviewsComponent],
       providers: [
         { provide: ProjetoService, useClass: ProjetoServiceStub },
         { provide: AvaliadoresExternosService, useClass: AvaliadoresExternosServiceStub },
       ],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(EnviarAvaliacoesModalComponent);
+    const fixture = TestBed.createComponent(SendReviewsComponent);
     component = fixture.componentInstance;
 
     projService = TestBed.inject(ProjetoService) as any;

@@ -1,17 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import {
-  faUsers,
-  faPlus,
-  faEdit,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons';
+
 import { AvaliadorExterno } from '@shared/models/avaliador_externo';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
-import { EnviarAvaliacoesModalComponent } from '../../../../components/modais/enviar-avaliacoes/enviar-avaliacoes.modal';
+import { SendReviewsComponent } from '../../../../components/modais/send-reviews/send-reviews.component';
 import { DialogService } from '@services/dialog.service';
-import { EnviosAvaliacoesModalComponent } from '../../../../components/modais/envios-avaliacoes/envios-avaliacoes.modal';
+import { ReviewsSendedComponent } from '../../../../components/modais/reviews-sended/reviews-sended.component';
+
+import { CreateEvaluatorModalComponent } from '../../../../components/modais/create-evaluator/create-evaluator.component';
 
 @Component({
   selector: 'app-listagem-avaliadores',
@@ -19,8 +16,9 @@ import { EnviosAvaliacoesModalComponent } from '../../../../components/modais/en
   imports: [
     CommonModule,
     RouterModule,
-    EnviarAvaliacoesModalComponent,
-    EnviosAvaliacoesModalComponent,
+    SendReviewsComponent,
+    ReviewsSendedComponent,
+    CreateEvaluatorModalComponent,
   ],
   templateUrl: './listagem-avaliadores.component.html',
   styleUrls: ['./listagem-avaliadores.component.css'],
@@ -29,16 +27,14 @@ export class ListagemAvaliadoresComponent implements OnInit {
   avaliadores: AvaliadorExterno[] = [];
   carregando = false;
   erro = '';
-  showModal = false;
 
-  icUsers = faUsers;
-  icPlus = faPlus;
-  icEdit = faEdit;
-  icTrash = faTrash;
+  showModal = false;
 
   selectedAvaliador: AvaliadorExterno | null = null;
   showEnviosModal = false;
-  avaliadorSelecionado: AvaliadorExterno | null = null;
+
+  showAvaliadorModal = false;
+  avaliadorModalData: AvaliadorExterno | null = null;
 
   constructor(
     private service: AvaliadoresExternosService,
@@ -54,11 +50,13 @@ export class ListagemAvaliadoresComponent implements OnInit {
   carregar(): void {
     this.carregando = true;
     this.erro = '';
+
     this.service.listarAvaliadoresExternos().subscribe({
       next: (lista: AvaliadorExterno[]) => {
         this.avaliadores = (lista || []).map((a: AvaliadorExterno) => ({
           ...a,
           link_lattes: (a as any).link_lattes ?? (a as any).lattes_link ?? '',
+          ...(a as any),
         }));
         this.carregando = false;
       },
@@ -67,6 +65,27 @@ export class ListagemAvaliadoresComponent implements OnInit {
         this.carregando = false;
       },
     });
+  }
+
+  private isIdValido(id: any): id is number {
+    return typeof id === 'number' && !isNaN(id) && id > 0;
+  }
+
+  getIdentificador(a: AvaliadorExterno): string {
+    const raw =
+      (a as any).identificador ??
+      (a as any).codigo ??
+      (a as any).id_publico ??
+      (a as any).public_id ??
+      '';
+
+    const txt = String(raw ?? '').trim();
+    if (txt) return txt;
+
+    const id = Number((a as any).id);
+    if (this.isIdValido(id)) return `AVL-${String(id).padStart(4, '0')}`;
+
+    return '—';
   }
 
   abrirModal(): void {
@@ -78,12 +97,6 @@ export class ListagemAvaliadoresComponent implements OnInit {
     if (reload) this.carregar();
   }
 
-  editar(a: AvaliadorExterno): void {
-    this.router.navigate(['/secretaria/avaliadores/novo'], {
-      state: { avaliador: a },
-    });
-  }
-
   abrirEnvios(a: AvaliadorExterno): void {
     this.selectedAvaliador = a;
     this.showEnviosModal = true;
@@ -92,6 +105,22 @@ export class ListagemAvaliadoresComponent implements OnInit {
   onEnviosModalClosed(): void {
     this.showEnviosModal = false;
     this.selectedAvaliador = null;
+  }
+
+  abrirNovoAvaliador(): void {
+    this.avaliadorModalData = null;
+    this.showAvaliadorModal = true;
+  }
+
+  abrirEditarModal(a: AvaliadorExterno): void {
+    this.avaliadorModalData = a;
+    this.showAvaliadorModal = true;
+  }
+
+  onAvaliadorModalClosed(reload: boolean): void {
+    this.showAvaliadorModal = false;
+    this.avaliadorModalData = null;
+    if (reload) this.carregar();
   }
 
   async excluir(id?: number): Promise<void> {

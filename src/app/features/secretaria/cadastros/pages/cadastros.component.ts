@@ -154,6 +154,24 @@ export class CadastrosComponent implements OnInit {
     });
   }
 
+  async inadimplentar(id: number) {
+    const confirmado = await this.dialog.confirm(
+      'Confirmar inadimplência? O usuário ficará inadimplente por 2 anos.',
+      'Confirmação'
+    );
+    if (!confirmado) return;
+
+    const call =
+      this.tipo === 'ALUNOS'
+        ? this.api.inadimplentarAluno(id)
+        : this.api.inadimplentarOrientador(id);
+
+    call.subscribe({
+      next: () => this.load(),
+      error: () => this.dialog.alert('Erro ao inadimplentar', 'Erro'),
+    });
+  }
+
   private transformRow(row: any) {
     const nomeSrc = row?.nome_completo ?? row?.nome ?? row?.name ?? '';
     const cpfSrc = row?.cpf ?? row?.CPF ?? '';

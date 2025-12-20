@@ -98,19 +98,22 @@
         <td data-label="PDF">{{ a.has_pdf ? "✓" : "—" }}</td>
         <td class="col-actions" data-label="Ações">
           <button
-            class="btn btn-approve"
-            (click)="aprovar(a.id)"
-            [disabled]="a.status === 'APROVADO'"
+            *ngIf="a.status === 'APROVADO'"
+            class="btn btn-inad"
+            (click)="inadimplentar(a.id)"
           >
-            Aprovar
+            Inadimplentar
           </button>
+
           <button
+            *ngIf="a.status !== 'APROVADO'"
             class="btn btn-reject"
             (click)="reprovar(a.id)"
             [disabled]="a.status === 'REPROVADO'"
           >
             Reprovar
           </button>
+
           <a
             *ngIf="a.has_pdf"
             class="btn"
@@ -170,14 +173,15 @@
         </td>
         <td class="col-actions" data-label="Ações">
           <button
-            class="btn btn-approve"
-            (click)="aprovar(o.id)"
-            [disabled]="o.status === 'APROVADO'"
+            *ngIf="o.status === 'APROVADO'"
+            class="btn btn-inad"
+            (click)="inadimplentar(o.id)"
           >
-            Aprovar
+            Inadimplentar
           </button>
 
           <button
+            *ngIf="o.status !== 'APROVADO'"
             class="btn btn-reject"
             (click)="reprovar(o.id)"
             [disabled]="o.status === 'REPROVADO'"

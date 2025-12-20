@@ -24,7 +24,10 @@ export class RegisterService {
     fd.append('cpf', this.cleanCPF(data.cpf));
     fd.append('id_curso', String(data.idCurso));
     fd.append('senha', data.senha);
-    fd.append('possui_trabalho_remunerado',String(data.possuiTrabalhoRemunerado));
+    fd.append(
+      'possui_trabalho_remunerado',
+      String(data.possuiTrabalhoRemunerado)
+    );
     fd.append('pdf', data.pdf, data.pdf.name);
     return this.http.post<RegisterResponse>(`${this.baseUrl}/alunos/`, fd);
   }
@@ -47,12 +50,15 @@ export class RegisterService {
   listarAlunos(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/alunos/`);
   }
+
   aprovarAluno(id: number) {
     return this.http.put(`${this.baseUrl}/alunos/${id}/aprovar`, {});
   }
+
   reprovarAluno(id: number) {
     return this.http.put(`${this.baseUrl}/alunos/${id}/reprovar`, {});
   }
+
   listarAlunosInadimplentes() {
     return this.http
       .get<{ alunos: any[] }>(`${this.baseUrl}/alunos/inadimplentes`)
@@ -62,12 +68,15 @@ export class RegisterService {
   listarOrientadores(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/orientadores/`);
   }
+
   aprovarOrientador(id: number) {
     return this.http.put(`${this.baseUrl}/orientadores/${id}/aprovar`, {});
   }
+
   reprovarOrientador(id: number) {
     return this.http.put(`${this.baseUrl}/orientadores/${id}/reprovar`, {});
   }
+
   listarOrientadoresInadimplentes() {
     return this.http
       .get<{ orientadores: any[] }>(
@@ -88,6 +97,17 @@ export class RegisterService {
   checkCPFExists(cpf: string): Observable<{ exists: boolean }> {
     return this.http.get<{ exists: boolean }>(
       `${this.baseUrl}/check-cpf/${this.cleanCPF(cpf)}`
+    );
+  }
+
+  inadimplentarAluno(id: number) {
+    return this.http.put(`${this.baseUrl}/alunos/${id}/inadimplentar`, {});
+  }
+
+  inadimplentarOrientador(id: number) {
+    return this.http.put(
+      `${this.baseUrl}/orientadores/${id}/inadimplentar`,
+      {}
     );
   }
 
@@ -125,7 +145,7 @@ export class RegisterService {
     const feedback: string[] = [];
     let score = 0;
     if (password.length >= 8) score++;
-    else feedback.push('Senha deve ter pelo menos 8 caracteres');
+    else feedback.push('Senha deve ter pelo menos 6 caracteres');
     if (/[a-z]/.test(password)) score++;
     else feedback.push('Adicione pelo menos uma letra minúscula');
     if (/[A-Z]/.test(password)) score++;

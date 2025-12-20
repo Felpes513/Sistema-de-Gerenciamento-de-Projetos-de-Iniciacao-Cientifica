@@ -15,6 +15,7 @@ import { AlunoSecretariaView } from '@shared/models/listagem-alunos';
 import { Inscricao } from '@shared/models/inscricao';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { DialogService } from '@core/data-access/dialog.service';
 
 type Modo = 'SECRETARIA' | 'ORIENTADOR';
 type InscricaoLike = ProjetoInscricaoApi | Inscricao;
@@ -59,7 +60,8 @@ export class ListagemAlunosComponent implements OnInit {
   constructor(
     private projetoService: ProjetoService,
     private inscricoesService: InscricoesService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -279,12 +281,43 @@ export class ListagemAlunosComponent implements OnInit {
     this.toggleSelecionado(inscricao, !!target?.checked);
   }
 
-  salvarSelecao() {
+  async salvarSelecao() {
     this.sucessoSelecao = '';
     this.erroSalvarSelecao = '';
-    this.salvandoSelecao = true;
 
     const ids = Array.from(this.selecionados);
+
+    if (this.modo === 'ORIENTADOR' && !this.bloqueado) {
+      if (ids.length === 0) {
+        await this.dialogService.alert(
+          'Selecione pelo menos 1 aluno antes de salvar.',
+          'Atenção'
+        );
+        return;
+      }
+
+      const selecionadosTexto = this.aprovadas
+        .filter((i) => this.selecionados.has(this.alunoId(i)))
+        .map((i) => `• ${this.alunoNome(i)} (RA: ${this.alunoRa(i)})`)
+        .join('\n');
+
+      const msg =
+        `Você selecionou ${ids.length}${
+          this.limite ? ` de ${this.limite}` : ''
+        } aluno(s).\n\n` +
+        `${selecionadosTexto || '—'}\n\n` +
+        `Ao confirmar, sua seleção será registrada e as demais inscrições aprovadas serão removidas.\n` +
+        `Depois disso, para alterações, será necessário contatar a Secretaria.\n\n` +
+        `Deseja confirmar?`;
+
+      const confirmou = await this.dialogService.confirm(
+        msg,
+        'Confirmar seleção'
+      );
+      if (!confirmou) return;
+    }
+
+    this.salvandoSelecao = true;
 
     if (this.modo === 'ORIENTADOR') {
       this.projetoService
@@ -305,7 +338,6 @@ export class ListagemAlunosComponent implements OnInit {
               (res as any)?.mensagem ||
               'Seleção salva e inscrições restantes excluídas.';
             this.selecionados = new Set<number>(ids);
-
             this.carregar();
           },
           error: (e: unknown) => {
