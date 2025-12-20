@@ -1,4 +1,3 @@
-<!-- antes: <section class="card" [class.loading]="carregando"> -->
 <section class="cadastros" [class.loading]="carregando">
   <header class="tabs">
     <button
@@ -48,7 +47,6 @@
 
   <div *ngIf="erro" class="erro">{{ erro }}</div>
 
-  <!-- ALUNOS -->
   <table
     class="table"
     *ngIf="!carregando && aba === 'APROVACoes' && tipo === 'ALUNOS'"
@@ -88,17 +86,35 @@
         <td data-label="Status">
           <span
             class="badge"
-            [class.aprovado]="a.status === 'APROVADO'"
-            [class.reprovado]="a.status === 'REPROVADO'"
-            [class.pendente]="!a.status"
+            [class.aprovado]="isAprovado(a)"
+            [class.reprovado]="isReprovado(a)"
+            [class.inadimplente]="isInadimplente(a)"
+            [class.pendente]="isPendente(a)"
           >
-            {{ a.status || "—" }}
+            {{ statusLabel(a) }}
           </span>
         </td>
+
         <td data-label="PDF">{{ a.has_pdf ? "✓" : "—" }}</td>
         <td class="col-actions" data-label="Ações">
           <button
-            *ngIf="a.status === 'APROVADO'"
+            *ngIf="isPendente(a) || isReprovado(a)"
+            class="btn btn-approve"
+            (click)="aprovar(a.id)"
+          >
+            Aprovar
+          </button>
+
+          <button
+            *ngIf="isPendente(a)"
+            class="btn btn-reject"
+            (click)="reprovar(a.id)"
+          >
+            Reprovar
+          </button>
+
+          <button
+            *ngIf="isAprovado(a)"
             class="btn btn-inad"
             (click)="inadimplentar(a.id)"
           >
@@ -106,12 +122,11 @@
           </button>
 
           <button
-            *ngIf="a.status !== 'APROVADO'"
-            class="btn btn-reject"
-            (click)="reprovar(a.id)"
-            [disabled]="a.status === 'REPROVADO'"
+            *ngIf="isInadimplente(a)"
+            class="btn btn-approve"
+            (click)="adimplentar(a.id)"
           >
-            Reprovar
+            Adimplentar
           </button>
 
           <a
@@ -119,8 +134,9 @@
             class="btn"
             [href]="'/api/alunos/' + a.id + '/pdf'"
             target="_blank"
-            >PDF</a
           >
+            PDF
+          </a>
         </td>
       </tr>
     </tbody>
@@ -164,16 +180,34 @@
         <td data-label="Status">
           <span
             class="badge"
-            [class.aprovado]="o.status === 'APROVADO'"
-            [class.reprovado]="o.status === 'REPROVADO'"
-            [class.pendente]="!o.status"
+            [class.aprovado]="isAprovado(o)"
+            [class.reprovado]="isReprovado(o)"
+            [class.inadimplente]="isInadimplente(o)"
+            [class.pendente]="isPendente(o)"
           >
-            {{ o.status || "—" }}
+            {{ statusLabel(o) }}
           </span>
         </td>
+
         <td class="col-actions" data-label="Ações">
           <button
-            *ngIf="o.status === 'APROVADO'"
+            *ngIf="isPendente(o) || isReprovado(o)"
+            class="btn btn-approve"
+            (click)="aprovar(o.id)"
+          >
+            Aprovar
+          </button>
+
+          <button
+            *ngIf="isPendente(o)"
+            class="btn btn-reject"
+            (click)="reprovar(o.id)"
+          >
+            Reprovar
+          </button>
+
+          <button
+            *ngIf="isAprovado(o)"
             class="btn btn-inad"
             (click)="inadimplentar(o.id)"
           >
@@ -181,12 +215,11 @@
           </button>
 
           <button
-            *ngIf="o.status !== 'APROVADO'"
-            class="btn btn-reject"
-            (click)="reprovar(o.id)"
-            [disabled]="o.status === 'REPROVADO'"
+            *ngIf="isInadimplente(o)"
+            class="btn btn-approve"
+            (click)="adimplentar(o.id)"
           >
-            Reprovar
+            Adimplentar
           </button>
         </td>
       </tr>

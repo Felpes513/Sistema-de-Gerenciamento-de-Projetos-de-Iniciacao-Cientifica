@@ -82,26 +82,25 @@ export class CadastrosComponent implements OnInit {
           },
         });
       }
-    } else {
-      forkJoin({
-        alunos: this.api.listarAlunosInadimplentes(),
-        orientadores: this.api.listarOrientadoresInadimplentes(),
-      }).subscribe({
-        next: ({ alunos, orientadores }) => {
-          this.alunosInad = (alunos || []).map((r: any) =>
-            this.transformRow(r)
-          );
-          this.orientadoresInad = (orientadores || []).map((r: any) =>
-            this.transformRow(r)
-          );
-          this.carregando = false;
-        },
-        error: () => {
-          this.erro = 'Falha ao listar inadimplentes';
-          this.carregando = false;
-        },
-      });
+      return;
     }
+
+    forkJoin({
+      alunos: this.api.listarAlunosInadimplentes(),
+      orientadores: this.api.listarOrientadoresInadimplentes(),
+    }).subscribe({
+      next: ({ alunos, orientadores }) => {
+        this.alunosInad = (alunos || []).map((r: any) => this.transformRow(r));
+        this.orientadoresInad = (orientadores || []).map((r: any) =>
+          this.transformRow(r)
+        );
+        this.carregando = false;
+      },
+      error: () => {
+        this.erro = 'Falha ao listar inadimplentes';
+        this.carregando = false;
+      },
+    });
   }
 
   match(term: string, ...vals: (string | number | undefined | null)[]) {
@@ -117,6 +116,36 @@ export class CadastrosComponent implements OnInit {
     return vals.some((v) => norm(v).includes(f));
   }
 
+  private statusOf(row: any): string {
+    return String(row?.status ?? '')
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  isPendente(row: any): boolean {
+    const st = this.statusOf(row);
+    return !st || st === 'PENDENTE';
+  }
+
+  isAprovado(row: any): boolean {
+    return this.statusOf(row) === 'APROVADO';
+  }
+
+  isReprovado(row: any): boolean {
+    return this.statusOf(row) === 'REPROVADO';
+  }
+
+  isInadimplente(row: any): boolean {
+    return this.statusOf(row) === 'INADIMPLENTE';
+  }
+
+  statusLabel(row: any): string {
+    const st = this.statusOf(row);
+    return st || 'PENDENTE';
+  }
+
   aprovar(id: number) {
     const call =
       this.tipo === 'ALUNOS'
@@ -124,12 +153,8 @@ export class CadastrosComponent implements OnInit {
         : this.api.aprovarOrientador(id);
 
     call.subscribe({
-      next: () => {
-        this.load();
-      },
-      error: () => {
-        this.dialog.alert('Erro ao aprovar', 'Erro');
-      },
+      next: () => this.load(),
+      error: () => this.dialog.alert('Erro ao aprovar', 'Erro'),
     });
   }
 
@@ -145,12 +170,8 @@ export class CadastrosComponent implements OnInit {
         : this.api.reprovarOrientador(id);
 
     call.subscribe({
-      next: () => {
-        this.load();
-      },
-      error: () => {
-        this.dialog.alert('Erro ao reprovar', 'Erro');
-      },
+      next: () => this.load(),
+      error: () => this.dialog.alert('Erro ao reprovar', 'Erro'),
     });
   }
 
@@ -169,6 +190,24 @@ export class CadastrosComponent implements OnInit {
     call.subscribe({
       next: () => this.load(),
       error: () => this.dialog.alert('Erro ao inadimplentar', 'Erro'),
+    });
+  }
+
+  async adimplentar(id: number) {
+    const confirmado = await this.dialog.confirm(
+      'Confirmar adimplência? O usuário voltará a ficar adimplente.',
+      'Confirmação'
+    );
+    if (!confirmado) return;
+
+    const call =
+      this.tipo === 'ALUNOS'
+        ? this.api.adimplentarAluno(id)
+        : this.api.adimplentarOrientador(id);
+
+    call.subscribe({
+      next: () => this.load(),
+      error: () => this.dialog.alert('Erro ao adimplentar', 'Erro'),
     });
   }
 

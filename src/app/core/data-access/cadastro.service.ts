@@ -59,6 +59,14 @@ export class RegisterService {
     return this.http.put(`${this.baseUrl}/alunos/${id}/reprovar`, {});
   }
 
+  inadimplentarAluno(id: number) {
+    return this.http.put(`${this.baseUrl}/alunos/${id}/inadimplentar`, {});
+  }
+
+  adimplentarAluno(id: number) {
+    return this.http.put(`${this.baseUrl}/alunos/${id}/adimplentar`, {});
+  }
+
   listarAlunosInadimplentes() {
     return this.http
       .get<{ alunos: any[] }>(`${this.baseUrl}/alunos/inadimplentes`)
@@ -75,6 +83,17 @@ export class RegisterService {
 
   reprovarOrientador(id: number) {
     return this.http.put(`${this.baseUrl}/orientadores/${id}/reprovar`, {});
+  }
+
+  inadimplentarOrientador(id: number) {
+    return this.http.put(
+      `${this.baseUrl}/orientadores/${id}/inadimplentar`,
+      {}
+    );
+  }
+
+  adimplentarOrientador(id: number) {
+    return this.http.put(`${this.baseUrl}/orientadores/${id}/adimplentar`, {});
   }
 
   listarOrientadoresInadimplentes() {
@@ -97,17 +116,6 @@ export class RegisterService {
   checkCPFExists(cpf: string): Observable<{ exists: boolean }> {
     return this.http.get<{ exists: boolean }>(
       `${this.baseUrl}/check-cpf/${this.cleanCPF(cpf)}`
-    );
-  }
-
-  inadimplentarAluno(id: number) {
-    return this.http.put(`${this.baseUrl}/alunos/${id}/inadimplentar`, {});
-  }
-
-  inadimplentarOrientador(id: number) {
-    return this.http.put(
-      `${this.baseUrl}/orientadores/${id}/inadimplentar`,
-      {}
     );
   }
 

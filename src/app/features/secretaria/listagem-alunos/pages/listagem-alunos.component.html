@@ -1,6 +1,7 @@
+<!-- src/app/features/secretaria/listagem-alunos/pages/listagem-alunos.component.html -->
 <section class="painel" [class.loading]="loading()">
   <header class="head">
-    <h3 *ngIf="modo === 'SECRETARIA'">Inscritos ({{ total() }})</h3>
+    <h3 *ngIf="modo === 'SECRETARIA'">Alunos ({{ total() }})</h3>
     <h3 *ngIf="modo === 'ORIENTADOR'">Selecionar alunos ({{ total() }})</h3>
   </header>
 
@@ -14,99 +15,310 @@
   </ng-container>
 
   <ng-template #conteudo>
+    <!-- ===================== SECRETARIA ===================== -->
     <ng-container *ngIf="modo === 'SECRETARIA'">
       <ng-container *ngIf="lista().length; else vazio">
-        <ul class="lista" role="list">
-          <li
-            class="item"
-            *ngFor="let a of lista(); trackBy: trackByAlunoSecretaria"
-          >
-            <div class="aluno-card">
-              <div class="dados">
-                <strong class="nome" [title]="a.nome">
-                  <mat-icon class="avatar-icon">person</mat-icon>
-                  <span class="nome-texto">{{ a.nome }}</span>
+        <!-- Quando já existem alunos vinculados, divide em Selecionados e Disponíveis -->
+        <ng-container *ngIf="temSelecaoFinal; else listaSecretariaNormal">
+          <div class="split-root">
+            <div class="split-container">
+              <!-- Topo: Selecionados -->
+              <div class="split-pane">
+                <h4>Selecionados ({{ secretariaSelecionados.length }})</h4>
 
-                  <span
-                    *ngIf="a.possuiTrabalhoRemunerado"
-                    class="badge remunerado"
-                    title="Possui trabalho remunerado"
-                  >
-                    <mat-icon class="badge-icon">work</mat-icon>
-                    Remunerado
-                  </span>
-                </strong>
+                <ng-container
+                  *ngIf="
+                    secretariaSelecionados.length;
+                    else nenhumSelecionadoSecretaria
+                  "
+                >
+                  <ul class="lista" role="list">
+                    <li
+                      class="item"
+                      *ngFor="
+                        let a of secretariaSelecionados;
+                        trackBy: trackByAlunoSecretaria
+                      "
+                    >
+                      <div class="aluno-card">
+                        <div class="dados">
+                          <strong class="nome" [title]="a.nome">
+                            <mat-icon class="avatar-icon">person</mat-icon>
+                            <span class="nome-texto">{{ a.nome }}</span>
 
-                <div class="mini">
-                  <span>RA: {{ a.matricula }}</span>
-                  <span>Email: {{ a.email }}</span>
-                  <span>
-                    Status:
-                    <b>{{ a.status }}</b>
-                  </span>
-                </div>
+                            <span
+                              *ngIf="a.possuiTrabalhoRemunerado"
+                              class="badge remunerado"
+                              title="Possui trabalho remunerado"
+                            >
+                              <mat-icon class="badge-icon">work</mat-icon>
+                              Remunerado
+                            </span>
+                          </strong>
 
-                <div class="links" *ngIf="a.documentoNotasUrl">
-                  <a
-                    [href]="a.documentoNotasUrl"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    <mat-icon class="link-icon">description</mat-icon>
-                    Visualizar Notas
-                  </a>
-                </div>
+                          <div class="mini">
+                            <span>RA: {{ a.matricula }}</span>
+                            <span>Email: {{ a.email }}</span>
+                            <span>
+                              Status:
+                              <b>{{ a.status }}</b>
+                            </span>
+                          </div>
+
+                          <div class="links" *ngIf="a.documentoNotasUrl">
+                            <a
+                              [href]="a.documentoNotasUrl"
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              <mat-icon class="link-icon">description</mat-icon>
+                              Visualizar Notas
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </ng-container>
+
+                <ng-template #nenhumSelecionadoSecretaria>
+                  <p class="muted">Nenhum aluno selecionado ainda.</p>
+                </ng-template>
+              </div>
+
+              <!-- Baixo: Disponíveis -->
+              <div class="split-pane">
+                <h4>Disponíveis ({{ secretariaDisponiveis.length }})</h4>
+
+                <ng-container
+                  *ngIf="
+                    secretariaDisponiveis.length;
+                    else nenhumDisponivelSecretaria
+                  "
+                >
+                  <ul class="lista" role="list">
+                    <li
+                      class="item"
+                      *ngFor="
+                        let a of secretariaDisponiveis;
+                        trackBy: trackByAlunoSecretaria
+                      "
+                    >
+                      <div class="aluno-card">
+                        <div class="dados">
+                          <strong class="nome" [title]="a.nome">
+                            <mat-icon class="avatar-icon">person</mat-icon>
+                            <span class="nome-texto">{{ a.nome }}</span>
+
+                            <span
+                              *ngIf="a.possuiTrabalhoRemunerado"
+                              class="badge remunerado"
+                              title="Possui trabalho remunerado"
+                            >
+                              <mat-icon class="badge-icon">work</mat-icon>
+                              Remunerado
+                            </span>
+                          </strong>
+
+                          <div class="mini">
+                            <span>RA: {{ a.matricula }}</span>
+                            <span>Email: {{ a.email }}</span>
+                            <span>
+                              Status:
+                              <b>{{ a.status }}</b>
+                            </span>
+                          </div>
+
+                          <div class="links" *ngIf="a.documentoNotasUrl">
+                            <a
+                              [href]="a.documentoNotasUrl"
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              <mat-icon class="link-icon">description</mat-icon>
+                              Visualizar Notas
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </ng-container>
+
+                <ng-template #nenhumDisponivelSecretaria>
+                  <p class="muted">Nenhum aluno disponível no momento.</p>
+                </ng-template>
               </div>
             </div>
-          </li>
-        </ul>
+          </div>
+        </ng-container>
+
+        <!-- Lista normal quando ainda não existe seleção final -->
+        <ng-template #listaSecretariaNormal>
+          <ul class="lista" role="list">
+            <li
+              class="item"
+              *ngFor="let a of lista(); trackBy: trackByAlunoSecretaria"
+            >
+              <div class="aluno-card">
+                <div class="dados">
+                  <strong class="nome" [title]="a.nome">
+                    <mat-icon class="avatar-icon">person</mat-icon>
+                    <span class="nome-texto">{{ a.nome }}</span>
+
+                    <span
+                      *ngIf="a.possuiTrabalhoRemunerado"
+                      class="badge remunerado"
+                      title="Possui trabalho remunerado"
+                    >
+                      <mat-icon class="badge-icon">work</mat-icon>
+                      Remunerado
+                    </span>
+                  </strong>
+
+                  <div class="mini">
+                    <span>RA: {{ a.matricula }}</span>
+                    <span>Email: {{ a.email }}</span>
+                    <span>
+                      Status:
+                      <b>{{ a.status }}</b>
+                    </span>
+                  </div>
+
+                  <div class="links" *ngIf="a.documentoNotasUrl">
+                    <a
+                      [href]="a.documentoNotasUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <mat-icon class="link-icon">description</mat-icon>
+                      Visualizar Notas
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </ng-template>
       </ng-container>
     </ng-container>
 
+    <!-- ===================== ORIENTADOR ===================== -->
     <ng-container *ngIf="modo === 'ORIENTADOR'">
-      <div *ngIf="aprovadas.length; else nenhumAprovado">
-        <h4>Aprovados pela Secretaria</h4>
+      <div class="split-root" *ngIf="aprovadas.length; else nenhumAprovado">
+        <div class="split-container">
+          <!-- Topo: Selecionados -->
+          <div class="split-pane">
+            <h4>Selecionados ({{ aprovadasSelecionadas().length }})</h4>
 
-        <ul class="lista" role="list">
-          <li
-            class="item"
-            *ngFor="
-              let i of aprovadas;
-              let last = last;
-              trackBy: trackByInscricao
-            "
-          >
-            <label class="linha">
-              <input
-                type="checkbox"
-                [checked]="selecionados.has(alunoId(i))"
-                [disabled]="disabledCheckbox(i)"
-                (change)="onSelecionadoChange($event, i)"
-                role="switch"
-                [attr.aria-label]="'Selecionar aluno ' + alunoNome(i)"
-                [attr.aria-checked]="selecionados.has(alunoId(i))"
-                [attr.aria-disabled]="disabledCheckbox(i) ? 'true' : null"
-              />
+            <ng-container
+              *ngIf="aprovadasSelecionadas().length; else nenhumSelecionado"
+            >
+              <ul class="lista" role="list">
+                <li
+                  class="item"
+                  *ngFor="
+                    let i of aprovadasSelecionadas();
+                    let last = last;
+                    trackBy: trackByInscricao
+                  "
+                >
+                  <label class="linha">
+                    <input
+                      type="checkbox"
+                      [checked]="selecionados.has(alunoId(i))"
+                      [disabled]="disabledCheckbox(i)"
+                      (change)="onSelecionadoChange($event, i)"
+                      role="switch"
+                      [attr.aria-label]="'Selecionar aluno ' + alunoNome(i)"
+                      [attr.aria-checked]="selecionados.has(alunoId(i))"
+                      [attr.aria-disabled]="disabledCheckbox(i) ? 'true' : null"
+                    />
 
-              <div class="dados">
-                <strong class="nome" [title]="alunoNome(i)">
-                  <mat-icon class="avatar-icon">person</mat-icon>
-                  <span class="nome-texto">{{ alunoNome(i) }}</span>
-                </strong>
+                    <div class="dados">
+                      <strong class="nome" [title]="alunoNome(i)">
+                        <mat-icon class="avatar-icon">person</mat-icon>
+                        <span class="nome-texto">{{ alunoNome(i) }}</span>
+                      </strong>
 
-                <div class="mini">
-                  <span>RA: {{ alunoRa(i) }}</span>
-                  <span class="sep">•</span>
-                  <span>Email: {{ alunoEmail(i) }}</span>
-                  <span class="sep">•</span>
-                  <span>Status: <b>APROVADO</b></span>
-                </div>
-              </div>
-            </label>
+                      <div class="mini">
+                        <span>RA: {{ alunoRa(i) }}</span>
+                        <span class="sep">•</span>
+                        <span>Email: {{ alunoEmail(i) }}</span>
+                        <span class="sep">•</span>
+                        <span
+                          >Status: <b>{{ alunoStatus(i) }}</b></span
+                        >
+                      </div>
+                    </div>
+                  </label>
 
-            <mat-divider *ngIf="!last"></mat-divider>
-          </li>
-        </ul>
+                  <mat-divider *ngIf="!last"></mat-divider>
+                </li>
+              </ul>
+            </ng-container>
+
+            <ng-template #nenhumSelecionado>
+              <p class="muted">Nenhum aluno selecionado ainda.</p>
+            </ng-template>
+          </div>
+
+          <!-- Baixo: Disponíveis -->
+          <div class="split-pane">
+            <h4>Disponíveis ({{ aprovadasDisponiveis().length }})</h4>
+
+            <ng-container
+              *ngIf="aprovadasDisponiveis().length; else nenhumDisponivel"
+            >
+              <ul class="lista" role="list">
+                <li
+                  class="item"
+                  *ngFor="
+                    let i of aprovadasDisponiveis();
+                    let last = last;
+                    trackBy: trackByInscricao
+                  "
+                >
+                  <label class="linha">
+                    <input
+                      type="checkbox"
+                      [checked]="selecionados.has(alunoId(i))"
+                      [disabled]="disabledCheckbox(i)"
+                      (change)="onSelecionadoChange($event, i)"
+                      role="switch"
+                      [attr.aria-label]="'Selecionar aluno ' + alunoNome(i)"
+                      [attr.aria-checked]="selecionados.has(alunoId(i))"
+                      [attr.aria-disabled]="disabledCheckbox(i) ? 'true' : null"
+                    />
+
+                    <div class="dados">
+                      <strong class="nome" [title]="alunoNome(i)">
+                        <mat-icon class="avatar-icon">person</mat-icon>
+                        <span class="nome-texto">{{ alunoNome(i) }}</span>
+                      </strong>
+
+                      <div class="mini">
+                        <span>RA: {{ alunoRa(i) }}</span>
+                        <span class="sep">•</span>
+                        <span>Email: {{ alunoEmail(i) }}</span>
+                        <span class="sep">•</span>
+                        <span
+                          >Status: <b>{{ alunoStatus(i) }}</b></span
+                        >
+                      </div>
+                    </div>
+                  </label>
+
+                  <mat-divider *ngIf="!last"></mat-divider>
+                </li>
+              </ul>
+            </ng-container>
+
+            <ng-template #nenhumDisponivel>
+              <p class="muted">Nenhum aluno disponível no momento.</p>
+            </ng-template>
+          </div>
+        </div>
       </div>
 
       <ng-template #nenhumAprovado>
@@ -118,16 +330,14 @@
           type="button"
           (click)="salvarSelecao()"
           [disabled]="
-            salvandoSelecao ||
-            bloqueado ||
-            (limite > 0 && selecionados.size > limite)
+            salvandoSelecao || (limite > 0 && selecionados.size > limite)
           "
         >
           {{
             salvandoSelecao
               ? "Salvando..."
               : bloqueado
-              ? "Seleção finalizada"
+              ? "Salvar alterações"
               : "Salvar seleção"
           }}
         </button>
@@ -143,7 +353,8 @@
         </div>
 
         <p class="muted" *ngIf="bloqueado" style="margin-top: 4px">
-          Seleção bloqueada. Para alterações, contate a Secretaria.
+          Seleção já registrada anteriormente. Você pode ajustar e salvar
+          novamente.
         </p>
       </div>
     </ng-container>

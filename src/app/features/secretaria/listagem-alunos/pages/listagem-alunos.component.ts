@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize, of, switchMap } from 'rxjs';
+import { finalize, of, switchMap, map } from 'rxjs';
 import { ProjetoService } from '@services/projeto.service';
 import { InscricoesService } from '@services/inscricoes.service';
 import { ProjetoInscricaoApi } from '@shared/models/projeto';
@@ -46,15 +46,28 @@ export class ListagemAlunosComponent implements OnInit {
   private _inscricoes: InscricaoLike[] = [];
 
   alunosSecretaria: AlunoSecretariaView[] = [];
+
+  // ORIENTADOR: lista "base" (aprovados/validados + finalizados)
   aprovadas: InscricaoLike[] = [];
   pendentesOuReprovadas: InscricaoLike[] = [];
+
+  // Seleção
   selecionados = new Set<number>();
   limite = 4;
-  bloqueado = false;
+
+  // Flags
+  bloqueado = false; // agora indica "já existe seleção registrada", mas não bloqueia interação
   loadingFlag = false;
   salvandoSelecao = false;
   sucessoSelecao = '';
   erroSalvarSelecao = '';
+
+  // SECRETARIA: split quando já existe seleção final
+  temSelecaoFinal = false;
+  secretariaSelecionados: AlunoSecretariaView[] = [];
+  secretariaDisponiveis: AlunoSecretariaView[] = [];
+
+  // Mantido (caso use depois)
   bolsaMarcada = new Set<number>();
 
   constructor(
@@ -77,13 +90,22 @@ export class ListagemAlunosComponent implements OnInit {
       return;
     }
 
+    // SECRETARIA
+    this.temSelecaoFinal = false;
+    this.secretariaSelecionados = [];
+    this.secretariaDisponiveis = [];
+
     this.projetoService
       .listarAlunosDoProjeto(this.projetoId)
       .pipe(
         switchMap((alunosVinculados) => {
-          if (alunosVinculados && alunosVinculados.length) {
-            this.bloqueado = true;
+          const temVinculados = !!(alunosVinculados && alunosVinculados.length);
 
+          if (temVinculados) {
+            this.bloqueado = true;
+            this.temSelecaoFinal = true;
+
+            // "Selecionados" (vinculados)
             this._inscricoes = (alunosVinculados || []).map((a: any) => ({
               id_aluno: a.id_aluno,
               nome_completo: a.nome_completo,
@@ -94,15 +116,32 @@ export class ListagemAlunosComponent implements OnInit {
 
             this.debugDuplicatas('SECRETARIA-LOCK', this._inscricoes);
 
-            this.alunosSecretaria = this._inscricoes.map((i) =>
+            this.secretariaSelecionados = this._inscricoes.map((i) =>
               this.mapAlunoSecretaria(i)
             );
 
-            return of(null);
+            // Mantém "lista()" com algo (pra não cair no vazio)
+            this.alunosSecretaria = [...this.secretariaSelecionados];
+
+            // Busca inscrições para montar "Disponíveis"
+            return this.inscricoesService.listarPorProjeto(this.projetoId).pipe(
+              map((inscricoes) => ({
+                inscricoes: Array.isArray(inscricoes) ? inscricoes : [],
+                selectedIds: new Set<number>(
+                  this._inscricoes.map((i) => this.alunoId(i))
+                ),
+              }))
+            );
           }
 
+          // Sem seleção final: lista normal de inscritos
           this.bloqueado = false;
-          return this.inscricoesService.listarPorProjeto(this.projetoId);
+          return this.inscricoesService.listarPorProjeto(this.projetoId).pipe(
+            map((inscricoes) => ({
+              inscricoes: Array.isArray(inscricoes) ? inscricoes : [],
+              selectedIds: null as Set<number> | null,
+            }))
+          );
         }),
         finalize(() => {
           this.loadingFlag = false;
@@ -110,19 +149,40 @@ export class ListagemAlunosComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (inscricoes) => {
-          if (!inscricoes) return;
+        next: ({ inscricoes, selectedIds }) => {
+          // Se NÃO tem seleção final, apenas lista normal
+          if (!this.temSelecaoFinal) {
+            this._inscricoes = inscricoes ?? [];
+            this.debugDuplicatas('SECRETARIA', this._inscricoes);
 
-          this._inscricoes = Array.isArray(inscricoes) ? inscricoes : [];
+            this.alunosSecretaria = this._inscricoes.map((i) =>
+              this.mapAlunoSecretaria(i)
+            );
+            return;
+          }
 
-          this.debugDuplicatas('SECRETARIA', this._inscricoes);
+          // Se TEM seleção final, calcula "Disponíveis" (inscrições que não estão selecionadas)
+          const idsSel = selectedIds ?? new Set<number>();
 
-          this.alunosSecretaria = this._inscricoes.map((i) =>
+          const disponiveis = (inscricoes ?? []).filter(
+            (i) => !idsSel.has(this.alunoId(i))
+          );
+
+          this.secretariaDisponiveis = disponiveis.map((i) =>
             this.mapAlunoSecretaria(i)
           );
+
+          // Mantém lista() como união (não quebra nada existente)
+          this.alunosSecretaria = [
+            ...this.secretariaSelecionados,
+            ...this.secretariaDisponiveis,
+          ];
         },
         error: () => {
-          this.alunosSecretaria = [];
+          if (!this.temSelecaoFinal) {
+            this.alunosSecretaria = [];
+          }
+          this.secretariaDisponiveis = [];
         },
       });
   }
@@ -132,29 +192,31 @@ export class ListagemAlunosComponent implements OnInit {
       .listarAlunosDoProjeto(this.projetoId)
       .pipe(
         switchMap((alunosVinculados) => {
-          if (alunosVinculados && alunosVinculados.length) {
-            this.bloqueado = true;
+          const finalizados = (alunosVinculados || []).map((a: any) => ({
+            id_aluno: a.id_aluno,
+            nome_completo: a.nome_completo,
+            email: a.email,
+            possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
+            status: 'CADASTRADO_FINAL',
+          })) as any[];
 
-            this._inscricoes = (alunosVinculados || []).map((a: any) => ({
-              id_aluno: a.id_aluno,
-              nome_completo: a.nome_completo,
-              email: a.email,
-              possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
-              status: 'CADASTRADO_FINAL',
-            })) as any[];
+          // Se tiver finalizados, marca como "já existe seleção"
+          this.bloqueado = finalizados.length > 0;
 
-            this.debugDuplicatas('ORIENTADOR-LOCK', this._inscricoes);
+          // Selecionados iniciais = finalizados (se existirem)
+          this.selecionados = new Set<number>(
+            finalizados.map((i: any) => this.alunoId(i))
+          );
 
-            this.aprovadas = [...this._inscricoes];
-            this.pendentesOuReprovadas = [];
-
-            this.selecionados = new Set<number>(
-              this._inscricoes.map((i) => this.alunoId(i))
+          // Sempre busca as inscrições também (pra montar "Disponíveis")
+          return this.projetoService
+            .listarInscricoesPorProjeto(this.projetoId)
+            .pipe(
+              map((inscricoes) => ({
+                inscricoes: (inscricoes ?? []) as InscricaoLike[],
+                finalizados,
+              }))
             );
-            return of(null);
-          }
-          this.bloqueado = false;
-          return this.projetoService.listarInscricoesPorProjeto(this.projetoId);
         }),
         finalize(() => {
           this.loadingFlag = false;
@@ -162,32 +224,49 @@ export class ListagemAlunosComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (inscricoes) => {
-          if (!inscricoes) return;
-
+        next: ({ inscricoes, finalizados }) => {
           this._inscricoes = inscricoes ?? [];
 
           this.debugDuplicatas('ORIENTADOR', this._inscricoes);
 
-          this.aprovadas = this._inscricoes.filter((i) => {
-            const st = ((i as any).status || '').toUpperCase();
+          // Aprovadas/Validado vindo das inscrições
+          const aprovadasApi = this._inscricoes.filter((i) => {
+            const st = this.alunoStatus(i);
             return st === 'VALIDADO' || st === 'APROVADO';
           });
 
+          // Se a API também retornar CADASTRADO_FINAL em inscrições
+          const finalizadosApi = this._inscricoes.filter(
+            (i) => this.alunoStatus(i) === 'CADASTRADO_FINAL'
+          );
+
+          const finalMerge = this.uniqByAlunoId([
+            ...(finalizados as any[]),
+            ...(finalizadosApi as any[]),
+          ]);
+
+          // garante que todos os finalizados estejam selecionados
+          for (const i of finalMerge) {
+            const id = this.alunoId(i);
+            if (id) this.selecionados.add(id);
+          }
+          if (finalMerge.length) this.bloqueado = true;
+
+          // "aprovadas" agora contém: finalizados + aprovadasApi (sem duplicar por aluno)
+          this.aprovadas = this.uniqByAlunoId([
+            ...(finalMerge as any[]),
+            ...(aprovadasApi as any[]),
+          ]);
+
+          // resto (não aparece no template hoje, mas mantemos)
           this.pendentesOuReprovadas = this._inscricoes.filter((i) => {
-            const st = ((i as any).status || '').toUpperCase();
-            return !this.aprovadas.includes(i) && st !== 'CADASTRADO_FINAL';
+            const st = this.alunoStatus(i);
+            return (
+              st !== 'VALIDADO' &&
+              st !== 'APROVADO' &&
+              st !== 'CADASTRADO_FINAL'
+            );
           });
-
-          const jaVinculados = this._inscricoes
-            .filter(
-              (i) =>
-                (((i as any).status || '') as string).toUpperCase() ===
-                'CADASTRADO_FINAL'
-            )
-            .map((i) => this.alunoId(i));
-
-          this.selecionados = new Set<number>(jaVinculados);
         },
         error: () => {
           this._inscricoes = [];
@@ -197,6 +276,7 @@ export class ListagemAlunosComponent implements OnInit {
       });
   }
 
+  // ---------- helpers do template ----------
   loading() {
     return this.loadingFlag;
   }
@@ -206,9 +286,25 @@ export class ListagemAlunosComponent implements OnInit {
   }
 
   total() {
-    return this.modo === 'SECRETARIA'
-      ? this.alunosSecretaria.length
-      : this.aprovadas.length + this.pendentesOuReprovadas.length;
+    if (this.modo === 'SECRETARIA') {
+      return this.temSelecaoFinal
+        ? this.secretariaSelecionados.length + this.secretariaDisponiveis.length
+        : this.alunosSecretaria.length;
+    }
+
+    return this.aprovadas.length + this.pendentesOuReprovadas.length;
+  }
+
+  aprovadasSelecionadas(): InscricaoLike[] {
+    return (this.aprovadas || []).filter((i) =>
+      this.selecionados.has(this.alunoId(i))
+    );
+  }
+
+  aprovadasDisponiveis(): InscricaoLike[] {
+    return (this.aprovadas || []).filter(
+      (i) => !this.selecionados.has(this.alunoId(i))
+    );
   }
 
   alunoId(i: InscricaoLike): number {
@@ -219,6 +315,7 @@ export class ListagemAlunosComponent implements OnInit {
       anyI?.idAluno ??
       anyI?.aluno?.id ??
       anyI?.alunoId ??
+      anyI?.aluno_id ??
       anyI?.id ??
       0
     );
@@ -245,21 +342,24 @@ export class ListagemAlunosComponent implements OnInit {
     return (anyI?.aluno?.email || anyI?.email || '—').trim();
   }
 
-  disabledCheckbox(i: InscricaoLike): boolean {
-    if (this.modo === 'ORIENTADOR' && this.bloqueado) {
-      return true;
-    }
+  alunoStatus(i: InscricaoLike): string {
+    const anyI = i as any;
+    const st = (anyI?.status || anyI?.situacao || 'PENDENTE')
+      .toString()
+      .toUpperCase();
+    return st || 'PENDENTE';
+  }
 
+  disabledCheckbox(i: InscricaoLike): boolean {
     const id = this.alunoId(i);
     if (this.selecionados.has(id)) return false;
     return this.selecionados.size >= this.limite;
   }
 
   toggleSelecionado(i: InscricaoLike, checked: boolean) {
-    if (this.modo === 'ORIENTADOR' && this.bloqueado) return;
-
     const id = this.alunoId(i);
     if (!id) return;
+
     if (checked) {
       if (this.selecionados.size >= this.limite) return;
       this.selecionados.add(id);
@@ -269,14 +369,6 @@ export class ListagemAlunosComponent implements OnInit {
   }
 
   onSelecionadoChange(event: Event, inscricao: InscricaoLike) {
-    if (this.modo === 'ORIENTADOR' && this.bloqueado) {
-      const target = event.target as HTMLInputElement | null;
-      if (target) {
-        target.checked = this.selecionados.has(this.alunoId(inscricao));
-      }
-      return;
-    }
-
     const target = event.target as HTMLInputElement | null;
     this.toggleSelecionado(inscricao, !!target?.checked);
   }
@@ -287,7 +379,7 @@ export class ListagemAlunosComponent implements OnInit {
 
     const ids = Array.from(this.selecionados);
 
-    if (this.modo === 'ORIENTADOR' && !this.bloqueado) {
+    if (this.modo === 'ORIENTADOR') {
       if (ids.length === 0) {
         await this.dialogService.alert(
           'Selecione pelo menos 1 aluno antes de salvar.',
@@ -306,8 +398,7 @@ export class ListagemAlunosComponent implements OnInit {
           this.limite ? ` de ${this.limite}` : ''
         } aluno(s).\n\n` +
         `${selecionadosTexto || '—'}\n\n` +
-        `Ao confirmar, sua seleção será registrada e as demais inscrições aprovadas serão removidas.\n` +
-        `Depois disso, para alterações, será necessário contatar a Secretaria.\n\n` +
+        `Ao confirmar, sua seleção será registrada.\n\n` +
         `Deseja confirmar?`;
 
       const confirmou = await this.dialogService.confirm(
@@ -319,6 +410,7 @@ export class ListagemAlunosComponent implements OnInit {
 
     this.salvandoSelecao = true;
 
+    // ORIENTADOR usa a rota que você já tinha
     if (this.modo === 'ORIENTADOR') {
       this.projetoService
         .atualizarAprovadosEExcluirRejeitados(
@@ -335,8 +427,7 @@ export class ListagemAlunosComponent implements OnInit {
           next: (res) => {
             this.salvandoSelecao = false;
             this.sucessoSelecao =
-              (res as any)?.mensagem ||
-              'Seleção salva e inscrições restantes excluídas.';
+              (res as any)?.mensagem || 'Seleção salva com sucesso.';
             this.selecionados = new Set<number>(ids);
             this.carregar();
           },
@@ -346,13 +437,13 @@ export class ListagemAlunosComponent implements OnInit {
               typeof e === 'object' && e && 'message' in e
                 ? String((e as { message: unknown }).message)
                 : null;
-            this.erroSalvarSelecao =
-              message || 'Falha ao salvar seleção/apagar inscrições.';
+            this.erroSalvarSelecao = message || 'Falha ao salvar seleção.';
           },
         });
       return;
     }
 
+    // SECRETARIA (mantido como estava)
     this.projetoService
       .updateAlunosProjeto({
         id_projeto: this.projetoId,
@@ -377,7 +468,6 @@ export class ListagemAlunosComponent implements OnInit {
   }
 
   toggleBolsa(i: InscricaoLike, checked: boolean) {
-    if (!this.bloqueado) return;
     const id = this.alunoId(i);
     if (!id) return;
 
@@ -390,10 +480,13 @@ export class ListagemAlunosComponent implements OnInit {
     return this.bolsaMarcada.has(id);
   }
 
+  // trackBys
   trackByAlunoSecretaria = (_: number, aluno: AlunoSecretariaView) =>
-    aluno.idInscricao;
+    aluno.idAluno || aluno.idInscricao;
+
   trackByInscricao = (_: number, inscricao: InscricaoLike) =>
     this.alunoId(inscricao);
+
   trackByIndex = (index: number) => index;
 
   private mapAlunoSecretaria(inscricao: InscricaoLike): AlunoSecretariaView {
@@ -419,6 +512,18 @@ export class ListagemAlunosComponent implements OnInit {
         anyI?.possuiTrabalhoRemunerado ?? !!anyI?.possui_trabalho_remunerado,
       documentoNotasUrl: anyI?.documentoNotasUrl ?? undefined,
     };
+  }
+
+  private uniqByAlunoId(list: InscricaoLike[]): InscricaoLike[] {
+    const seen = new Set<number>();
+    const out: InscricaoLike[] = [];
+    for (const item of list || []) {
+      const id = this.alunoId(item);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push(item);
+    }
+    return out;
   }
 
   private debugDuplicatas(contexto: string, lista: InscricaoLike[]) {
