@@ -3,7 +3,6 @@
   <p class="muted">Gerencie campus, cursos, bolsas e secretarias</p>
 
   <mat-tab-group>
-    <!-- ===== Campus ===== -->
     <mat-tab label="Campus">
       <div class="form-section">
         <h3>Cadastrar Campus</h3>
@@ -22,7 +21,11 @@
         <ul class="list">
           <li *ngFor="let c of campus">
             <span>{{ c.campus }}</span>
-            <button class="danger" (click)="excluirCampus(c.id_campus)">
+            <button
+              class="danger"
+              type="button"
+              (click)="excluirCampus(c.id_campus)"
+            >
               Excluir
             </button>
           </li>
@@ -30,7 +33,6 @@
       </div>
     </mat-tab>
 
-    <!-- ===== Cursos ===== -->
     <mat-tab label="Cursos">
       <div class="form-section">
         <h3>Cadastrar Curso</h3>
@@ -49,7 +51,11 @@
         <ul class="list">
           <li *ngFor="let c of cursos">
             <span>{{ c.nome }}</span>
-            <button class="danger" (click)="excluirCurso(c.id_curso)">
+            <button
+              class="danger"
+              type="button"
+              (click)="excluirCurso(c.id_curso)"
+            >
               Excluir
             </button>
           </li>
@@ -57,7 +63,6 @@
       </div>
     </mat-tab>
 
-    <!-- ===== Bolsas ===== -->
     <mat-tab label="Bolsas">
       <div class="form-section">
         <h3>Cadastrar Tipo de Bolsa</h3>
@@ -77,7 +82,11 @@
         <ul class="list">
           <li *ngFor="let t of tiposBolsa">
             <span>{{ t.tipo_bolsa }}</span>
-            <button class="danger" (click)="excluirTipoBolsa(t.id_tipo_bolsa)">
+            <button
+              class="danger"
+              type="button"
+              (click)="excluirTipoBolsa(t.id_tipo_bolsa)"
+            >
               Excluir
             </button>
           </li>
@@ -91,6 +100,7 @@
           <input
             type="text"
             [(ngModel)]="filtroBolsa"
+            name="filtroBolsa"
             placeholder="Filtrar por nome ou e-mail"
           />
         </div>
@@ -98,44 +108,47 @@
         <div class="table-bolsas-wrapper" *ngIf="alunos.length">
           <table class="table table-bolsas">
             <thead>
-            <tr>
-              <th>Aluno</th>
-              <th>Email</th>
-              <th>Bolsas Atuais</th>
-              <th>Ações</th>
-            </tr>
+              <tr>
+                <th>Aluno</th>
+                <th>Email</th>
+                <th>Bolsas Atuais</th>
+                <th>Ações</th>
+              </tr>
             </thead>
 
             <tbody>
-            <tr
-              *ngFor="let a of alunos"
-              [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
-            >
-              <td>{{ toTitleCase(a.nome_completo) }}</td>
-              <td>{{ a.email }}</td>
+              <tr
+                *ngFor="let a of alunos"
+                [hidden]="!matchBolsa(filtroBolsa, a.nome_completo, a.email)"
+              >
+                <td>{{ toTitleCase(a.nome_completo) }}</td>
+                <td>{{ a.email }}</td>
 
-              <td>
-                <div *ngIf="a.bolsas.length; else semBolsa">
+                <td>
+                  <div *ngIf="a.bolsas.length; else semBolsa">
                     <span *ngFor="let b of a.bolsas" class="tag">
                       {{ b.tipo_bolsa }}
                       <button
                         class="tag-remove"
+                        type="button"
                         (click)="removerBolsa(b.id_bolsa)"
                       >
                         x
                       </button>
                     </span>
-                </div>
+                  </div>
 
-                <ng-template #semBolsa>
-                  <span class="muted">Nenhuma bolsa</span>
-                </ng-template>
-              </td>
+                  <ng-template #semBolsa>
+                    <span class="muted">Nenhuma bolsa</span>
+                  </ng-template>
+                </td>
 
-              <td>
-                <button (click)="abrirSelecaoBolsa(a)">Vincular Bolsa</button>
-              </td>
-            </tr>
+                <td>
+                  <button type="button" (click)="abrirSelecaoBolsa(a)">
+                    Vincular Bolsa
+                  </button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -150,29 +163,25 @@
           </p>
 
           <select [(ngModel)]="bolsaSelecionada" name="tiposBolsaSelect">
-            <option [ngValue]="null" disabled selected>
-              Selecione o tipo de bolsa
-            </option>
+            <option [ngValue]="null" disabled>Selecione o tipo de bolsa</option>
             <option *ngFor="let t of tiposBolsa" [ngValue]="t.id_tipo_bolsa">
               {{ t.tipo_bolsa }}
             </option>
           </select>
 
           <div class="modal-actions">
-            <button (click)="confirmarVinculo()">Salvar</button>
-            <button class="danger" (click)="fecharModal()">Cancelar</button>
+            <button type="button" (click)="confirmarVinculo()">Salvar</button>
+            <button class="danger" type="button" (click)="fecharModal()">
+              Cancelar
+            </button>
           </div>
         </div>
       </div>
     </mat-tab>
 
-    <!-- ===== Secretarias (NOVA ABA) ===== -->
     <mat-tab label="Secretarias">
       <div class="form-section">
         <h3>Cadastrar Secretaria</h3>
-        <p class="muted sec-muted">
-          Apenas uma secretária logada pode criar outras secretárias.
-        </p>
 
         <form (ngSubmit)="cadastrarSecretaria()" class="sec-form">
           <div class="sec-field span-2">
@@ -200,7 +209,10 @@
               [class.invalid]="secTouched.email && !isEmailValid(sec.email)"
               (blur)="secTouched.email = true"
             />
-            <small class="sec-hint error" *ngIf="secTouched.email && !isEmailValid(sec.email)">
+            <small
+              class="sec-hint error"
+              *ngIf="secTouched.email && !isEmailValid(sec.email)"
+            >
               E-mail inválido
             </small>
           </div>
@@ -216,7 +228,10 @@
               (blur)="onSecCpfBlur()"
               [class.invalid]="secTouched.cpf && !isCpfValido(sec.cpf)"
             />
-            <small class="sec-hint error" *ngIf="secTouched.cpf && !isCpfValido(sec.cpf)">
+            <small
+              class="sec-hint error"
+              *ngIf="secTouched.cpf && !isCpfValido(sec.cpf)"
+            >
               CPF inválido
             </small>
           </div>
@@ -233,7 +248,10 @@
               (blur)="secTouched.senha = true"
               [class.invalid]="secTouched.senha && !isSenhaValida(sec.senha)"
             />
-            <small class="sec-hint error" *ngIf="secTouched.senha && !isSenhaValida(sec.senha)">
+            <small
+              class="sec-hint error"
+              *ngIf="secTouched.senha && !isSenhaValida(sec.senha)"
+            >
               Senha deve ter no mínimo 6 caracteres
             </small>
           </div>
@@ -248,26 +266,87 @@
               required
               (blur)="secTouched.confirmar = true"
               [class.invalid]="
-                secTouched.confirmar && !!sec.confirmar && sec.senha !== sec.confirmar
+                secTouched.confirmar &&
+                !!sec.confirmar &&
+                sec.senha !== sec.confirmar
               "
             />
             <small
               class="sec-hint error"
-              *ngIf="secTouched.confirmar && !!sec.confirmar && sec.senha !== sec.confirmar"
+              *ngIf="
+                secTouched.confirmar &&
+                !!sec.confirmar &&
+                sec.senha !== sec.confirmar
+              "
             >
               Senhas não conferem
             </small>
           </div>
 
           <div class="sec-actions span-2">
-            <button type="submit" [disabled]="secLoading || !canSubmitSecretaria()">
-              {{ secLoading ? 'Salvando...' : 'Salvar' }}
+            <button
+              type="submit"
+              [disabled]="secLoading || !canSubmitSecretaria()"
+            >
+              {{ secLoading ? "Salvando..." : "Salvar" }}
             </button>
           </div>
 
           <div class="sec-msg erro" *ngIf="secErro">{{ secErro }}</div>
           <div class="sec-msg sucesso" *ngIf="secSucesso">{{ secSucesso }}</div>
         </form>
+
+        <hr class="section-divider" />
+
+        <h3>Secretarias cadastradas</h3>
+
+        <div
+          class="table-secretarias-wrapper"
+          *ngIf="secretarias.length; else semSecretarias"
+        >
+          <table class="table table-secretarias">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>CPF</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let s of secretarias">
+                <td>{{ toTitleCase(s.nome_completo) }}</td>
+                <td>{{ s.email }}</td>
+                <td>{{ formatCpf(s.cpf) }}</td>
+                <td class="sec-actions-col">
+                  <button
+                    type="button"
+                    class="btn-reset"
+                    (click)="resetarSenhaSecretaria(s)"
+                    [disabled]="resetPwdLoadingId === s.id"
+                  >
+                    {{
+                      resetPwdLoadingId === s.id
+                        ? "Enviando..."
+                        : "Resetar senha"
+                    }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #semSecretarias>
+          <p class="muted" style="margin-top: 8px">
+            {{
+              secretariasLoading
+                ? "Carregando..."
+                : "Nenhuma secretaria cadastrada."
+            }}
+          </p>
+        </ng-template>
       </div>
     </mat-tab>
   </mat-tab-group>

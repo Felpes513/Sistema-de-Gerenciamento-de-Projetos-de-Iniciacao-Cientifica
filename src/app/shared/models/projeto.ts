@@ -73,6 +73,7 @@ export interface Projeto {
   nomesAlunos: string[];
   inscritosTotal?: number;
   concluido?: boolean;
+  status?: string;
 }
 
 export interface ProjetoDetalhado {
@@ -92,6 +93,7 @@ export interface ProjetoDetalhado {
   data_atualizacao?: string;
   concluido?: boolean;
   tipo_bolsa?: string | null;
+  status?: string;
 }
 
 export interface DocumentoHistorico {

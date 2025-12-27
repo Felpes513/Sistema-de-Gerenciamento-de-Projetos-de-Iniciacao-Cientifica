@@ -41,6 +41,7 @@ export class RegisterService {
       cpf: this.cleanCPF(data.cpf),
       senha: data.senha,
     };
+
     return this.http.post<RegisterResponse>(
       `${this.baseUrl}/orientadores/`,
       payload
@@ -119,6 +120,7 @@ export class RegisterService {
     );
   }
 
+  // ✅ CREATE secretaria
   registerSecretaria(data: {
     nomeCompleto: string;
     email: string;
@@ -133,6 +135,10 @@ export class RegisterService {
     };
 
     return this.http.post<any>(`${this.baseUrl}/secretarias/`, payload);
+  }
+
+  listarSecretarias(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/secretarias/secretarias`);
   }
 
   validateCPF(cpf: string): Observable<{ valid: boolean }> {
@@ -152,16 +158,22 @@ export class RegisterService {
   } {
     const feedback: string[] = [];
     let score = 0;
+
     if (password.length >= 8) score++;
     else feedback.push('Senha deve ter pelo menos 6 caracteres');
+
     if (/[a-z]/.test(password)) score++;
     else feedback.push('Adicione pelo menos uma letra minúscula');
+
     if (/[A-Z]/.test(password)) score++;
     else feedback.push('Adicione pelo menos uma letra maiúscula');
+
     if (/[0-9]/.test(password)) score++;
     else feedback.push('Adicione pelo menos um número');
+
     if (/[^A-Za-z0-9]/.test(password)) score++;
     else feedback.push('Adicione pelo menos um caractere especial (!@#$%^&*)');
+
     return { score, feedback, isValid: score >= 3 };
   }
 }

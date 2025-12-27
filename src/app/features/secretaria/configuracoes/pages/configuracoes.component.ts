@@ -7,18 +7,9 @@ import { DialogService } from '@services/dialog.service';
 import { RegisterService } from '@services/cadastro.service';
 import { forkJoin } from 'rxjs';
 import { BolsaListItem } from '@shared/models/configuracao';
-
-interface AlunoConfigView {
-  id_aluno: number;
-  nome_completo: string;
-  email: string;
-  status?: string;
-  bolsas: {
-    id_bolsa: number;
-    id_tipo_bolsa: number;
-    tipo_bolsa: string;
-  }[];
-}
+import { PasswordService } from '@services/password.service';
+import { RegisterSecretariaData } from '@shared/models/registros';
+import { AlunoConfigView } from '@shared/models/aluno';
 
 @Component({
   selector: 'app-configuracoes',
@@ -30,21 +21,18 @@ interface AlunoConfigView {
 export class ConfiguracoesComponent implements OnInit {
   campus: any[] = [];
   novoCampus = '';
-
   cursos: any[] = [];
   novoCurso = '';
-
   tiposBolsa: any[] = [];
   novoTipoBolsa = '';
-
   alunos: AlunoConfigView[] = [];
   filtroBolsa = '';
-
   modalBolsaAberto = false;
   alunoSelecionado: AlunoConfigView | null = null;
   bolsaSelecionada: number | null = null;
+  secretarias: RegisterSecretariaData[] = [];
+  secretariasLoading = false;
 
-  // ===== Secretarias (novo) =====
   sec = { nomeCompleto: '', cpf: '', email: '', senha: '', confirmar: '' };
   secLoading = false;
   secErro: string | null = null;
@@ -58,10 +46,13 @@ export class ConfiguracoesComponent implements OnInit {
     confirmar: false,
   };
 
+  resetPwdLoadingId: number | null = null;
+
   constructor(
     private config: ConfigService,
     private dialog: DialogService,
-    private registerService: RegisterService
+    private registerService: RegisterService,
+    private passwordService: PasswordService
   ) {}
 
   ngOnInit(): void {
@@ -69,9 +60,8 @@ export class ConfiguracoesComponent implements OnInit {
     this.carregarCursos();
     this.carregarTiposBolsa();
     this.carregarAlunosComBolsa();
+    this.carregarSecretarias();
   }
-
-  // ========= Campus =========
 
   carregarCampus() {
     this.config.listarCampus().subscribe({
@@ -102,8 +92,6 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  // ========= Cursos =========
-
   carregarCursos() {
     this.config.listarCursos().subscribe((res) => (this.cursos = res.cursos));
   }
@@ -129,8 +117,6 @@ export class ConfiguracoesComponent implements OnInit {
       error: () => this.dialog.alert('Falha ao excluir curso', 'Erro'),
     });
   }
-
-  // ========= Tipos de Bolsa =========
 
   carregarTiposBolsa() {
     this.config.listarTiposBolsa().subscribe((res) => {
@@ -158,8 +144,6 @@ export class ConfiguracoesComponent implements OnInit {
       this.carregarTiposBolsa();
     });
   }
-
-  // ========= Alunos + Bolsas =========
 
   carregarAlunosComBolsa() {
     forkJoin({
@@ -246,7 +230,27 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  // ========= Secretarias (novo) =========
+  carregarSecretarias() {
+    this.secretariasLoading = true;
+
+    this.registerService.listarSecretarias().subscribe({
+      next: (rows: any[]) => {
+        this.secretariasLoading = false;
+        const lista = Array.isArray(rows) ? rows : [];
+
+        this.secretarias = lista.map((s: any) => ({
+          id: Number(s.id ?? s.id_secretaria ?? 0),
+          nome_completo: s.nome_completo ?? '',
+          email: s.email ?? '',
+          cpf: s.cpf ?? '',
+        }));
+      },
+      error: () => {
+        this.secretariasLoading = false;
+        this.secretarias = [];
+      },
+    });
+  }
 
   onSecCpfBlur() {
     this.secTouched.cpf = true;
@@ -267,7 +271,6 @@ export class ConfiguracoesComponent implements OnInit {
     this.secErro = null;
     this.secSucesso = null;
 
-    // marca tudo como "tocado" pra pintar os erros
     this.secTouched = {
       nome: true,
       email: true,
@@ -293,9 +296,19 @@ export class ConfiguracoesComponent implements OnInit {
       .subscribe({
         next: (res: any) => {
           this.secLoading = false;
-          this.secSucesso = res?.mensagem || 'Secretaria cadastrada com sucesso.';
 
-          this.sec = { nomeCompleto: '', cpf: '', email: '', senha: '', confirmar: '' };
+          const msg = res?.mensagem || 'Secretaria cadastrada com sucesso.';
+          this.secSucesso = msg;
+
+          this.dialog.alert(msg, 'Sucesso');
+
+          this.sec = {
+            nomeCompleto: '',
+            cpf: '',
+            email: '',
+            senha: '',
+            confirmar: '',
+          };
           this.secTouched = {
             nome: false,
             email: false,
@@ -303,13 +316,20 @@ export class ConfiguracoesComponent implements OnInit {
             senha: false,
             confirmar: false,
           };
+
+          this.carregarSecretarias();
         },
         error: (e) => {
           this.secLoading = false;
-          this.secErro =
+
+          const msg =
             e?.error?.detail ||
             e?.message ||
             'Falha ao cadastrar secretária (verifique permissões e dados).';
+
+          this.secErro = msg;
+
+          this.dialog.alert(msg, 'Erro');
         },
       });
   }
@@ -319,6 +339,12 @@ export class ConfiguracoesComponent implements OnInit {
     return raw.length === 11
       ? raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
       : raw;
+  }
+
+  formatCpf(value?: string | null): string {
+    const digits = (value ?? '').replace(/\D/g, '');
+    if (digits.length !== 11) return value ?? '';
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   }
 
   isSenhaValida(s: string): boolean {
@@ -348,7 +374,40 @@ export class ConfiguracoesComponent implements OnInit {
     return d1 === Number(digits[9]) && d2 === Number(digits[10]);
   }
 
-  // ========= Helpers =========
+  async resetarSenhaSecretaria(sec: RegisterSecretariaData) {
+    const email = (sec.email || '').trim();
+    if (!email) {
+      await this.dialog.alert('E-mail da secretária inválido.', 'Erro');
+      return;
+    }
+
+    const ok = await this.dialog.confirm(
+      `Enviar link de redefinição de senha para:\n${email}?`,
+      'Reset de senha'
+    );
+    if (!ok) return;
+
+    this.resetPwdLoadingId = sec.id;
+
+    this.passwordService.forgotPassword(email, 'secretaria').subscribe({
+      next: (r) => {
+        this.resetPwdLoadingId = null;
+        const msg =
+          (r as any)?.message ||
+          'Link de redefinição enviado para o e-mail da secretária.';
+        this.dialog.alert(msg, 'Sucesso');
+      },
+      error: (e) => {
+        this.resetPwdLoadingId = null;
+        const msg =
+          e?.error?.message ||
+          e?.error?.detail ||
+          e?.message ||
+          'Falha ao solicitar reset de senha.';
+        this.dialog.alert(msg, 'Erro');
+      },
+    });
+  }
 
   matchBolsa(term: string, ...vals: (string | number | undefined | null)[]) {
     const norm = (s: any) =>

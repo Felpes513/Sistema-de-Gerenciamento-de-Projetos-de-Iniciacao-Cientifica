@@ -8,3 +8,15 @@ export interface Aluno {
   documentoNotasUrl?: string;
   possuiTrabalhoRemunerado?: boolean;
 }
+
+export interface AlunoConfigView {
+  id_aluno: number;
+  nome_completo: string;
+  email: string;
+  status?: string;
+  bolsas: {
+    id_bolsa: number;
+    id_tipo_bolsa: number;
+    tipo_bolsa: string;
+  }[];
+}

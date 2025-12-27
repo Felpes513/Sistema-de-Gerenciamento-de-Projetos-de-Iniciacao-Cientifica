@@ -242,6 +242,10 @@ export class ListagemProjetosComponent implements OnInit {
       .join(' ');
   }
 
+  isProjetoCancelado(projeto: any): boolean {
+    return this.isCancelado(projeto);
+  }
+
   carregarProjetos(): void {
     this.carregando = true;
     this.erro = null;
@@ -512,6 +516,52 @@ export class ListagemProjetosComponent implements OnInit {
           console.error('Erro concluirProjeto', e);
           this.snackBar.open(
             e?.error?.detail || 'Erro ao concluir projeto.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
+    });
+  }
+
+  ativarProjeto(id: number): void {
+    console.log('✅ ativarProjeto clicado', id);
+    if (!this.isSecretaria) return;
+
+    if (!this.isIdValido(id)) {
+      this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
+      return;
+    }
+
+    this.abrirConfirmacao(
+      'Ativar projeto',
+      'Deseja reativar este projeto?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) return;
+
+      const svc: any = this.projetoService as any;
+      if (typeof svc.ativarProjeto !== 'function') {
+        this.snackBar.open(
+          'Endpoint ativarProjeto não implementado.',
+          'Fechar',
+          { duration: 3500 }
+        );
+        return;
+      }
+
+      svc.ativarProjeto(id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(res?.mensagem || 'Projeto ativado.', 'Fechar', {
+            duration: 3000,
+          });
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro ativarProjeto', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro ao ativar projeto.',
             'Fechar',
             { duration: 4000 }
           );
