@@ -1,3 +1,5 @@
+// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\core\data-access\cadastro.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -8,6 +10,8 @@ import {
 } from '@shared/models/registros';
 import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
+
+type StatusCadastro = 'PENDENTE' | 'APROVADO' | 'INADIMPLENTE';
 
 @Injectable({ providedIn: 'root' })
 export class RegisterService {
@@ -32,9 +36,7 @@ export class RegisterService {
     return this.http.post<RegisterResponse>(`${this.baseUrl}/alunos/`, fd);
   }
 
-  registerOrientador(
-    data: RegisterOrientadorData
-  ): Observable<RegisterResponse> {
+  registerOrientador(data: RegisterOrientadorData): Observable<RegisterResponse> {
     const payload = {
       nome_completo: data.nomeCompleto,
       email: data.email,
@@ -42,66 +44,53 @@ export class RegisterService {
       senha: data.senha,
     };
 
-    return this.http.post<RegisterResponse>(
-      `${this.baseUrl}/orientadores/`,
-      payload
-    );
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/orientadores/`, payload);
   }
 
   listarAlunos(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/alunos/`);
   }
 
-  aprovarAluno(id: number) {
-    return this.http.put(`${this.baseUrl}/alunos/${id}/aprovar`, {});
-  }
-
-  reprovarAluno(id: number) {
-    return this.http.put(`${this.baseUrl}/alunos/${id}/reprovar`, {});
-  }
-
-  inadimplentarAluno(id: number) {
-    return this.http.put(`${this.baseUrl}/alunos/${id}/inadimplentar`, {});
-  }
-
-  adimplentarAluno(id: number) {
-    return this.http.put(`${this.baseUrl}/alunos/${id}/adimplentar`, {});
-  }
-
-  listarAlunosInadimplentes() {
-    return this.http
-      .get<{ alunos: any[] }>(`${this.baseUrl}/alunos/inadimplentes`)
-      .pipe(map((r) => r.alunos || []));
-  }
-
   listarOrientadores(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/orientadores/`);
+  }
+
+  // ====== APROVAR (vira APROVADO) ======
+  aprovarAluno(id: number) {
+    return this.http.put(`${this.baseUrl}/alunos/${id}/aprovar`, {});
   }
 
   aprovarOrientador(id: number) {
     return this.http.put(`${this.baseUrl}/orientadores/${id}/aprovar`, {});
   }
 
-  reprovarOrientador(id: number) {
-    return this.http.put(`${this.baseUrl}/orientadores/${id}/reprovar`, {});
-  }
-
-  inadimplentarOrientador(id: number) {
+  // ====== ATUALIZAR STATUS (usado para INADIMPLENTE) ======
+  atualizarStatusAluno(id: number, novoStatus: StatusCadastro) {
     return this.http.put(
-      `${this.baseUrl}/orientadores/${id}/inadimplentar`,
-      {}
+      `${this.baseUrl}/alunos/${id}/status`,
+      {},
+      { params: { novo_status: novoStatus } } // FastAPI pega como query param
     );
   }
 
-  adimplentarOrientador(id: number) {
-    return this.http.put(`${this.baseUrl}/orientadores/${id}/adimplentar`, {});
+  atualizarStatusOrientador(id: number, novoStatus: StatusCadastro) {
+    return this.http.put(
+      `${this.baseUrl}/orientadores/${id}/status`,
+      {},
+      { params: { novo_status: novoStatus } }
+    );
+  }
+
+  // ====== LISTA INADIMPLENTES ======
+  listarAlunosInadimplentes() {
+    return this.http
+      .get<{ alunos: any[] }>(`${this.baseUrl}/alunos/inadimplentes`)
+      .pipe(map((r) => r.alunos || []));
   }
 
   listarOrientadoresInadimplentes() {
     return this.http
-      .get<{ orientadores: any[] }>(
-        `${this.baseUrl}/orientadores/inadimplentes`
-      )
+      .get<{ orientadores: any[] }>(`${this.baseUrl}/orientadores/inadimplentes`)
       .pipe(map((r) => r.orientadores || []));
   }
 

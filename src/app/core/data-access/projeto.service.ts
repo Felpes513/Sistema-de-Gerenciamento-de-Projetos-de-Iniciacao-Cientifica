@@ -42,8 +42,6 @@ export class ProjetoService {
   private readonly apiUrl = environment.apiBaseUrl;
 
   private readonly apiUrlProjetos = `${this.apiUrl}/projetos/`;
-  private readonly apiUrlProjetosAdmin = `${this.apiUrl}/projetos/projetos/`;
-
   private readonly apiUrlOrientadores = `${this.apiUrl}/orientadores`;
   private readonly apiUrlInscricoes = `${this.apiUrl}/inscricoes`;
 
@@ -66,10 +64,6 @@ export class ProjetoService {
     return [];
   }
 
-  /**
-   * Busca todas as páginas do GET /projetos (paginação do back).
-   * Evita bug de "projeto não encontrado" por estar fora da primeira página.
-   */
   private listarProjetosRawAll(pageSize = 200): Observable<any[]> {
     const getPage = (page: number) => {
       const params = new HttpParams()
@@ -88,9 +82,6 @@ export class ProjetoService {
     );
   }
 
-  // -----------------------------
-  // CREATE (JSON + Base64)
-  // -----------------------------
   cadastrarProjetoCompleto(
     projeto: ProjetoCadastro & {
       cod_projeto?: string;
@@ -108,7 +99,6 @@ export class ProjetoService {
 
     const cod = (projeto.cod_projeto || '').trim() || this.gerarCodProjeto();
 
-    // backend aceita base64 puro ou dataURL — aqui mantemos puro (como você já fazia)
     const ideiaDocxCrua = this.stripDataUrl(projeto.ideia_inicial_b64 || '');
     const ideiaPdfCrua = this.stripDataUrl(projeto.ideia_inicial_pdf_b64 || '');
 
@@ -135,9 +125,6 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  // -----------------------------
-  // LISTAGENS
-  // -----------------------------
   listarProjetos(): Observable<Projeto[]> {
     return this.listarProjetosRaw().pipe(
       map((lista) => lista.map((p) => this.normalizarProjeto(p))),
@@ -146,7 +133,6 @@ export class ProjetoService {
   }
 
   listarProjetosRaw(): Observable<any[]> {
-    // agora pega todas as páginas pra não quebrar telas antigas
     return this.listarProjetosRawAll(200);
   }
 
@@ -177,16 +163,12 @@ export class ProjetoService {
       );
   }
 
-  // novos: cancelados (secretaria)
   listarProjetosCancelados(): Observable<any[]> {
     return this.http
-      .get<any[]>(`${this.apiUrlProjetosAdmin}cancelados`)
+      .get<any[]>(`${this.apiUrlProjetos}cancelados`)
       .pipe(catchError(this.handleError));
   }
 
-  // -----------------------------
-  // GET por ID (sem endpoint dedicado no back)
-  // -----------------------------
   getProjetoPorId(id: number) {
     return this.listarProjetosRaw().pipe(
       map((lista) => {
@@ -203,7 +185,6 @@ export class ProjetoService {
   }
 
   getProjetoDetalhado(id: number) {
-    // mantém fallback como você tinha (se existir endpoint /detalhado em algum lugar)
     return this.http.get<any>(`${this.apiUrlProjetos}${id}/detalhado`).pipe(
       map((p) => this.normalizarProjetoDetalhado(p)),
       catchError(() =>
@@ -214,15 +195,11 @@ export class ProjetoService {
     );
   }
 
-  // -----------------------------
-  // UPDATE do projeto (AGORA multipart/FormData + rota nova)
-  // -----------------------------
   atualizarProjeto(id: number, formulario: ProjetoFormulario) {
     return this.buscarOrientadorPorNome(formulario.orientador_nome).pipe(
       switchMap((orientador: Orientador) => {
         const fd = new FormData();
 
-        // campos esperados no back (Form)
         fd.append(
           'titulo_projeto',
           String(formulario.titulo_projeto || '').trim()
@@ -234,23 +211,18 @@ export class ProjetoService {
         const cod = (formulario as any).cod_projeto;
         if (cod != null) fd.append('cod_projeto', String(cod));
 
-        // se seu formulário tiver "concluido", manda também (opcional)
         const concluido = (formulario as any).concluido;
         if (concluido !== undefined && concluido !== null) {
           fd.append('concluido', String(!!concluido));
         }
 
-        // ✅ rota nova no back: /projetos/projetos/{id}
         return this.http
-          .put(`${this.apiUrlProjetosAdmin}${id}`, fd)
+          .put(`${this.apiUrlProjetos}${id}`, fd)
           .pipe(catchError(this.handleError));
       })
     );
   }
 
-  // -----------------------------
-  // STATUS: concluir / cancelar / ativar
-  // -----------------------------
   concluirProjeto(id: number): Observable<{ mensagem: string }> {
     return this.http
       .put<{ success?: boolean; message?: string }>(
@@ -268,7 +240,7 @@ export class ProjetoService {
   ativarProjeto(idProjeto: number) {
     return this.http
       .put<{ mensagem: string }>(
-        `${this.apiUrlProjetosAdmin}${idProjeto}/ativar`,
+        `${this.apiUrlProjetos}${idProjeto}/ativar`,
         {}
       )
       .pipe(catchError(this.handleError));
@@ -277,7 +249,7 @@ export class ProjetoService {
   cancelarProjeto(idProjeto: number) {
     return this.http
       .put<{ mensagem: string }>(
-        `${this.apiUrlProjetosAdmin}${idProjeto}/cancelar`,
+        `${this.apiUrlProjetos}${idProjeto}/cancelar`,
         {}
       )
       .pipe(catchError(this.handleError));
@@ -289,9 +261,6 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  // -----------------------------
-  // Orientadores
-  // -----------------------------
   listarOrientadores(): Observable<Orientador[]> {
     return this.http
       .get<Orientador[]>(`${this.apiUrlOrientadores}/`)
@@ -312,9 +281,6 @@ export class ProjetoService {
       .pipe(catchError(this.handleError));
   }
 
-  // -----------------------------
-  // Inscrições / Selecionados
-  // -----------------------------
   listarInscricoesPorProjeto(
     idProjeto: number
   ): Observable<ProjetoInscricaoApi[]> {
@@ -324,7 +290,6 @@ export class ProjetoService {
         map((items: any[]) => {
           const lista = items || [];
 
-          // debug duplicadas (mantive)
           const seen = new Set<string>();
           const duplicadas: any[] = [];
 
@@ -375,7 +340,6 @@ export class ProjetoService {
       );
   }
 
-  // ✅ atualizado para o endpoint novo: POST /projetos/{id}/selecionados
   updateAlunosProjeto(
     dto: UpdateProjetoAlunosDTO
   ): Observable<{ mensagem: string }> {
@@ -446,9 +410,6 @@ export class ProjetoService {
       );
   }
 
-  // -----------------------------
-  // Downloads / Monografia
-  // -----------------------------
   downloadDocx(idProjeto: number): Observable<Blob> {
     return this.http.get(
       `${this.apiUrlProjetos}${idProjeto}/ideia-inicial.docx`,
@@ -542,9 +503,6 @@ export class ProjetoService {
     );
   }
 
-  // -----------------------------
-  // Avaliações (mantido)
-  // -----------------------------
   listarProjetosParaAvaliacao(): Observable<ProjetoBasico[]> {
     return this.http
       .get<any[]>(`${this.apiUrl}/avaliacoes/projetos-para-avaliacao`)
@@ -618,8 +576,6 @@ export class ProjetoService {
         dados.nomeOrientador || dados.orientador || 'Não informado',
       nomesAlunos: dados.nomesAlunos || [],
       concluido: Boolean(dados?.concluido),
-
-      // ✅ vem do back (ATIVO/CANCELADO etc)
       status: dados?.status ?? '',
     };
   }
@@ -641,20 +597,12 @@ export class ProjetoService {
       id_campus: dados.id_campus || 0,
       data_criacao: dados.data_criacao || '',
       data_atualizacao: dados.data_atualizacao || '',
-
-      // ✅ corrigido (antes estava vindo string)
       concluido: Boolean(dados?.concluido),
-
       tipo_bolsa: dados.tipo_bolsa ?? null,
-
-      // ✅ status do back
       status: dados?.status ?? '',
     };
   }
 
-  // -----------------------------
-  // Error handler (mantido)
-  // -----------------------------
   private handleError = (error: any): Observable<never> => {
     const status: number = Number(error?.status ?? 0);
     const body = error?.error ?? null;

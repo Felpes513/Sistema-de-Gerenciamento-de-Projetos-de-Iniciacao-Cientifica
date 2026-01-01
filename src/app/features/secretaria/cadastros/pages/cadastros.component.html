@@ -1,3 +1,5 @@
+<!-- D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\cadastros\pages\cadastros.component.html -->
+
 <section class="cadastros" [class.loading]="carregando">
   <header class="tabs">
     <button
@@ -47,6 +49,7 @@
 
   <div *ngIf="erro" class="erro">{{ erro }}</div>
 
+  <!-- ====== ALUNOS (APROVAÇÕES) ====== -->
   <table
     class="table"
     *ngIf="!carregando && aba === 'APROVACoes' && tipo === 'ALUNOS'"
@@ -61,6 +64,7 @@
         <th class="col-actions">Ações</th>
       </tr>
     </thead>
+
     <tbody>
       <tr
         *ngFor="let a of alunos"
@@ -81,13 +85,14 @@
         >
           {{ a.nomeFmt || a.nome_completo }}
         </td>
+
         <td data-label="Email">{{ a.email }}</td>
         <td data-label="CPF">{{ a.cpfFmt || a.cpf }}</td>
+
         <td data-label="Status">
           <span
             class="badge"
             [class.aprovado]="isAprovado(a)"
-            [class.reprovado]="isReprovado(a)"
             [class.inadimplente]="isInadimplente(a)"
             [class.pendente]="isPendente(a)"
           >
@@ -96,11 +101,13 @@
         </td>
 
         <td data-label="PDF">{{ a.has_pdf ? "✓" : "—" }}</td>
+
         <td class="col-actions" data-label="Ações">
+          <!-- PENDENTE: APROVAR + REPROVAR -->
           <button
-            *ngIf="isPendente(a) || isReprovado(a)"
+            *ngIf="isPendente(a)"
             class="btn btn-approve"
-            (click)="aprovar(a.id)"
+            (click)="aprovar(rowId(a))"
           >
             Aprovar
           </button>
@@ -108,31 +115,25 @@
           <button
             *ngIf="isPendente(a)"
             class="btn btn-reject"
-            (click)="reprovar(a.id)"
+            (click)="reprovar(rowId(a))"
           >
             Reprovar
           </button>
 
+          <!-- APROVADO: INADIMPLENTAR -->
           <button
             *ngIf="isAprovado(a)"
             class="btn btn-inad"
-            (click)="inadimplentar(a.id)"
+            (click)="inadimplentar(rowId(a))"
           >
             Inadimplentar
           </button>
 
-          <button
-            *ngIf="isInadimplente(a)"
-            class="btn btn-approve"
-            (click)="adimplentar(a.id)"
-          >
-            Adimplentar
-          </button>
-
+          <!-- PDF (sempre que existir) -->
           <a
             *ngIf="a.has_pdf"
             class="btn"
-            [href]="'/api/alunos/' + a.id + '/pdf'"
+            [href]="'/api/alunos/' + rowId(a) + '/pdf'"
             target="_blank"
           >
             PDF
@@ -142,6 +143,7 @@
     </tbody>
   </table>
 
+  <!-- ====== ORIENTADORES (APROVAÇÕES) ====== -->
   <table
     class="table"
     *ngIf="!carregando && aba === 'APROVACoes' && tipo === 'ORIENTADORES'"
@@ -155,6 +157,7 @@
         <th class="col-actions">Ações</th>
       </tr>
     </thead>
+
     <tbody>
       <tr
         *ngFor="let o of orientadores"
@@ -175,13 +178,14 @@
         >
           {{ o.nomeFmt || o.nome_completo }}
         </td>
+
         <td data-label="Email">{{ o.email }}</td>
         <td data-label="CPF">{{ o.cpfFmt || o.cpf }}</td>
+
         <td data-label="Status">
           <span
             class="badge"
             [class.aprovado]="isAprovado(o)"
-            [class.reprovado]="isReprovado(o)"
             [class.inadimplente]="isInadimplente(o)"
             [class.pendente]="isPendente(o)"
           >
@@ -190,10 +194,11 @@
         </td>
 
         <td class="col-actions" data-label="Ações">
+          <!-- PENDENTE: APROVAR + REPROVAR -->
           <button
-            *ngIf="isPendente(o) || isReprovado(o)"
+            *ngIf="isPendente(o)"
             class="btn btn-approve"
-            (click)="aprovar(o.id)"
+            (click)="aprovar(rowId(o))"
           >
             Aprovar
           </button>
@@ -201,31 +206,25 @@
           <button
             *ngIf="isPendente(o)"
             class="btn btn-reject"
-            (click)="reprovar(o.id)"
+            (click)="reprovar(rowId(o))"
           >
             Reprovar
           </button>
 
+          <!-- APROVADO: INADIMPLENTAR -->
           <button
             *ngIf="isAprovado(o)"
             class="btn btn-inad"
-            (click)="inadimplentar(o.id)"
+            (click)="inadimplentar(rowId(o))"
           >
             Inadimplentar
-          </button>
-
-          <button
-            *ngIf="isInadimplente(o)"
-            class="btn btn-approve"
-            (click)="adimplentar(o.id)"
-          >
-            Adimplentar
           </button>
         </td>
       </tr>
     </tbody>
   </table>
 
+  <!-- ====== INADIMPLENTES (ABA) ====== -->
   <ng-container *ngIf="!carregando && aba === 'INADIMPLENTES'">
     <h3 class="inad-section-title">Alunos</h3>
     <table class="table inad-table">
@@ -235,6 +234,7 @@
           <th>Email</th>
           <th>CPF</th>
           <th>Inadimplente até</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -244,6 +244,21 @@
           <td data-label="CPF">{{ a.cpfFmt || a.cpf }}</td>
           <td data-label="Inadimplente até">
             {{ a.inadimplente_ate | date : "shortDate" }}
+          </td>
+          <td data-label="Ações">
+            <button class="btn btn-approve" (click)="adimplentarAluno(rowId(a))">
+              Adimplentar
+            </button>
+
+            <a
+              *ngIf="a.has_pdf"
+              class="btn"
+              [href]="'/api/alunos/' + rowId(a) + '/pdf'"
+              target="_blank"
+              style="margin-left: 8px"
+            >
+              PDF
+            </a>
           </td>
         </tr>
       </tbody>
@@ -257,6 +272,7 @@
           <th>Email</th>
           <th>CPF</th>
           <th>Inadimplente até</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -266,6 +282,14 @@
           <td data-label="CPF">{{ o.cpfFmt || o.cpf }}</td>
           <td data-label="Inadimplente até">
             {{ o.inadimplente_ate | date : "shortDate" }}
+          </td>
+          <td data-label="Ações">
+            <button
+              class="btn btn-approve"
+              (click)="adimplentarOrientador(rowId(o))"
+            >
+              Adimplentar
+            </button>
           </td>
         </tr>
       </tbody>

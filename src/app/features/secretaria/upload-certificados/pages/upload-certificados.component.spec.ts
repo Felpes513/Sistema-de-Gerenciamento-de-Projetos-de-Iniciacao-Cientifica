@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { UploadCertificadosComponent } from './upload-certificados.component';
-import { UploadService } from '@services/upload.service';
+import { UploadService } from '@core/data-access/certificados.service';
 import { MatDialog } from '@angular/material/dialog';
 import { RelatorioService } from '@services/relatorio.service';
 

@@ -1,68 +1,233 @@
-<!-- src/app/features/secretaria/upload-certificados/upload-certificados.component.html -->
-<div class="upload-container">
-  <!-- Mensagem para o usuário -->
-  <div class="upload-instruction">
-    <p>
-      Por favor, anexe um arquivo Excel contendo os dados necessários para a
-      emissão do certificado.
-    </p>
-    <p>
-      O arquivo deve estar no formato <strong>.xlsx</strong> e conter as colunas
-      obrigatórias conforme o modelo disponibilizado.
-    </p>
-    <a
-      class="download-template"
-      href="/api/exportar-exemplo-excel"
-      download
-      target="_blank"
-      rel="noopener"
-      (click)="baixarModeloExcel($event)"
-    >
-      📄 Baixar modelo de Excel
-    </a>
-  </div>
+<section class="cert-page">
+  <header class="page-header">
+    <div class="title-wrap">
+      <h2>Envio de Certificados</h2>
+      <p class="muted">
+        Baixe modelo/relatórios e envie uma planilha (.xlsx) para disparar os
+        e-mails.
+      </p>
+    </div>
+  </header>
 
-  <div
-    class="upload-area"
-    *ngIf="!fileName"
-    (dragover)="onDragOver($event)"
-    (drop)="onDrop($event)"
-  >
-    <label>
-      <mat-icon>cloud_upload</mat-icon>
-      <span>Clique ou arraste um arquivo aqui</span>
-      <input type="file" hidden (change)="onFileSelected($event)" />
-    </label>
-  </div>
+  <div class="layout">
+    <!-- ===== DOWNLOADS ===== -->
+    <aside class="card downloads">
+      <div class="card-head">
+        <div>
+          <h3>Downloads</h3>
+          <p class="muted">Arquivos em Excel (XLSX) gerados pela API.</p>
+        </div>
+      </div>
 
-  <div *ngIf="fileName" class="file-info">
-    <span
-      >Arquivo: <strong>{{ fileName }}</strong></span
-    >
-    <button
-      mat-icon-button
-      color="warn"
-      (click)="removeFile()"
-      aria-label="Remover"
-      type="button"
-    >
-      <mat-icon>delete</mat-icon>
-    </button>
-  </div>
+      <ul class="dl-list">
+        <!-- MODELO -->
+        <li class="dl-item">
+          <div class="dl-icon">
+            <mat-icon>description</mat-icon>
+          </div>
 
-  <button
-    mat-raised-button
-    color="primary"
-    class="submit-btn"
-    (click)="onSubmit()"
-    [disabled]="loading || !file"
-    type="button"
-  >
-    <ng-container *ngIf="!loading; else loadingTpl">
-      <span>Enviar arquivo</span>
-    </ng-container>
-    <ng-template #loadingTpl>
-      <span>Enviando...</span>
-    </ng-template>
-  </button>
-</div>
+          <div class="dl-content">
+            <div class="dl-top">
+              <strong>exemplo_importacao.xlsx</strong>
+              <span class="pill">XLSX</span>
+            </div>
+            <div class="dl-desc muted">
+              Campos: <b>nome</b>, <b>email</b>, <b>cpf</b>,
+              <b>data_conclusao</b>, <b>ciclo</b>.
+            </div>
+          </div>
+
+          <div class="dl-action">
+            <a
+              class="btn btn-outline"
+              href="/api/relatorios/exportar-exemplo-excel"
+              (click)="baixarModeloExcel($event)"
+              [class.disabled]="baixandoModelo"
+              [attr.aria-disabled]="baixandoModelo ? 'true' : null"
+            >
+              <mat-icon class="btn-ico">download</mat-icon>
+              <span *ngIf="!baixandoModelo">Baixar</span>
+              <span *ngIf="baixandoModelo">Baixando...</span>
+            </a>
+          </div>
+        </li>
+
+        <!-- RELATORIO ALUNOS -->
+        <li class="dl-item">
+          <div class="dl-icon">
+            <mat-icon>table_view</mat-icon>
+          </div>
+
+          <div class="dl-content">
+            <div class="dl-top">
+              <strong>relatorio_alunos.xlsx</strong>
+              <span class="pill">XLSX</span>
+            </div>
+            <div class="dl-desc muted">
+              Orientador, aluno, título do projeto e código do projeto.
+            </div>
+          </div>
+
+          <div class="dl-action">
+            <a
+              class="btn btn-outline"
+              href="/api/relatorios/relatorio-alunos"
+              (click)="baixarRelatorioAlunos($event)"
+              [class.disabled]="baixandoRelatorioAlunos"
+              [attr.aria-disabled]="baixandoRelatorioAlunos ? 'true' : null"
+            >
+              <mat-icon class="btn-ico">download</mat-icon>
+              <span *ngIf="!baixandoRelatorioAlunos">Baixar</span>
+              <span *ngIf="baixandoRelatorioAlunos">Baixando...</span>
+            </a>
+          </div>
+        </li>
+
+        <!-- WORKSHOP -->
+        <li class="dl-item">
+          <div class="dl-icon">
+            <mat-icon>school</mat-icon>
+          </div>
+
+          <div class="dl-content">
+            <div class="dl-top">
+              <strong>relatorio_workshop.xlsx</strong>
+              <span class="pill">XLSX</span>
+            </div>
+            <div class="dl-desc muted">
+              Alunos <b>APROVADOS</b> (nome, email, cpf, data_conclusao, ciclo).
+            </div>
+          </div>
+
+          <div class="dl-action">
+            <a
+              class="btn btn-outline"
+              href="/api/relatorios/workshop"
+              (click)="baixarRelatorioWorkshop($event)"
+              [class.disabled]="baixandoWorkshop"
+              [attr.aria-disabled]="baixandoWorkshop ? 'true' : null"
+            >
+              <mat-icon class="btn-ico">download</mat-icon>
+              <span *ngIf="!baixandoWorkshop">Baixar</span>
+              <span *ngIf="baixandoWorkshop">Baixando...</span>
+            </a>
+          </div>
+        </li>
+
+        <!-- CERTIFICADOS FINAIS -->
+        <li class="dl-item">
+          <div class="dl-icon">
+            <mat-icon>verified</mat-icon>
+          </div>
+
+          <div class="dl-content">
+            <div class="dl-top">
+              <strong>certificados_finais.xlsx</strong>
+              <span class="pill">XLSX</span>
+            </div>
+            <div class="dl-desc muted">
+              Cod. projeto, orientador, título e aluno (certificados finais).
+            </div>
+          </div>
+
+          <div class="dl-action">
+            <a
+              class="btn btn-outline"
+              href="/api/relatorios/certificados"
+              (click)="baixarCertificadosFinais($event)"
+              [class.disabled]="baixandoCertificados"
+              [attr.aria-disabled]="baixandoCertificados ? 'true' : null"
+            >
+              <mat-icon class="btn-ico">download</mat-icon>
+              <span *ngIf="!baixandoCertificados">Baixar</span>
+              <span *ngIf="baixandoCertificados">Baixando...</span>
+            </a>
+          </div>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- ===== UPLOAD ===== -->
+    <main class="card uploader">
+      <div class="card-head">
+        <div>
+          <h3>Enviar planilha</h3>
+          <p class="muted">Arraste ou selecione um arquivo .xlsx</p>
+        </div>
+      </div>
+
+      <!-- Dropzone -->
+      <div
+        class="dropzone"
+        [class.has-file]="!!file"
+        [class.is-loading]="loading"
+        (drop)="onDrop($event)"
+        (dragover)="onDragOver($event)"
+      >
+        <input
+          class="file-input"
+          type="file"
+          accept=".xlsx,.xls"
+          (change)="onFileSelected($event)"
+          [disabled]="loading"
+        />
+
+        <ng-container *ngIf="!file; else chosen">
+          <div class="dz-empty">
+            <div class="dz-badge">
+              <mat-icon>upload</mat-icon>
+            </div>
+            <strong>Arraste a planilha aqui</strong>
+            <span class="muted">ou clique para selecionar</span>
+          </div>
+        </ng-container>
+
+        <ng-template #chosen>
+          <div class="dz-file">
+            <div class="dz-file-ico">
+              <mat-icon>description</mat-icon>
+            </div>
+
+            <div class="dz-file-info">
+              <strong class="dz-file-name">{{ fileName }}</strong>
+              <span class="muted">
+                {{ (file?.size || 0) / 1024 | number : "1.0-0" }} KB
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              (click)="removeFile()"
+              [disabled]="loading"
+            >
+              Trocar
+            </button>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="btn"
+          (click)="onSubmit()"
+          [disabled]="!file || loading"
+        >
+          <mat-icon class="btn-ico">send</mat-icon>
+          <span *ngIf="!loading">Enviar e-mails</span>
+          <span *ngIf="loading">Enviando...</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="removeFile()"
+          [disabled]="loading || !file"
+        >
+          Limpar
+        </button>
+      </div>
+    </main>
+  </div>
+</section>
