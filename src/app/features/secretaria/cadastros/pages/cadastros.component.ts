@@ -1,5 +1,3 @@
-// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\cadastros\pages\cadastros.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -63,7 +61,6 @@ export class CadastrosComponent implements OnInit {
           next: (rows: any[]) => {
             const lista = (rows || []).map((r) => this.transformRow(r));
 
-            // ✅ Aqui: na aba Aprovações, NÃO mostra INADIMPLENTE
             this.alunos = lista.filter((r) => !this.isInadimplente(r));
 
             this.carregando = false;
@@ -78,7 +75,6 @@ export class CadastrosComponent implements OnInit {
           next: (rows: any[]) => {
             const lista = (rows || []).map((r) => this.transformRow(r));
 
-            // ✅ Aqui: na aba Aprovações, NÃO mostra INADIMPLENTE
             this.orientadores = lista.filter((r) => !this.isInadimplente(r));
 
             this.carregando = false;
@@ -130,7 +126,6 @@ export class CadastrosComponent implements OnInit {
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
 
-    // compat com status antigo
     if (st === 'REPROVADO') return 'INADIMPLENTE';
 
     if (st === 'APROVADO' || st === 'INADIMPLENTE' || st === 'PENDENTE')
@@ -167,7 +162,6 @@ export class CadastrosComponent implements OnInit {
     });
   }
 
-  // ✅ REPROVAR (agora = marcar como INADIMPLENTE via /status)
   async reprovar(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar reprovação? O usuário ficará inadimplente por 2 anos.',
@@ -186,7 +180,6 @@ export class CadastrosComponent implements OnInit {
     });
   }
 
-  // ✅ INADIMPLENTAR (APROVADO -> INADIMPLENTE via /status)
   async inadimplentar(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar inadimplência? O usuário ficará inadimplente por 2 anos.',
@@ -205,7 +198,6 @@ export class CadastrosComponent implements OnInit {
     });
   }
 
-  // ✅ ADIMPLENTAR (gambiarra): usa /aprovar para voltar a APROVADO
   async adimplentar(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar adimplência? O usuário voltará a ficar adimplente.',
@@ -224,7 +216,6 @@ export class CadastrosComponent implements OnInit {
     });
   }
 
-  // ✅ ADIMPLENTAR direto (para usar na aba INADIMPLENTES sem depender de this.tipo)
   async adimplentarAluno(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar adimplência? O aluno voltará a ficar adimplente.',

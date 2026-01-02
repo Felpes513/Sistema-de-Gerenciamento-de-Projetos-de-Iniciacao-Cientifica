@@ -33,7 +33,9 @@
         <label>Identificador *</label>
         <select
           [(ngModel)]="form.identificador"
+          [class.invalid]="submitted && invalid.identificador"
           data-testid="select-identificador"
+          required
         >
           <option value="" disabled>Selecione...</option>
           <option value="INTERNO">Interno</option>
@@ -46,8 +48,10 @@
         <input
           type="text"
           [(ngModel)]="form.nome"
+          [class.invalid]="submitted && invalid.nome"
           placeholder="Nome do avaliador"
           data-testid="input-nome"
+          required
         />
       </div>
 
@@ -56,8 +60,10 @@
         <input
           type="email"
           [(ngModel)]="form.email"
+          [class.invalid]="submitted && invalid.email"
           placeholder="email@exemplo.com"
           data-testid="input-email"
+          required
         />
       </div>
 
@@ -66,8 +72,10 @@
         <input
           type="text"
           [(ngModel)]="form.especialidade"
+          [class.invalid]="submitted && invalid.especialidade"
           placeholder="Ex: Computação"
           data-testid="input-especialidade"
+          required
         />
       </div>
 
@@ -76,6 +84,7 @@
         <input
           type="text"
           [(ngModel)]="form.subespecialidade"
+          [class.invalid]="submitted && invalid.subespecialidade"
           placeholder="Ex: IA, Redes, Banco de Dados..."
           data-testid="input-subespecialidade"
         />
@@ -86,6 +95,7 @@
         <input
           type="url"
           [(ngModel)]="form.link_lattes"
+          [class.invalid]="submitted && invalid.link_lattes"
           placeholder="https://lattes.cnpq.br/..."
           data-testid="input-lattes"
         />

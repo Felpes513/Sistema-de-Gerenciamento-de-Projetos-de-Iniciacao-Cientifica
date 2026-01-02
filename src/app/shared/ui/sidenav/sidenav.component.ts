@@ -61,9 +61,15 @@ export class SidenavComponent implements OnInit, OnDestroy {
     if (this.isSecretaria) return this.helpUrls.secretaria;
     if (this.isOrientador) return this.helpUrls.orientador;
     if (this.isAluno) return this.helpUrls.aluno;
-    return this.helpUrls.aluno; // fallback seguro
+    return this.helpUrls.aluno;
   }
 
+  get perfilLink(): string {
+    if (this.isSecretaria) return '/secretaria/perfil';
+    if (this.isOrientador) return '/orientador/perfil';
+    if (this.isAluno) return '/aluno/perfil';
+    return '/login';
+  }
 
   ngOnInit(): void {
     this.updateLayout();
@@ -122,9 +128,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
       'Sair do sistema'
     );
 
-    if (!confirmou) {
-      return;
-    }
+    if (!confirmou) return;
 
     this.auth.clearSession();
     this.router.navigate(['/'], { replaceUrl: true });

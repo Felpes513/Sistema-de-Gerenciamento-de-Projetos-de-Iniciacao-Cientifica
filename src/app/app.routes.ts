@@ -112,7 +112,15 @@ export const routes: Routes = [
             (m) => m.CadastrosComponent
           ),
       },
-      
+
+      // ✅ PERFIL
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('@shared/ui/user-profile/user-profile.component').then(
+            (m) => m.UserProfileComponent
+          ),
+      },
     ],
   },
 
@@ -153,6 +161,15 @@ export const routes: Routes = [
             '@orientador/relatorios/pages/relatorio-form/relatorio-form.component'
           ).then((m) => m.RelatorioFormComponent),
       },
+
+      // ✅ PERFIL
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('@shared/ui/user-profile/user-profile.component').then(
+            (m) => m.UserProfileComponent
+          ),
+      },
     ],
   },
 
@@ -182,6 +199,15 @@ export const routes: Routes = [
             '@features/projetos/pages/formulario-projeto/formulario-projeto.component'
           ).then((m) => m.FormularioProjetoComponent),
         data: { modo: 'ALUNO' },
+      },
+
+      // ✅ PERFIL
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('@shared/ui/user-profile/user-profile.component').then(
+            (m) => m.UserProfileComponent
+          ),
       },
     ],
   },

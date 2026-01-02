@@ -1,0 +1,153 @@
+<div class="page">
+  <header class="header">
+    <h2>
+      <mat-icon>account_circle</mat-icon>
+      Meu Perfil
+    </h2>
+    <p class="sub">Gerencie suas informações pessoais e acadêmicas.</p>
+  </header>
+
+  <section class="card">
+    <div class="card-title">
+      <mat-icon>badge</mat-icon>
+      <span>Dados da conta</span>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label>Perfil</label>
+        <input [value]="roleLabel" disabled />
+      </div>
+
+      <div class="field">
+        <label>ID</label>
+        <input [value]="perfil.id" disabled />
+      </div>
+
+      <div class="field span-2">
+        <label>Nome</label>
+        <input [(ngModel)]="perfil.nome" placeholder="Seu nome completo" />
+      </div>
+
+      <div class="field span-2">
+        <label>E-mail</label>
+        <input
+          type="email"
+          [(ngModel)]="perfil.email"
+          placeholder="seu.email@exemplo.com"
+        />
+      </div>
+
+      <div class="field">
+        <label>CPF</label>
+        <input [(ngModel)]="perfil.cpf" placeholder="000.000.000-00" />
+      </div>
+
+      <div class="field">
+        <label>Telefone</label>
+        <input [(ngModel)]="perfil.telefone" placeholder="(11) 90000-0000" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <mat-icon>school</mat-icon>
+      <span>Acadêmico</span>
+    </div>
+
+    <div class="grid">
+      <div class="field span-2">
+        <label>Campus</label>
+        <input [(ngModel)]="perfil.campus" placeholder="Campus" />
+      </div>
+
+      <div class="field span-2">
+        <label>Cursos</label>
+        <div class="chips">
+          <span class="chip" *ngFor="let c of perfil.cursos">
+            <mat-icon>menu_book</mat-icon>
+            {{ c.nome }}
+          </span>
+        </div>
+        <small class="hint">
+          (mock) Futuramente isso vem da API. Se preferir, a gente transforma
+          isso em edição com adicionar/remover.
+        </small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <mat-icon>folder</mat-icon>
+      <span>Projetos vinculados</span>
+    </div>
+
+    <div class="table">
+      <div class="thead">
+        <div>Número</div>
+        <div>Projeto</div>
+        <div>Papel</div>
+        <div>Status</div>
+      </div>
+
+      <div class="trow" *ngFor="let p of perfil.projetos">
+        <div class="mono">{{ p.numero }}</div>
+        <div>{{ p.nome }}</div>
+        <div>{{ p.papel }}</div>
+        <div>
+          <span class="pill">{{ p.status }}</span>
+        </div>
+      </div>
+
+      <div class="empty" *ngIf="perfil.projetos.length === 0">
+        Nenhum projeto vinculado.
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <mat-icon>security</mat-icon>
+      <span>Segurança</span>
+    </div>
+
+    <div class="security">
+      <div class="security-text">
+        <strong>Redefinir senha</strong>
+        <p>
+          Você pode redefinir sua senha a qualquer momento. Ao confirmar, será
+          direcionado para a tela de reset.
+        </p>
+      </div>
+
+      <button
+        class="btn btn-secondary"
+        type="button"
+        (click)="irParaResetSenha()"
+      >
+        <mat-icon>lock_reset</mat-icon>
+        Resetar senha
+      </button>
+    </div>
+  </section>
+
+  <footer class="actions">
+    <button class="btn btn-ghost" type="button" (click)="cancelar()">
+      <mat-icon>close</mat-icon>
+      Cancelar
+    </button>
+
+    <button
+      class="btn btn-primary"
+      type="button"
+      (click)="atualizar()"
+      [disabled]="carregando"
+    >
+      <mat-icon *ngIf="!carregando">save</mat-icon>
+      <span *ngIf="!carregando">Atualizar</span>
+      <span *ngIf="carregando">Salvando...</span>
+    </button>
+  </footer>
+</div>

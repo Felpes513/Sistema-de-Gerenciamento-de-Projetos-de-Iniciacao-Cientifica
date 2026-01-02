@@ -327,8 +327,10 @@ export class ProjetoService {
                 },
                 nome_aluno: i.nome_aluno ?? i.aluno?.nome ?? '—',
                 email: i.email ?? i.aluno?.email ?? '—',
-                matricula: i.matricula ?? i.cpf ?? '—',
-                status: i.status ?? i.status_aluno ?? 'PENDENTE',
+                matricula: i.aluno?.matricula ?? i.matricula ?? i.cpf ?? '—',
+                status: String(i.status ?? i.status_aluno ?? 'PENDENTE')
+                  .toUpperCase()
+                  .trim(),
                 possuiTrabalhoRemunerado: !!(
                   i.possuiTrabalhoRemunerado ?? i.possui_trabalho_remunerado
                 ),

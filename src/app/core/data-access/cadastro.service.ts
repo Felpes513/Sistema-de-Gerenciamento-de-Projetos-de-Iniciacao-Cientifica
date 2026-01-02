@@ -1,5 +1,3 @@
-// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\core\data-access\cadastro.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -55,7 +53,6 @@ export class RegisterService {
     return this.http.get<any[]>(`${this.baseUrl}/orientadores/`);
   }
 
-  // ====== APROVAR (vira APROVADO) ======
   aprovarAluno(id: number) {
     return this.http.put(`${this.baseUrl}/alunos/${id}/aprovar`, {});
   }
@@ -64,12 +61,11 @@ export class RegisterService {
     return this.http.put(`${this.baseUrl}/orientadores/${id}/aprovar`, {});
   }
 
-  // ====== ATUALIZAR STATUS (usado para INADIMPLENTE) ======
   atualizarStatusAluno(id: number, novoStatus: StatusCadastro) {
     return this.http.put(
       `${this.baseUrl}/alunos/${id}/status`,
       {},
-      { params: { novo_status: novoStatus } } // FastAPI pega como query param
+      { params: { novo_status: novoStatus } }
     );
   }
 
@@ -81,7 +77,6 @@ export class RegisterService {
     );
   }
 
-  // ====== LISTA INADIMPLENTES ======
   listarAlunosInadimplentes() {
     return this.http
       .get<{ alunos: any[] }>(`${this.baseUrl}/alunos/inadimplentes`)
@@ -109,7 +104,6 @@ export class RegisterService {
     );
   }
 
-  // ✅ CREATE secretaria
   registerSecretaria(data: {
     nomeCompleto: string;
     email: string;

@@ -7,7 +7,6 @@ import { environment } from '@environments/environment';
 export class NotificacaoService {
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
-  // IMPORTANTE: barra final para evitar 307 (redirect) e Mixed Content em produção
   private readonly notificacoesUrl = `${this.apiBaseUrl}/notificacoes/`;
 
   constructor(private http: HttpClient) {}

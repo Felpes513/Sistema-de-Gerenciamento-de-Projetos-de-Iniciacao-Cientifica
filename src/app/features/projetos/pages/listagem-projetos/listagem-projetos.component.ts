@@ -88,7 +88,7 @@ export class ListagemProjetosComponent implements OnInit {
       .open(ConfirmDialogComponent, {
         data: { titulo, mensagem, modo: 'confirm' },
       })
-      .afterClosed(); // Observable<boolean>
+      .afterClosed();
   }
 
   private abrirAlerta(titulo: string, mensagem: string) {
@@ -398,7 +398,6 @@ export class ListagemProjetosComponent implements OnInit {
       if (this.filtroStatus === 'CONCLUIDO') return concluido;
       if (this.filtroStatus === 'CANCELADO') return cancelado;
 
-      // EM_EXECUCAO
       return !concluido && !cancelado;
     };
 
@@ -460,7 +459,6 @@ export class ListagemProjetosComponent implements OnInit {
     return 'disponivel';
   }
 
-  // ✅ CORRIGIDO: string + .size
   get tituloLista(): string {
     if (this.isOrientador) return 'Meus Projetos';
     if (this.isAluno && this.projetosSelecionadosDoAluno.size > 0)
@@ -475,9 +473,6 @@ export class ListagemProjetosComponent implements OnInit {
   toggleMenu(id: number | null): void {
     this.menuAberto = this.menuAberto === id ? null : id;
   }
-
-  // ... (daqui pra baixo permanece igual ao seu código)
-  // ✅ Mantive todo o resto, sem alterar lógica.
 
   concluirProjeto(id: number): void {
     console.log('✅ concluirProjeto clicado', id);

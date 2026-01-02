@@ -14,7 +14,7 @@
       <span class="icon">USCS</span>
       <span class="role">{{ papelLegivel() }}</span>
       <mat-icon class="chevron" aria-hidden="true" *ngIf="isMobile"
-      >expand_more</mat-icon
+        >expand_more</mat-icon
       >
     </button>
 
@@ -93,6 +93,17 @@
         </a>
       </ng-container>
 
+      <ng-container *ngIf="isOrientador">
+        <a
+          routerLink="/orientador/projetos"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon>folder_open</mat-icon> Projetos
+        </a>
+      </ng-container>
+
+      <!-- ✅ Sair (uma vez só, para todos) -->
       <a href="#" (click)="confirmarSaida($event)">
         <mat-icon>logout</mat-icon> Sair
       </a>
@@ -103,9 +114,20 @@
     <router-outlet></router-outlet>
   </div>
 
+  <!-- ✅ FAB Meu Perfil (topo direito) -->
+  <a
+    class="fab profile-fab"
+    [routerLink]="perfilLink"
+    aria-label="Abrir meu perfil"
+    title="Meu perfil"
+  >
+    <mat-icon aria-hidden="true">account_circle</mat-icon>
+  </a>
+
+  <!-- ✅ FAB Ajuda (base direito) -->
   <a
     *ngIf="ajudaUrl"
-    class="help-fab"
+    class="fab help-fab"
     [href]="ajudaUrl"
     target="_blank"
     rel="noopener noreferrer"

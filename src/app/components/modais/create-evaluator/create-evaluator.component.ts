@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { AvaliadorExterno } from '@shared/models/avaliador_externo';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 
+type TipoAvaliador = 'INTERNO' | 'EXTERNO';
+
 @Component({
   selector: 'app-avaliador-modal',
   standalone: true,
@@ -18,8 +20,19 @@ export class CreateEvaluatorModalComponent implements OnInit {
   carregando = false;
   erro = '';
 
+  submitted = false;
+
+  invalid = {
+    identificador: false,
+    nome: false,
+    email: false,
+    especialidade: false,
+    subespecialidade: false,
+    link_lattes: false,
+  };
+
   form = {
-    identificador: '',
+    identificador: '' as '' | TipoAvaliador,
     nome: '',
     email: '',
     especialidade: '',
@@ -35,10 +48,15 @@ export class CreateEvaluatorModalComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.avaliador) {
-      this.form.identificador =
+      // API devolve tipo_avaliador; alguns lugares podem estar usando identificador
+      const tipo =
+        (this.avaliador as any).tipo_avaliador ??
         (this.avaliador as any).identificador ??
         (this.avaliador as any).codigo ??
         '';
+
+      this.form.identificador = (String(tipo || '').toUpperCase().trim() as any) || '';
+
       this.form.nome = this.avaliador.nome ?? '';
       this.form.email = this.avaliador.email ?? '';
       this.form.especialidade = this.avaliador.especialidade ?? '';
@@ -54,17 +72,75 @@ export class CreateEvaluatorModalComponent implements OnInit {
     this.closed.emit(reload);
   }
 
+  private resetInvalid() {
+    this.invalid = {
+      identificador: false,
+      nome: false,
+      email: false,
+      especialidade: false,
+      subespecialidade: false,
+      link_lattes: false,
+    };
+  }
+
+  private isEmailValid(v: string): boolean {
+    const s = v.trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  }
+
+  private isUrlValid(v: string): boolean {
+    const s = v.trim();
+    if (!s) return false;
+    try {
+      const u = new URL(s);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
   private validar(): string | null {
-    if (!String(this.form.identificador).trim()) return 'Informe o identificador.';
-    if (!String(this.form.nome).trim()) return 'Informe o nome.';
-    if (!String(this.form.email).trim()) return 'Informe o e-mail.';
-    if (!String(this.form.email).includes('@')) return 'E-mail inválido.';
-    if (!String(this.form.especialidade).trim()) return 'Informe a especialidade.';
+    this.resetInvalid();
+
+    const identificador = String(this.form.identificador || '').trim().toUpperCase();
+    const nome = String(this.form.nome || '').trim();
+    const email = String(this.form.email || '').trim();
+    const especialidade = String(this.form.especialidade || '').trim();
+    const subespecialidade = String(this.form.subespecialidade || '').trim();
+    const link = String(this.form.link_lattes || '').trim();
+
+    // Obrigatórios (como você pediu)
+    if (!identificador) this.invalid.identificador = true;
+    if (nome.length < 3) this.invalid.nome = true;
+    if (!this.isEmailValid(email)) this.invalid.email = true;
+    if (especialidade.length < 3) this.invalid.especialidade = true;
+
+    // Seu backend atual exige subespecialidade e link_lattes (min_length/HttpUrl).
+    // Se você quiser manter opcional no front, a API vai barrar. Então validamos aqui:
+    if (subespecialidade.length < 3) this.invalid.subespecialidade = true;
+    if (!this.isUrlValid(link)) this.invalid.link_lattes = true;
+
+    if (Object.values(this.invalid).some(Boolean)) {
+      // Mensagem simples (e campos destacados em vermelho)
+      if (this.invalid.link_lattes) {
+        return 'Link do Lattes inválido. Use um link completo (https://...).';
+      }
+      return 'Corrija os campos destacados.';
+    }
+
+    // validação do tipo (por segurança)
+    if (identificador !== 'INTERNO' && identificador !== 'EXTERNO') {
+      this.invalid.identificador = true;
+      return 'Tipo de avaliador inválido.';
+    }
+
     return null;
   }
 
   salvar(): void {
     this.erro = '';
+    this.submitted = true;
+
     const msg = this.validar();
     if (msg) {
       this.erro = msg;
@@ -74,12 +150,13 @@ export class CreateEvaluatorModalComponent implements OnInit {
     this.carregando = true;
 
     const payload: any = {
-      identificador: String(this.form.identificador).trim(),
+      // ✅ nomes exatamente como a API espera
       nome: String(this.form.nome).trim(),
       email: String(this.form.email).trim(),
       especialidade: String(this.form.especialidade).trim(),
       subespecialidade: String(this.form.subespecialidade).trim(),
-      link_lattes: String(this.form.link_lattes || '').trim(),
+      link_lattes: String(this.form.link_lattes).trim(),
+      tipo_avaliador: String(this.form.identificador).trim().toUpperCase(),
     };
 
     const svc: any = this.service;
@@ -100,7 +177,7 @@ export class CreateEvaluatorModalComponent implements OnInit {
     if (!req$) {
       this.carregando = false;
       this.erro =
-        'Não encontrei o método de salvar no AvaliadoresExternosService. Crie createAvaliador/updateAvaliador (ou ajuste o nome no modal).';
+        'Não encontrei o método de salvar no AvaliadoresExternosService.';
       return;
     }
 

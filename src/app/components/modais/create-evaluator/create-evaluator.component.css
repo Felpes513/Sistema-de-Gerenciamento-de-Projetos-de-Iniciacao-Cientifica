@@ -84,31 +84,33 @@
   font-size: 0.9rem;
 }
 
-.field input {
-  padding: 10px 12px;
-  border: 1px solid #e6e6ee;
-  border-radius: 12px;
-  outline: none;
-  font-size: 0.95rem;
-}
-
-.field input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
-}
-
+/* ✅ garante MESMO tamanho visual (principalmente o select) */
+.field input,
 .field select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
   padding: 10px 12px;
   border: 1px solid #e6e6ee;
   border-radius: 12px;
   outline: none;
   font-size: 0.95rem;
+  line-height: 1.2;
   background: #fff;
 }
 
+/* foco padrão */
+.field input:focus,
 .field select:focus {
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+/* ✅ inválido (igual “fluxo de login”: vermelho) */
+.field input.invalid,
+.field select.invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
 }
 
 .modal-footer {

@@ -1,11 +1,14 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { AuthService } from '@services/auth.service';
 
-export const alunoGuard: CanActivateFn = () => {
+export const alunoGuard: CanActivateFn = (route, state): boolean | UrlTree => {
   const auth = inject(AuthService);
   const router = inject(Router);
+
   if (auth.hasRole('ALUNO')) return true;
-  router.navigateByUrl('/login');
-  return false;
+
+  return router.createUrlTree(['/login'], {
+    queryParams: { returnUrl: state.url, perfil: 'aluno' },
+  });
 };

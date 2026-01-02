@@ -53,11 +53,28 @@ export class ListagemAvaliadoresComponent implements OnInit {
 
     this.service.listarAvaliadoresExternos().subscribe({
       next: (lista: AvaliadorExterno[]) => {
-        this.avaliadores = (lista || []).map((a: AvaliadorExterno) => ({
-          ...a,
-          link_lattes: (a as any).link_lattes ?? (a as any).lattes_link ?? '',
-          ...(a as any),
-        }));
+        this.avaliadores = (lista || []).map((raw: any) => {
+          const tipo = String(
+            raw?.tipo_avaliador ??
+              raw?.tipoAvaliador ??
+              raw?.identificador ??
+              ''
+          )
+            .toUpperCase()
+            .trim();
+
+          return {
+            id: raw?.id,
+            nome: raw?.nome ?? '',
+            email: raw?.email ?? '',
+            especialidade: raw?.especialidade ?? '',
+            subespecialidade: raw?.subespecialidade ?? '',
+            link_lattes: raw?.link_lattes ?? raw?.lattes_link ?? '',
+            tipo_avaliador:
+              tipo === 'INTERNO' || tipo === 'EXTERNO' ? tipo : undefined,
+          } as AvaliadorExterno;
+        });
+
         this.carregando = false;
       },
       error: (err: any) => {
@@ -67,25 +84,16 @@ export class ListagemAvaliadoresComponent implements OnInit {
     });
   }
 
-  private isIdValido(id: any): id is number {
-    return typeof id === 'number' && !isNaN(id) && id > 0;
+  getIdentificador(a: AvaliadorExterno): string {
+    const tipo = String((a as any)?.tipo_avaliador ?? '')
+      .toUpperCase()
+      .trim();
+    if (tipo === 'INTERNO' || tipo === 'EXTERNO') return tipo;
+    return '—';
   }
 
-  getIdentificador(a: AvaliadorExterno): string {
-    const raw =
-      (a as any).identificador ??
-      (a as any).codigo ??
-      (a as any).id_publico ??
-      (a as any).public_id ??
-      '';
-
-    const txt = String(raw ?? '').trim();
-    if (txt) return txt;
-
-    const id = Number((a as any).id);
-    if (this.isIdValido(id)) return `AVL-${String(id).padStart(4, '0')}`;
-
-    return '—';
+  private isIdValido(id: any): id is number {
+    return typeof id === 'number' && !isNaN(id) && id > 0;
   }
 
   abrirModal(): void {

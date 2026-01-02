@@ -4,7 +4,7 @@ export interface Inscricao {
   nome: string;
   matricula: string;
   email: string;
-  status: 'PENDENTE' | 'VALIDADO' | 'CADASTRADO_FINAL' | 'REJEITADO';
+  status: 'PENDENTE' | 'VALIDADO' | 'APROVADO' | 'CADASTRADO_FINAL' | 'REJEITADO';
   documentoNotasUrl?: string | null;
   criadoEm: string;
   atualizadoEm: string;

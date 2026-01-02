@@ -1,0 +1,255 @@
+.page {
+  width: 100%;
+  max-width: 980px;
+}
+
+.header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px 0;
+  color: #111827;
+  font-weight: 900;
+}
+
+.sub {
+  margin: 0 0 18px 0;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg, 14px);
+  padding: 16px 18px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 14px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid #e6e6ee;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  background: #fff;
+  color: #111827;
+  font-weight: 600;
+}
+
+.field input:disabled {
+  background: #f6f7fb;
+  color: #6b7280;
+}
+
+.field input:focus {
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--uscs-blue, #1e40af) 25%, transparent);
+  border-color: color-mix(in srgb, var(--uscs-blue, #1e40af) 35%, #e6e6ee);
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.hint {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e6e6ee;
+  background: #f9fafb;
+  border-radius: 999px;
+  color: #111827;
+  font-weight: 700;
+}
+
+.chip mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.table {
+  border: 1px solid #e6e6ee;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.thead,
+.trow {
+  display: grid;
+  grid-template-columns: 130px 1fr 140px 180px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.thead {
+  background: #f6f7fb;
+  color: #6b7280;
+  font-weight: 900;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.trow {
+  border-bottom: 1px solid #eef0f4;
+  color: #111827;
+  font-weight: 600;
+}
+
+.trow:last-child {
+  border-bottom: none;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e6e6ee;
+  background: #f9fafb;
+  font-weight: 800;
+}
+
+.empty {
+  padding: 16px 14px;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.security {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.security-text p {
+  margin: 6px 0 0 0;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 6px 2px 0 2px;
+}
+
+/* Botões */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 800;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.btn-primary {
+  background: var(--uscs-blue, #1e40af);
+  color: #fff;
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #111827;
+  border-color: #e6e6ee;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #111827;
+  border-color: #e6e6ee;
+}
+
+@media (max-width: 900px) {
+  .thead,
+  .trow {
+    grid-template-columns: 120px 1fr 120px 160px;
+  }
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .span-2 {
+    grid-column: span 1;
+  }
+  .thead {
+    display: none;
+  }
+  .trow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .security {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

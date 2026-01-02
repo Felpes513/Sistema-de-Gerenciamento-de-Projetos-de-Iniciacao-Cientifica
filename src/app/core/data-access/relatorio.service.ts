@@ -67,10 +67,6 @@ export class RelatorioService {
     );
   }
 
-  /**
-   * ✅ Baixar MODELO (exemplo) Excel: /api/exportar-exemplo-excel
-   * Usando URL completa do environment: exportAlunosBaseUrl
-   */
   baixarModeloExcelImportacaoAlunos(): Observable<HttpResponse<ArrayBuffer>> {
     return this.http.get(this.exportAlunosUrl, {
       observe: 'response',

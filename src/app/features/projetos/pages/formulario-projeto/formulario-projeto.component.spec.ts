@@ -48,8 +48,6 @@ class ProjetoServiceStub {
   uploadMonografiaFinalPdf = jasmine
     .createSpy('uploadMonografiaFinalPdf')
     .and.returnValue(of({}));
-
-  // Downloads (não usados nos testes, mas stubados por segurança)
   downloadDocx = jasmine
     .createSpy('downloadDocx')
     .and.returnValue(of(new Blob()));
@@ -95,7 +93,7 @@ describe('FormularioProjetoComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              params: {}, // sem id => modo cadastro
+              params: {},
               data: { modo: 'SECRETARIA' },
             },
           },
@@ -109,7 +107,7 @@ describe('FormularioProjetoComponent', () => {
     dialogService = TestBed.inject(
       DialogService
     ) as unknown as DialogServiceStub;
-    fixture.detectChanges(); // dispara ngOnInit
+    fixture.detectChanges();
   });
 
   it('should create', () => {
@@ -137,19 +135,15 @@ describe('FormularioProjetoComponent', () => {
   });
 
   it('should start upload flow on PARCIAL etapa for new project', () => {
-    // novo cadastro => sem id na rota => currentEtapaUpload deve ser PARCIAL
     expect(component['currentEtapaUpload']).toBe('PARCIAL');
   });
 
   it('should send PARCIAL PDF using uploadDocumentosMonografia when editing', async () => {
-    // garantir que passa na validação do formulário
     component.projeto.titulo_projeto = 'Titulo';
     component.projeto.resumo = 'Resumo';
     component.projeto.orientador_nome = 'Maria Souza';
     component.orientadorSelecionadoId = 1;
     component.projeto.id_campus = 1;
-
-    // modo edição + id do projeto (upload só roda no modo edição)
     component.modoEdicao = true;
     component.projetoId = 123;
     component.currentEtapaUpload = 'PARCIAL';

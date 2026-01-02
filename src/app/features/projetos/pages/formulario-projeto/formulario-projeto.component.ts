@@ -95,7 +95,6 @@ export class FormularioProjetoComponent implements OnInit {
   ];
   private etapas: EtapaDocumento[] = ['IDEIA', 'PARCIAL', 'FINAL'];
 
-  // ✅ Utilitários para formatar nome (Title Case PT-BR)
   private readonly particulasNome = new Set([
     'da',
     'de',
@@ -124,8 +123,6 @@ export class FormularioProjetoComponent implements OnInit {
     this.carregarCampus();
   }
 
-  // ✅ Usar no HTML: {{ formatarNomeCompleto(orientador.nome_completo) }}
-  // ✅ Usar ao selecionar: this.projeto.orientador_nome = this.formatarNomeCompleto(...)
   formatarNomeCompleto(nome?: string | null): string {
     if (!nome) return '';
 
@@ -135,13 +132,10 @@ export class FormularioProjetoComponent implements OnInit {
       .map((token, idx) => {
         const lower = token.toLowerCase();
 
-        // partículas ficam minúsculas (exceto se for a primeira palavra)
         if (idx !== 0 && this.particulasNome.has(lower)) return lower;
 
-        // números romanos (I, II, III...)
         if (this.romanRegex.test(lower)) return lower.toUpperCase();
 
-        // capitaliza início e após hífen/apóstrofo
         return lower.replace(
           /(^|[-'’])([a-zà-ü])/g,
           (_, sep, ch) => sep + ch.toUpperCase()
@@ -202,7 +196,6 @@ export class FormularioProjetoComponent implements OnInit {
         const nomeOrientadorRaw =
           p.orientador || p.nomeOrientador || o?.nome_completo || '';
 
-        // ✅ garante exibição em Title Case mesmo se vier tudo minúsculo
         this.projeto.orientador_nome =
           this.formatarNomeCompleto(nomeOrientadorRaw);
 
@@ -252,9 +245,6 @@ export class FormularioProjetoComponent implements OnInit {
           },
         ];
 
-        // Etapa atual:
-        // - se já tem PARCIAL, o próximo envio é FINAL
-        // - se não tem PARCIAL, fica em PARCIAL
         if (hasFinalPdf) {
           this.currentEtapaUpload = 'FINAL';
         } else if (hasParcialPdf) {
@@ -389,7 +379,6 @@ export class FormularioProjetoComponent implements OnInit {
     this.carregando = true;
     this.erro = null;
 
-    // ✅ MODO EDIÇÃO: se tiver arquivos, faz upload direto e sai (não depende do PUT /projetos/{id})
     if (this.modoEdicao) {
       const temArquivos = !!this.arquivoDocx || !!this.arquivoPdf;
 
@@ -428,7 +417,6 @@ export class FormularioProjetoComponent implements OnInit {
               return;
             }
 
-            // atualiza histórico local
             this.atualizarHistoricoParaEtapa(
               this.currentEtapaUpload,
               this.arquivoDocx,
@@ -461,11 +449,10 @@ export class FormularioProjetoComponent implements OnInit {
           },
         });
 
-        return; // 👈 não continua pro PUT /projetos/{id}
+        return;
       }
     }
 
-    // ✅ CADASTRO: mantém ideia inicial em Base64
     if (!this.modoEdicao) {
       if (!this.arquivoDocx || !this.arquivoPdf) {
         await this.dialog.alert(
