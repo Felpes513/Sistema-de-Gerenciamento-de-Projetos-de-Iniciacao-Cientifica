@@ -40,9 +40,9 @@ export const routes: Routes = [
       {
         path: 'configuracoes',
         loadComponent: () =>
-          import('@secretaria/configuracoes/pages/configuracoes.component').then(
-            (m) => m.ConfiguracoesComponent
-          ),
+          import(
+            '@secretaria/configuracoes/pages/configuracoes.component'
+          ).then((m) => m.ConfiguracoesComponent),
       },
 
       {
@@ -112,15 +112,6 @@ export const routes: Routes = [
             (m) => m.CadastrosComponent
           ),
       },
-
-      // ✅ PERFIL
-      {
-        path: 'perfil',
-        loadComponent: () =>
-          import('@shared/ui/user-profile/user-profile.component').then(
-            (m) => m.UserProfileComponent
-          ),
-      },
     ],
   },
 
@@ -161,15 +152,6 @@ export const routes: Routes = [
             '@orientador/relatorios/pages/relatorio-form/relatorio-form.component'
           ).then((m) => m.RelatorioFormComponent),
       },
-
-      // ✅ PERFIL
-      {
-        path: 'perfil',
-        loadComponent: () =>
-          import('@shared/ui/user-profile/user-profile.component').then(
-            (m) => m.UserProfileComponent
-          ),
-      },
     ],
   },
 
@@ -200,18 +182,8 @@ export const routes: Routes = [
           ).then((m) => m.FormularioProjetoComponent),
         data: { modo: 'ALUNO' },
       },
-
-      // ✅ PERFIL
-      {
-        path: 'perfil',
-        loadComponent: () =>
-          import('@shared/ui/user-profile/user-profile.component').then(
-            (m) => m.UserProfileComponent
-          ),
-      },
     ],
   },
-
   {
     path: 'aluno/reset-password',
     loadComponent: () =>

@@ -28,7 +28,15 @@ export class RelatoriosComponent implements OnInit {
 
   private readonly TZ = 'America/Sao_Paulo';
 
-  private readonly lowerWords = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di']);
+  private readonly lowerWords = new Set([
+    'de',
+    'da',
+    'do',
+    'das',
+    'dos',
+    'e',
+    'di',
+  ]);
 
   private properCase(v: string): string {
     if (!v) return '';
@@ -38,7 +46,7 @@ export class RelatoriosComponent implements OnInit {
       .map((w, i) =>
         i > 0 && this.lowerWords.has(w)
           ? w
-          : w.charAt(0).toUpperCase() + w.slice(1)
+          : w.charAt(0).toUpperCase() + w.slice(1),
       )
       .join(' ');
   }
@@ -126,8 +134,47 @@ export class RelatoriosComponent implements OnInit {
   dataBr(iso?: string): string {
     if (!iso) return '—';
 
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
+    console.log('📅 ISO recebido:', iso);
+
+    // Parse manual para tratar como UTC
+    const match = String(iso).match(
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
+    );
+
+    let d: Date;
+    if (match) {
+      const [, year, month, day, hour, minute, second] = match;
+      console.log('📊 Valores parseados:', {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+      });
+
+      // Cria a data assumindo que veio em UTC e converte para local
+      d = new Date(
+        Date.UTC(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day),
+          parseInt(hour),
+          parseInt(minute),
+          parseInt(second),
+        ),
+      );
+
+      console.log('⏰ Date criado:', d);
+    } else {
+      console.log('⚠️ Regex não deu match');
+      d = new Date(iso);
+    }
+
+    if (Number.isNaN(d.getTime())) {
+      console.log('❌ Data inválida');
+      return '—';
+    }
 
     const s = new Intl.DateTimeFormat('pt-BR', {
       timeZone: this.TZ,
@@ -139,6 +186,8 @@ export class RelatoriosComponent implements OnInit {
       second: '2-digit',
       hour12: false,
     }).format(d);
+
+    console.log('✅ String formatada:', s);
 
     return s.replace(',', '');
   }
