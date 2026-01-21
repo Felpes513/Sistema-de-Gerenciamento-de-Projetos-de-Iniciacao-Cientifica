@@ -14,7 +14,6 @@
   </ng-container>
 
   <ng-template #conteudo>
-    <!-- TEMPLATE REUTILIZÁVEL (SECRETARIA) -->
     <ng-template #alunoCard let-a>
       <div class="aluno-card">
         <div class="dados">
@@ -51,9 +50,7 @@
       </div>
     </ng-template>
 
-    <!-- ======================= SECRETARIA ======================= -->
     <ng-container *ngIf="modo === 'SECRETARIA'">
-      <!-- Se já houve seleção final: split (Selecionados / Disponíveis) -->
       <ng-container *ngIf="temSelecaoFinal; else listaSecretariaNormal">
         <ng-container
           *ngIf="
@@ -131,7 +128,6 @@
         </ng-container>
       </ng-container>
 
-      <!-- Lista normal (antes da seleção final) -->
       <ng-template #listaSecretariaNormal>
         <ng-container *ngIf="secretariaListaNormal.length; else vazio">
           <ul class="lista" role="list">
@@ -148,7 +144,6 @@
       </ng-template>
     </ng-container>
 
-    <!-- ======================= ORIENTADOR ======================= -->
     <ng-container *ngIf="modo === 'ORIENTADOR'">
       <div class="split-root" *ngIf="aprovadasVm.length; else nenhumAprovado">
         <div class="split-container">
@@ -307,7 +302,6 @@
     </ng-container>
   </ng-template>
 
-  <!-- vazio: usado na SECRETARIA -->
   <ng-template #vazio>
     <div class="vazio">
       <h4>Nenhum aluno inscrito ainda</h4>

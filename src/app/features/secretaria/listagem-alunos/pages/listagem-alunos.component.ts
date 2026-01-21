@@ -30,7 +30,7 @@ function toTitleCase(s: string = ''): string {
 }
 
 type InscricaoVM = {
-  inscricaoId: number; // 0 quando não existe (ex: aluno já vinculado)
+  inscricaoId: number;
   alunoId: number;
   nome: string;
   matricula: string;
@@ -57,10 +57,8 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  /** Fonte real (importante pra salvar/excluir por id_inscricao) */
   private _inscricoes: InscricaoLike[] = [];
 
-  /** ViewModel pronto pro template */
   secretariaSelecionados: InscricaoVM[] = [];
   secretariaDisponiveis: InscricaoVM[] = [];
   secretariaListaNormal: InscricaoVM[] = [];
@@ -81,14 +79,13 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
   temSelecaoFinal = false;
 
-  /** (mantive) caso use depois */
   bolsaMarcada = new Set<number>();
 
   constructor(
     private projetoService: ProjetoService,
     private inscricoesService: InscricoesService,
     private cdr: ChangeDetectorRef,
-    private dialogService: DialogService
+    private dialogService: DialogService,
   ) {}
 
   ngOnInit(): void {
@@ -112,11 +109,9 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
         : this.secretariaListaNormal.length;
     }
 
-    // Mantive a ideia original: total = aprovadas + pendentes/reprovadas
     return this.aprovadasVm.length + this.pendentesOuReprovadasVm.length;
   }
 
-  /** ===== Normalização (InscricaoLike -> VM) ===== */
   private alunoId(i: InscricaoLike): number {
     const anyI = i as any;
     return (
@@ -190,6 +185,21 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
     };
   }
 
+  private filtrarCadFinalForaDoProjeto(
+    lista: InscricaoLike[],
+    allowedFinalIds: Set<number> | null,
+  ): InscricaoLike[] {
+    const allowed = allowedFinalIds ?? new Set<number>();
+
+    return (lista || []).filter((i) => {
+      const st = this.alunoStatus(i);
+      if (st !== 'CADASTRADO_FINAL') return true;
+
+      const id = this.alunoId(i);
+      return allowed.has(id);
+    });
+  }
+
   private uniqByAlunoId(list: InscricaoLike[]): InscricaoLike[] {
     const seen = new Set<number>();
     const out: InscricaoLike[] = [];
@@ -202,7 +212,6 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
     return out;
   }
 
-  /** ===== Carregamentos ===== */
   private carregar() {
     this.loadingFlag = true;
 
@@ -230,7 +239,6 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
             this.bloqueado = true;
             this.temSelecaoFinal = true;
 
-            // "fake" InscricaoLike apenas pra VM (inscrição real vem do endpoint de inscrições)
             const vinculadosAsLike: InscricaoLike[] = (
               alunosVinculados || []
             ).map(
@@ -241,23 +249,22 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
                   email: a.email,
                   possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
                   status: 'CADASTRADO_FINAL',
-                } as any)
+                }) as any,
             );
 
             const vinculadosUniq = this.uniqByAlunoId(vinculadosAsLike);
             this.secretariaSelecionados = vinculadosUniq.map((i) =>
-              this.toVM(i, 'CADASTRADO_FINAL')
+              this.toVM(i, 'CADASTRADO_FINAL'),
             );
 
-            // Agora carrega inscrições pra montar "Disponíveis"
             return this.inscricoesService.listarPorProjeto(this.projetoId).pipe(
               map((inscricoes) => {
                 const lista = Array.isArray(inscricoes) ? inscricoes : [];
                 const selectedIds = new Set<number>(
-                  vinculadosUniq.map((i) => this.alunoId(i))
+                  vinculadosUniq.map((i) => this.alunoId(i)),
                 );
                 return { inscricoes: lista, selectedIds };
-              })
+              }),
             );
           }
 
@@ -267,37 +274,41 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
             map((inscricoes) => ({
               inscricoes: Array.isArray(inscricoes) ? inscricoes : [],
               selectedIds: null as Set<number> | null,
-            }))
+            })),
           );
         }),
         finalize(() => {
           this.loadingFlag = false;
           this.cdr.markForCheck();
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe({
         next: ({ inscricoes, selectedIds }) => {
-          // sem seleção final => lista normal
+          const baseUniq = this.uniqByAlunoId(inscricoes ?? []);
+          const allowedFinalIds = selectedIds ?? new Set<number>();
+
+          // >>> FILTRO: remove CADASTRADO_FINAL que NÃO está vinculado ao projeto
+          const listaUi = this.filtrarCadFinalForaDoProjeto(
+            baseUniq,
+            allowedFinalIds,
+          );
+
           if (!this.temSelecaoFinal) {
-            this._inscricoes = this.uniqByAlunoId(inscricoes ?? []);
-            this.secretariaListaNormal = this._inscricoes.map((i) =>
-              this.toVM(i)
-            );
+            this._inscricoes = listaUi; // ok aqui, secretaria não usa _inscricoes pra deletar
+            this.secretariaListaNormal = listaUi.map((i) => this.toVM(i));
             return;
           }
 
-          // com seleção final => split
-          const idsSel = selectedIds ?? new Set<number>();
-          const disponiveis = this.uniqByAlunoId(inscricoes ?? []).filter(
-            (i) => !idsSel.has(this.alunoId(i))
+          const idsSel = allowedFinalIds;
+          const disponiveis = listaUi.filter(
+            (i) => !idsSel.has(this.alunoId(i)),
           );
 
           this.secretariaDisponiveis = disponiveis.map((i) => this.toVM(i));
-
-          // lista normal não é usada nesse modo, mas mantenho zerada
           this.secretariaListaNormal = [];
         },
+
         error: () => {
           this._inscricoes = [];
           this.secretariaSelecionados = [];
@@ -322,10 +333,9 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
             status: 'CADASTRADO_FINAL',
           })) as any[];
 
-          // se já tem finalizados, já parte bloqueado
           this.bloqueado = finalizados.length > 0;
           this.selecionados = new Set<number>(
-            finalizados.map((i: any) => this.alunoId(i))
+            finalizados.map((i: any) => this.alunoId(i)),
           );
 
           return this.projetoService
@@ -334,30 +344,38 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
               map((inscricoes) => ({
                 inscricoes: (inscricoes ?? []) as InscricaoLike[],
                 finalizados,
-              }))
+              })),
             );
         }),
         finalize(() => {
           this.loadingFlag = false;
           this.cdr.markForCheck();
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe({
         next: ({ inscricoes, finalizados }) => {
-          // Fonte real = inscrições do endpoint (usada no salvar pra excluir rejeitados por id_inscricao)
-          this._inscricoes = this.uniqByAlunoId(inscricoes ?? []);
+          this._inscricoes = this.uniqByAlunoId(inscricoes ?? []); // mantém para exclusão batch
 
-          const aprovadasApi = this._inscricoes.filter((i) => {
+          const finalIds = new Set<number>(
+            (finalizados ?? []).map((i: any) => this.alunoId(i)),
+          );
+
+          // >>> FILTRO PARA UI
+          const inscricoesUi = this.filtrarCadFinalForaDoProjeto(
+            this._inscricoes,
+            finalIds,
+          );
+
+          const aprovadasApi = inscricoesUi.filter((i) => {
             const st = this.alunoStatus(i);
             return st === 'VALIDADO' || st === 'APROVADO';
           });
 
-          const finalizadosApi = this._inscricoes.filter(
-            (i) => this.alunoStatus(i) === 'CADASTRADO_FINAL'
+          const finalizadosApi = inscricoesUi.filter(
+            (i) => this.alunoStatus(i) === 'CADASTRADO_FINAL',
           );
 
-          // merge finalizados (vinculados) + finalizados vindos do endpoint
           const finalMerge = this.uniqByAlunoId([
             ...(finalizados as any[]),
             ...(finalizadosApi as any[]),
@@ -376,7 +394,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
           this.aprovadasVm = aprovadasLike.map((i) => this.toVM(i));
 
-          const pendentes = this._inscricoes.filter((i) => {
+          const pendentes = inscricoesUi.filter((i) => {
             const st = this.alunoStatus(i);
             return (
               st !== 'VALIDADO' &&
@@ -399,13 +417,12 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** ===== Orientador: listas prontas p/ template ===== */
   private recomputeOrientadorLists() {
     this.orientadorSelecionados = (this.aprovadasVm || []).filter((v) =>
-      this.selecionados.has(v.alunoId)
+      this.selecionados.has(v.alunoId),
     );
     this.orientadorDisponiveis = (this.aprovadasVm || []).filter(
-      (v) => !this.selecionados.has(v.alunoId)
+      (v) => !this.selecionados.has(v.alunoId),
     );
   }
 
@@ -441,7 +458,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
       if (ids.length === 0) {
         await this.dialogService.alert(
           'Selecione pelo menos 1 aluno antes de salvar.',
-          'Atenção'
+          'Atenção',
         );
         return;
       }
@@ -460,7 +477,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
       const confirmou = await this.dialogService.confirm(
         msg,
-        'Confirmar seleção'
+        'Confirmar seleção',
       );
       if (!confirmou) return;
     }
@@ -468,8 +485,6 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
     this.salvandoSelecao = true;
 
     if (this.modo === 'ORIENTADOR') {
-      // ⚠️ Aqui é onde “inscrição é o objetivo”:
-      // usamos _inscricoes (reais) pra obter id_inscricao e excluir rejeitados corretamente.
       this.projetoService
         .atualizarAprovadosEExcluirRejeitados(
           {
@@ -479,7 +494,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
           this._inscricoes.map((i) => ({
             id_inscricao: (i as any).id_inscricao ?? (i as any).id ?? 0,
             id_aluno: this.alunoId(i),
-          }))
+          })),
         )
         .subscribe({
           next: (res) => {
@@ -502,7 +517,6 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // SECRETARIA (se um dia usar seleção via secretaria)
     this.projetoService
       .updateAlunosProjeto({
         id_projeto: this.projetoId,

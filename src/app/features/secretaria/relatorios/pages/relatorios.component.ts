@@ -1,4 +1,3 @@
-// D:\Projetos\Vs code\Sistema-de-Gerenciamento-de-Projetos-de-Iniciacao-Cientifica\src\app\features\secretaria\relatorios\pages\relatorios.component.ts
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -136,7 +135,6 @@ export class RelatoriosComponent implements OnInit {
 
     console.log('📅 ISO recebido:', iso);
 
-    // Parse manual para tratar como UTC
     const match = String(iso).match(
       /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
     );
@@ -153,7 +151,6 @@ export class RelatoriosComponent implements OnInit {
         second,
       });
 
-      // Cria a data assumindo que veio em UTC e converte para local
       d = new Date(
         Date.UTC(
           parseInt(year),

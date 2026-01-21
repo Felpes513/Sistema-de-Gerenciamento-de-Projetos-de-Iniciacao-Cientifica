@@ -32,7 +32,6 @@
     </div>
   </div>
 
-  <!-- LISTA -->
   <ng-container *ngIf="!carregando && !erro">
     <div class="lista">
       <div
@@ -57,7 +56,6 @@
     <p *ngIf="!notificacoes.length" class="vazio">Sem notificações.</p>
   </ng-container>
 
-  <!-- Modal -->
   <div
     class="modal"
     *ngIf="notificacaoAberta"
