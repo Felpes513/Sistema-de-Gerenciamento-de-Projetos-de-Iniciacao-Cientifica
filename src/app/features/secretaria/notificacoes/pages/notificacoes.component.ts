@@ -34,7 +34,7 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
   constructor(
     private notifService: NotificacaoService,
     private renderer: Renderer2,
-    private dialog: DialogService
+    private dialog: DialogService,
   ) {}
 
   ngOnInit(): void {
@@ -98,9 +98,35 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
 
   private mapItem(n: any): Notificacao {
     const rawDate = n.data_criacao || n.created_at || n.data || n.timestamp;
-    const d = rawDate ? new Date(rawDate) : new Date();
 
-    // Conversão explícita: garante que lida seja sempre boolean
+    let d: Date;
+    if (rawDate) {
+      const dateStr = String(rawDate);
+      const match = dateStr.match(
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
+      );
+
+      if (match) {
+        const [, year, month, day, hour, minute, second] = match;
+
+        // Cria a data assumindo que veio em UTC e converte para local
+        d = new Date(
+          Date.UTC(
+            parseInt(year),
+            parseInt(month) - 1,
+            parseInt(day),
+            parseInt(hour),
+            parseInt(minute),
+            parseInt(second),
+          ),
+        );
+      } else {
+        d = new Date(rawDate);
+      }
+    } else {
+      d = new Date();
+    }
+
     const rawLida = n.lida;
     const lida = rawLida === true || rawLida === 1 || rawLida === '1';
 
@@ -131,8 +157,8 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
           const itemsRaw = Array.isArray(res?.items)
             ? res.items
             : Array.isArray(res)
-            ? res
-            : [];
+              ? res
+              : [];
 
           console.log('📋 Items raw:', itemsRaw);
 
@@ -170,7 +196,7 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
   async marcarTodasComoLidas(): Promise<void> {
     const ok = await this.dialog.confirm(
       'Marcar todas as notificações como lidas?',
-      'Confirmação'
+      'Confirmação',
     );
     if (!ok) return;
 

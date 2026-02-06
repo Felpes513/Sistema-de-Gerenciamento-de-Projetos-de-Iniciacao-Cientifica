@@ -40,9 +40,9 @@ export const routes: Routes = [
       {
         path: 'configuracoes',
         loadComponent: () =>
-          import('@secretaria/configuracoes/pages/configuracoes.component').then(
-            (m) => m.ConfiguracoesComponent
-          ),
+          import(
+            '@secretaria/configuracoes/pages/configuracoes.component'
+          ).then((m) => m.ConfiguracoesComponent),
       },
 
       {
@@ -51,14 +51,6 @@ export const routes: Routes = [
           import(
             '@secretaria/listagem-avaliadores/pages/listagem-avaliadores.component'
           ).then((m) => m.ListagemAvaliadoresComponent),
-      },
-
-      {
-        path: 'avaliadores/novo',
-        loadComponent: () =>
-          import(
-            '@secretaria/formulario-avaliador/pages/formulario-avaliador.component'
-          ).then((m) => m.FormularioAvaliadorComponent),
       },
 
       {
@@ -120,7 +112,6 @@ export const routes: Routes = [
             (m) => m.CadastrosComponent
           ),
       },
-      
     ],
   },
 
@@ -193,7 +184,6 @@ export const routes: Routes = [
       },
     ],
   },
-
   {
     path: 'aluno/reset-password',
     loadComponent: () =>

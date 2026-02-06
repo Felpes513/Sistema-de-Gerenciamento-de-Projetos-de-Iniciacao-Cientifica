@@ -1,14 +1,24 @@
+/* garante cadeia de altura dentro do sidebar */
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
 .painel {
   background: var(--white);
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
-  min-height: 100%;
+
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
   display: flex;
   flex-direction: column;
 }
-
 
 .painel.loading {
   opacity: 0.7;
@@ -17,12 +27,13 @@
 
 .head {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
   border-bottom: 2px solid var(--gray-200);
+  flex: 0 0 auto;
 }
 
 .head h3 {
@@ -39,12 +50,17 @@
   font-weight: 600;
 }
 
+.split-pane > h4 {
+  text-align: center;
+}
+
 .filters {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
+/* base da lista (SEM overflow aqui) */
 .lista {
   list-style: none;
   padding: 0;
@@ -52,6 +68,64 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+}
+
+/* quando a lista for o conteúdo principal (modo lista normal) ela rola */
+.painel > ul.lista {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
+.split-root {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 2 seções (Selecionados / Disponíveis) — primeira auto, segunda ocupa o restante */
+.split-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--spacing-md);
+}
+
+.split-pane {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-pane > h4 {
+  margin: 0 0 var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--gray-200);
+  flex: 0 0 auto;
+}
+
+/* listas dentro das seções SEMPRE com scroll, mas sem mexer no header/ações */
+.split-pane .lista {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
+/* Se por algum motivo "Selecionados" crescer demais, limita e rola */
+.split-container > .split-pane:first-child .lista {
+  flex: 0 1 auto;
+  max-height: min(360px, 40vh);
+}
+
+.split-pane .muted {
+  margin: 0;
+  padding: var(--spacing-md);
 }
 
 .item {
@@ -86,8 +160,10 @@
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   background: #f9fafb;
-  transition: border-color var(--transition-fast),
-    background var(--transition-fast), box-shadow var(--transition-fast),
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
     transform var(--transition-fast);
 }
 
@@ -159,7 +235,6 @@
   white-space: nowrap;
 }
 
-
 /* Badge (remunerado) */
 .badge {
   display: inline-flex;
@@ -226,145 +301,9 @@
   height: 18px;
 }
 
-/* ====== Notas (quando existir tela de notas) ====== */
-.notas-section {
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 2px solid var(--gray-200);
-}
-
-.notas-section h4 {
-  font-size: var(--font-size-lg);
-  color: var(--uscs-blue-dark);
-  margin-bottom: var(--spacing-md);
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.notas-grid {
-  display: grid;
-  gap: var(--spacing-md);
-}
-
-.nota-card {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  transition: all var(--transition-base);
-}
-
-.nota-card:hover {
-  border-color: var(--uscs-blue-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.nota-card label {
-  display: block;
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  color: var(--gray-700);
-  margin-bottom: var(--spacing-xs);
-}
-
-.nota-card input[type="number"] {
-  width: 100%;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  text-align: center;
-  transition: all var(--transition-fast);
-}
-
-.nota-card input[type="number"]:focus {
-  outline: none;
-  border-color: var(--uscs-blue);
-  box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
-}
-
-.nota-card input[type="number"]:disabled {
-  background-color: var(--gray-100);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.nota-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--spacing-xs);
-  font-size: var(--font-size-xs);
-  color: var(--gray-500);
-}
-
-.nota-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-weight: 600;
-  font-size: var(--font-size-xs);
-}
-
-.nota-status.aprovado {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.nota-status.reprovado {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.nota-status.pendente {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-/* ====== Ações (botão Salvar seleção etc.) ====== */
-.acoes {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  margin-top: var(--spacing-sm);
-}
-
-.btn {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-300);
-  background: var(--white);
-  cursor: pointer;
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn:hover {
-  background: var(--gray-100);
-  border-color: var(--gray-400);
-}
-
-.btn.danger {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: var(--error);
-}
-
-.btn.danger:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-}
-
+/* ====== Ações (Salvar seleção etc.) ====== */
 .form-actions {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
@@ -395,16 +334,6 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-}
-
-.alert {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  background-color: #dbeafe;
-  border: 1px solid #93c5fd;
-  color: #1e40af;
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--spacing-md);
 }
 
 .ok {
@@ -477,6 +406,7 @@
 @media (max-width: 768px) {
   .painel {
     padding: var(--spacing-md);
+    height: auto;
   }
 
   .head {
@@ -484,16 +414,8 @@
     align-items: flex-start;
   }
 
-  .lista {
-    max-height: none;
-  }
-
   .linha {
     flex-direction: column;
     gap: var(--spacing-sm);
-  }
-
-  .notas-grid {
-    grid-template-columns: 1fr;
   }
 }

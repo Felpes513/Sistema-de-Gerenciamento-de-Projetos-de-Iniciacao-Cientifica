@@ -1,14 +1,12 @@
-// src/app/shared/interfaces/projeto.ts
 import { Aluno } from '@shared/models/aluno';
 
 export type StatusProjeto = 'EM_EXECUCAO' | 'CONCLUIDO';
 export type StatusEnvio = 'ENVIADO' | 'NAO_ENVIADO';
 export type EtapaDocumento = 'IDEIA' | 'PARCIAL' | 'FINAL';
 
-/** DTO usado pelo endpoint POST /projetos/update-alunos */
 export interface UpdateProjetoAlunosDTO {
   id_projeto: number;
-  ids_alunos_aprovados: number[]; // ids de ALUNO aprovados pelo orientador
+  ids_alunos_aprovados: number[];
 }
 
 export interface ProjetoInscricaoApi {
@@ -73,6 +71,7 @@ export interface Projeto {
   nomesAlunos: string[];
   inscritosTotal?: number;
   concluido?: boolean;
+  status?: string;
 }
 
 export interface ProjetoDetalhado {
@@ -92,6 +91,7 @@ export interface ProjetoDetalhado {
   data_atualizacao?: string;
   concluido?: boolean;
   tipo_bolsa?: string | null;
+  status?: string;
 }
 
 export interface DocumentoHistorico {

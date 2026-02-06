@@ -5,16 +5,19 @@ import { ProjetoService } from '@services/projeto.service';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 import { AvaliadorExterno } from '@shared/models/avaliador_externo';
 
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+
 type ProjetoMin = { id: number; titulo: string; has_pdf: boolean };
 
 @Component({
   selector: 'app-enviar-avaliacoes-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './enviar-avaliacoes.modal.html',
-  styleUrls: ['./enviar-avaliacoes.modal.css'],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatSelectModule],
+  templateUrl: './send-reviews.component.html',
+  styleUrls: ['./send-reviews.component.css'],
 })
-export class EnviarAvaliacoesModalComponent implements OnInit {
+export class SendReviewsComponent implements OnInit {
   @Input() avaliadores: AvaliadorExterno[] = [];
   @Output() closed = new EventEmitter<boolean>();
 

@@ -46,6 +46,7 @@ export class ListagemProjetosComponent implements OnInit {
   @ViewChild('topSentinel') topSentinel?: ElementRef<HTMLSpanElement>;
 
   readonly MAX_ESCOLHIDOS = 4;
+  readonly MAX_TITULO_PROJETO = 45;
 
   pageSize = 6;
   currentPage = 1;
@@ -54,7 +55,7 @@ export class ListagemProjetosComponent implements OnInit {
   projetosFiltradosLista: (Projeto & { alunosIds?: number[] })[] = [];
 
   filtro = '';
-  filtroStatus: '' | 'EM_EXECUCAO' | 'CONCLUIDO' = '';
+  filtroStatus: '' | 'EM_EXECUCAO' | 'CONCLUIDO' | 'CANCELADO' = '';
 
   carregando = false;
   erro: string | null = null;
@@ -87,7 +88,7 @@ export class ListagemProjetosComponent implements OnInit {
       .open(ConfirmDialogComponent, {
         data: { titulo, mensagem, modo: 'confirm' },
       })
-      .afterClosed(); // Observable<boolean>
+      .afterClosed();
   }
 
   private abrirAlerta(titulo: string, mensagem: string) {
@@ -241,6 +242,10 @@ export class ListagemProjetosComponent implements OnInit {
       .join(' ');
   }
 
+  isProjetoCancelado(projeto: any): boolean {
+    return this.isCancelado(projeto);
+  }
+
   carregarProjetos(): void {
     this.carregando = true;
     this.erro = null;
@@ -368,7 +373,7 @@ export class ListagemProjetosComponent implements OnInit {
     }, 0);
   }
 
-  setFiltroStatus(status: '' | 'EM_EXECUCAO' | 'CONCLUIDO') {
+  setFiltroStatus(status: '' | 'EM_EXECUCAO' | 'CONCLUIDO' | 'CANCELADO') {
     this.filtroStatus = status;
     this.currentPage = 1;
     this.atualizarProjetosFiltrados();
@@ -388,9 +393,12 @@ export class ListagemProjetosComponent implements OnInit {
       if (!this.filtroStatus) return true;
 
       const concluido = this.isConcluido(p);
+      const cancelado = this.isCancelado(p);
 
       if (this.filtroStatus === 'CONCLUIDO') return concluido;
-      return true;
+      if (this.filtroStatus === 'CANCELADO') return cancelado;
+
+      return !concluido && !cancelado;
     };
 
     this.projetosFiltradosLista = (this.projetos || []).filter(
@@ -423,6 +431,26 @@ export class ListagemProjetosComponent implements OnInit {
     );
   }
 
+  private getStatusStr(p: any): string {
+    return String(
+      p?.status ?? p?.status_projeto ?? p?.situacao ?? p?.estado ?? ''
+    )
+      .toUpperCase()
+      .trim();
+  }
+
+  private isConcluido(p: any): boolean {
+    if (p?.concluido === true) return true;
+    const s = this.getStatusStr(p);
+    return s === 'CONCLUIDO' || s === 'CONCLUÍDO' || s.includes('CONCLUI');
+  }
+
+  private isCancelado(p: any): boolean {
+    if (p?.cancelado === true) return true;
+    const s = this.getStatusStr(p);
+    return s === 'CANCELADO' || s.includes('CANCEL');
+  }
+
   getStatusProjeto(projeto: Projeto): string {
     if (!this.temIdValido(projeto)) return 'erro';
     const escolhidos = this.getQuantidadeAlunos(projeto as any);
@@ -431,7 +459,6 @@ export class ListagemProjetosComponent implements OnInit {
     return 'disponivel';
   }
 
-  // ✅ CORRIGIDO: string + .size
   get tituloLista(): string {
     if (this.isOrientador) return 'Meus Projetos';
     if (this.isAluno && this.projetosSelecionadosDoAluno.size > 0)
@@ -446,9 +473,6 @@ export class ListagemProjetosComponent implements OnInit {
   toggleMenu(id: number | null): void {
     this.menuAberto = this.menuAberto === id ? null : id;
   }
-
-  // ... (daqui pra baixo permanece igual ao seu código)
-  // ✅ Mantive todo o resto, sem alterar lógica.
 
   concluirProjeto(id: number): void {
     console.log('✅ concluirProjeto clicado', id);
@@ -487,6 +511,52 @@ export class ListagemProjetosComponent implements OnInit {
           console.error('Erro concluirProjeto', e);
           this.snackBar.open(
             e?.error?.detail || 'Erro ao concluir projeto.',
+            'Fechar',
+            { duration: 4000 }
+          );
+        },
+      });
+    });
+  }
+
+  ativarProjeto(id: number): void {
+    console.log('✅ ativarProjeto clicado', id);
+    if (!this.isSecretaria) return;
+
+    if (!this.isIdValido(id)) {
+      this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
+      return;
+    }
+
+    this.abrirConfirmacao(
+      'Ativar projeto',
+      'Deseja reativar este projeto?'
+    ).subscribe((confirmado) => {
+      if (!confirmado) return;
+
+      const svc: any = this.projetoService as any;
+      if (typeof svc.ativarProjeto !== 'function') {
+        this.snackBar.open(
+          'Endpoint ativarProjeto não implementado.',
+          'Fechar',
+          { duration: 3500 }
+        );
+        return;
+      }
+
+      svc.ativarProjeto(id).subscribe({
+        next: (res: any) => {
+          this.menuAberto = null;
+          this.snackBar.open(res?.mensagem || 'Projeto ativado.', 'Fechar', {
+            duration: 3000,
+          });
+          this.carregarProjetos();
+        },
+        error: (e: any) => {
+          this.menuAberto = null;
+          console.error('Erro ativarProjeto', e);
+          this.snackBar.open(
+            e?.error?.detail || 'Erro ao ativar projeto.',
             'Fechar',
             { duration: 4000 }
           );
@@ -861,12 +931,37 @@ export class ListagemProjetosComponent implements OnInit {
       });
   }
 
+  truncarTituloProjeto(
+    titulo: string | null | undefined,
+    limite = this.MAX_TITULO_PROJETO
+  ): string {
+    const t = String(titulo ?? '').trim();
+    if (!t) return '—';
+    if (t.length <= limite) return t;
+    return t.slice(0, limite).trimEnd() + '...';
+  }
+
   podeVerRelatorio(projeto: Projeto & { alunosIds?: number[] }): boolean {
     if (!this.isAluno) return false;
     const meuId = this.getMeuId();
     if (!meuId) return false;
     const ids = (projeto as any).alunosIds as number[] | undefined;
     return Array.isArray(ids) && ids.includes(Number(meuId));
+  }
+
+  orientadorSelecaoFinalizada(
+    projeto: Projeto & { alunosIds?: number[] }
+  ): boolean {
+    const qtd = this.getQuantidadeAlunos(projeto as any);
+    if (qtd > 0) return true;
+
+    const ids = (projeto as any).alunosIds;
+    if (Array.isArray(ids) && ids.length > 0) return true;
+
+    const nomes = (projeto as any).nomesAlunos;
+    if (Array.isArray(nomes) && nomes.length > 0) return true;
+
+    return false;
   }
 
   recarregar(): void {
@@ -886,10 +981,6 @@ export class ListagemProjetosComponent implements OnInit {
       !isNaN(id) &&
       id > 0
     );
-  }
-
-  private isConcluido(p: any): boolean {
-    return Boolean(p?.concluido);
   }
 
   calcularProgresso(projeto: Projeto): number {

@@ -34,20 +34,24 @@ export class InscricoesService {
       .get<any[]>(`${this.apiUrl}/projetos/${projetoId}/inscricoes`)
       .pipe(
         map((lista) =>
-          (lista ?? []).map(
-            (item): Inscricao => ({
-              id: item.id_inscricao,
-              alunoId: item.aluno?.id ?? item.id_aluno ?? 0,
-              nome: item.aluno?.nome ?? item.nome_aluno ?? '',
-              matricula: item.matricula ?? '',
-              email: item.aluno?.email ?? item.email ?? '',
-              status: (item.status ?? 'PENDENTE') as Inscricao['status'],
+          (lista ?? []).map((item): Inscricao => {
+            const status = String(item.status ?? item.situacao ?? 'PENDENTE')
+              .toUpperCase()
+              .trim() as Inscricao['status'];
+
+            return {
+              id: item.id_inscricao ?? item.id ?? 0,
+              alunoId: item.aluno?.id ?? item.id_aluno ?? item.alunoId ?? 0,
+              nome: item.aluno?.nome ?? item.nome_aluno ?? item.nome ?? '',
+              matricula: item.aluno?.matricula ?? item.matricula ?? '',
+              email: (item.aluno?.email ?? item.email ?? '').trim(),
+              status,
               documentoNotasUrl:
                 item.documentoNotasUrl ?? item.documento_notas_url ?? null,
               criadoEm: item.created_at ?? '',
               atualizadoEm: item.updated_at ?? item.created_at ?? '',
-            })
-          )
+            };
+          })
         )
       );
   }

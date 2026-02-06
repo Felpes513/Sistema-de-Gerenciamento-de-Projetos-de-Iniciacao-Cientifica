@@ -50,7 +50,6 @@ header .close {
   flex: 1 1 auto;
 }
 
-
 .row {
   display: flex;
   flex-direction: column;
@@ -142,7 +141,7 @@ footer .primary:disabled {
   box-shadow: none;
 }
 
-.row select {
+.row .sgpic-field {
   width: 100%;
 }
 

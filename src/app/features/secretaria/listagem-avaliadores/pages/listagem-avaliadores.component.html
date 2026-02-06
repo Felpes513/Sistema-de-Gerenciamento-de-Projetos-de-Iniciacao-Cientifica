@@ -1,18 +1,26 @@
 <div class="container avl">
-  <h2><i class="fa-solid fa-users"></i> Avaliadores Externos</h2>
+  <h2><i class="fa-solid fa-users"></i> Avaliadores</h2>
 
   <div class="avl-toolbar">
     <div class="spacer"></div>
-    <a class="btn btn-primary" [routerLink]="['/secretaria/avaliadores/novo']">
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="abrirNovoAvaliador()"
+    >
       <i class="fa-solid fa-plus"></i> Novo Avaliador
-    </a>
-    <button class="btn btn-primary" (click)="abrirModal()">
+    </button>
+
+    <button type="button" class="btn btn-primary" (click)="abrirModal()">
       <i class="fa-solid fa-paper-plane"></i> Enviar avaliação
     </button>
   </div>
+
   <table class="table table-striped avl-table">
     <thead>
       <tr>
+        <th>Identificador</th>
         <th>Nome</th>
         <th>E-mail</th>
         <th>Especialidade</th>
@@ -21,20 +29,37 @@
         <th>Ações</th>
       </tr>
     </thead>
+
     <tbody>
+      <tr *ngIf="carregando">
+        <td class="table-loading" colspan="7">Carregando avaliadores...</td>
+      </tr>
+
+      <tr *ngIf="!carregando && erro">
+        <td class="table-empty" colspan="7">{{ erro }}</td>
+      </tr>
+
+      <tr *ngIf="!carregando && !erro && avaliadores.length === 0">
+        <td class="table-empty" colspan="7">Nenhum avaliador cadastrado.</td>
+      </tr>
+
       <tr *ngFor="let a of avaliadores">
+        <td data-label="Identificador:">{{ getIdentificador(a) }}</td>
         <td data-label="Nome:">{{ a.nome }}</td>
         <td data-label="E-mail:">{{ a.email }}</td>
         <td data-label="Especialidade:">{{ a.especialidade }}</td>
         <td data-label="Subespecialidade:">{{ a.subespecialidade }}</td>
+
         <td data-label="Lattes:">
           <a [href]="a.link_lattes" target="_blank" *ngIf="a.link_lattes">
             Ver Lattes
           </a>
           <span *ngIf="!a.link_lattes" class="text-muted">Não informado</span>
         </td>
+
         <td class="actions" data-label="Ações:">
           <button
+            type="button"
             class="btn btn-info btn-sm"
             (click)="abrirEnvios(a)"
             title="Ver envios"
@@ -43,14 +68,16 @@
           </button>
 
           <button
+            type="button"
             class="btn btn-warning btn-sm"
-            (click)="editar(a)"
+            (click)="abrirEditarModal(a)"
             title="Editar"
           >
             <i class="fa-solid fa-edit"></i>
           </button>
 
           <button
+            type="button"
             class="btn btn-danger btn-sm"
             (click)="excluir(a.id)"
             title="Excluir"
@@ -62,15 +89,24 @@
     </tbody>
   </table>
 </div>
+
 <app-enviar-avaliacoes-modal
   *ngIf="showModal"
   [avaliadores]="avaliadores"
   (closed)="onModalClosed($event)"
 >
 </app-enviar-avaliacoes-modal>
+
 <app-envios-avaliacoes-modal
   *ngIf="showEnviosModal && selectedAvaliador"
   [avaliador]="selectedAvaliador"
   (closed)="onEnviosModalClosed()"
 >
 </app-envios-avaliacoes-modal>
+
+<app-avaliador-modal
+  *ngIf="showAvaliadorModal"
+  [avaliador]="avaliadorModalData"
+  (closed)="onAvaliadorModalClosed($event)"
+>
+</app-avaliador-modal>

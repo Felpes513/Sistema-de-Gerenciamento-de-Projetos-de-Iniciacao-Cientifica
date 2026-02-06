@@ -28,7 +28,12 @@ export class LoginComponent {
     private router: Router
   ) {
     this.route.queryParams.subscribe((params) => {
-      this.perfil = (params['perfil'] as any) || 'aluno';
+      const p = String(params['perfil'] ?? 'aluno').toLowerCase();
+      this.perfil =
+        p === 'aluno' || p === 'orientador' || p === 'secretaria'
+          ? (p as any)
+          : 'aluno';
+
       this.loadRememberedEmail();
     });
   }
@@ -51,13 +56,18 @@ export class LoginComponent {
     }
 
     observable.subscribe({
-      next: (res) => {
-        this.loginService.setTokens(res.access_token, res.refresh_token);
+      next: (res: any) => {
+        const access = res?.access_token ?? res?.token;
+        const refresh = res?.refresh_token ?? '';
+
+        if (access) {
+          this.loginService.setTokens(access, refresh);
+        }
+
         this.handleRememberMe();
 
         const role = this.loginService.getRole();
 
-        // ✅ Dashboard removido: Secretaria vai para "projetos"
         const redirects: Record<string, string> = {
           ALUNO: '/aluno/projetos',
           ORIENTADOR: '/orientador/projetos',
@@ -65,8 +75,13 @@ export class LoginComponent {
         };
 
         const destino = (role && redirects[role]) || '/';
+
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const target =
+          returnUrl && returnUrl.startsWith('/') ? returnUrl : destino;
+
         this.isLoading = false;
-        this.router.navigateByUrl(destino);
+        this.router.navigateByUrl(target);
       },
       error: (e) => {
         const status = e?.status;

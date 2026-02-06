@@ -1,3 +1,5 @@
+export type TipoAvaliador = 'INTERNO' | 'EXTERNO';
+
 export interface AvaliadorExterno {
   id?: number;
   nome: string;
@@ -5,6 +7,7 @@ export interface AvaliadorExterno {
   especialidade: string;
   subespecialidade: string;
   link_lattes: string;
+  tipo_avaliador?: TipoAvaliador;
 }
 
 export interface EnvioProjeto {

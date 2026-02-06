@@ -3,18 +3,19 @@ import {
   Component,
   Input,
   OnInit,
+  OnDestroy,
   ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize, of, switchMap } from 'rxjs';
+import { finalize, switchMap, map, Subject, takeUntil } from 'rxjs';
 import { ProjetoService } from '@services/projeto.service';
 import { InscricoesService } from '@services/inscricoes.service';
 import { ProjetoInscricaoApi } from '@shared/models/projeto';
-import { AlunoSecretariaView } from '@shared/models/listagem-alunos';
 import { Inscricao } from '@shared/models/inscricao';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { DialogService } from '@core/data-access/dialog.service';
 
 type Modo = 'SECRETARIA' | 'ORIENTADOR';
 type InscricaoLike = ProjetoInscricaoApi | Inscricao;
@@ -28,6 +29,18 @@ function toTitleCase(s: string = ''): string {
     .trim();
 }
 
+type InscricaoVM = {
+  inscricaoId: number;
+  alunoId: number;
+  nome: string;
+  matricula: string;
+  email: string;
+  status: string;
+  possuiTrabalhoRemunerado: boolean;
+  documentoNotasUrl?: string | null;
+  raw: InscricaoLike;
+};
+
 @Component({
   selector: 'app-listagem-alunos',
   standalone: true,
@@ -36,30 +49,43 @@ function toTitleCase(s: string = ''): string {
   styleUrls: ['./listagem-alunos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListagemAlunosComponent implements OnInit {
+export class ListagemAlunosComponent implements OnInit, OnDestroy {
   @Input({ required: true }) projetoId!: number;
   @Input() modo: Modo = 'SECRETARIA';
 
   readonly skeletonRows = [1, 2, 3, 4];
 
+  private destroy$ = new Subject<void>();
+
   private _inscricoes: InscricaoLike[] = [];
 
-  alunosSecretaria: AlunoSecretariaView[] = [];
-  aprovadas: InscricaoLike[] = [];
-  pendentesOuReprovadas: InscricaoLike[] = [];
+  secretariaSelecionados: InscricaoVM[] = [];
+  secretariaDisponiveis: InscricaoVM[] = [];
+  secretariaListaNormal: InscricaoVM[] = [];
+
+  aprovadasVm: InscricaoVM[] = [];
+  pendentesOuReprovadasVm: InscricaoVM[] = [];
+  orientadorSelecionados: InscricaoVM[] = [];
+  orientadorDisponiveis: InscricaoVM[] = [];
+
   selecionados = new Set<number>();
   limite = 4;
+
   bloqueado = false;
   loadingFlag = false;
   salvandoSelecao = false;
   sucessoSelecao = '';
   erroSalvarSelecao = '';
+
+  temSelecaoFinal = false;
+
   bolsaMarcada = new Set<number>();
 
   constructor(
     private projetoService: ProjetoService,
     private inscricoesService: InscricoesService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialogService: DialogService,
   ) {}
 
   ngOnInit(): void {
@@ -67,149 +93,26 @@ export class ListagemAlunosComponent implements OnInit {
     this.carregar();
   }
 
-  private carregar() {
-    this.loadingFlag = true;
-
-    if (this.modo === 'ORIENTADOR') {
-      this.carregarOrientador();
-      return;
-    }
-
-    this.projetoService
-      .listarAlunosDoProjeto(this.projetoId)
-      .pipe(
-        switchMap((alunosVinculados) => {
-          if (alunosVinculados && alunosVinculados.length) {
-            this.bloqueado = true;
-
-            this._inscricoes = (alunosVinculados || []).map((a: any) => ({
-              id_aluno: a.id_aluno,
-              nome_completo: a.nome_completo,
-              email: a.email,
-              possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
-              status: 'CADASTRADO_FINAL',
-            })) as any[];
-
-            this.debugDuplicatas('SECRETARIA-LOCK', this._inscricoes);
-
-            this.alunosSecretaria = this._inscricoes.map((i) =>
-              this.mapAlunoSecretaria(i)
-            );
-
-            return of(null);
-          }
-
-          this.bloqueado = false;
-          return this.inscricoesService.listarPorProjeto(this.projetoId);
-        }),
-        finalize(() => {
-          this.loadingFlag = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: (inscricoes) => {
-          if (!inscricoes) return;
-
-          this._inscricoes = Array.isArray(inscricoes) ? inscricoes : [];
-
-          this.debugDuplicatas('SECRETARIA', this._inscricoes);
-
-          this.alunosSecretaria = this._inscricoes.map((i) =>
-            this.mapAlunoSecretaria(i)
-          );
-        },
-        error: () => {
-          this.alunosSecretaria = [];
-        },
-      });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  private carregarOrientador() {
-    this.projetoService
-      .listarAlunosDoProjeto(this.projetoId)
-      .pipe(
-        switchMap((alunosVinculados) => {
-          if (alunosVinculados && alunosVinculados.length) {
-            this.bloqueado = true;
-
-            this._inscricoes = (alunosVinculados || []).map((a: any) => ({
-              id_aluno: a.id_aluno,
-              nome_completo: a.nome_completo,
-              email: a.email,
-              possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
-              status: 'CADASTRADO_FINAL',
-            })) as any[];
-
-            this.debugDuplicatas('ORIENTADOR-LOCK', this._inscricoes);
-
-            this.aprovadas = [...this._inscricoes];
-            this.pendentesOuReprovadas = [];
-
-            this.selecionados = new Set<number>(
-              this._inscricoes.map((i) => this.alunoId(i))
-            );
-            return of(null);
-          }
-          this.bloqueado = false;
-          return this.projetoService.listarInscricoesPorProjeto(this.projetoId);
-        }),
-        finalize(() => {
-          this.loadingFlag = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: (inscricoes) => {
-          if (!inscricoes) return;
-
-          this._inscricoes = inscricoes ?? [];
-
-          this.debugDuplicatas('ORIENTADOR', this._inscricoes);
-
-          this.aprovadas = this._inscricoes.filter((i) => {
-            const st = ((i as any).status || '').toUpperCase();
-            return st === 'VALIDADO' || st === 'APROVADO';
-          });
-
-          this.pendentesOuReprovadas = this._inscricoes.filter((i) => {
-            const st = ((i as any).status || '').toUpperCase();
-            return !this.aprovadas.includes(i) && st !== 'CADASTRADO_FINAL';
-          });
-
-          const jaVinculados = this._inscricoes
-            .filter(
-              (i) =>
-                (((i as any).status || '') as string).toUpperCase() ===
-                'CADASTRADO_FINAL'
-            )
-            .map((i) => this.alunoId(i));
-
-          this.selecionados = new Set<number>(jaVinculados);
-        },
-        error: () => {
-          this._inscricoes = [];
-          this.aprovadas = [];
-          this.pendentesOuReprovadas = [];
-        },
-      });
-  }
-
-  loading() {
+  get loading(): boolean {
     return this.loadingFlag;
   }
 
-  lista(): AlunoSecretariaView[] {
-    return this.alunosSecretaria;
+  get total(): number {
+    if (this.modo === 'SECRETARIA') {
+      return this.temSelecaoFinal
+        ? this.secretariaSelecionados.length + this.secretariaDisponiveis.length
+        : this.secretariaListaNormal.length;
+    }
+
+    return this.aprovadasVm.length + this.pendentesOuReprovadasVm.length;
   }
 
-  total() {
-    return this.modo === 'SECRETARIA'
-      ? this.alunosSecretaria.length
-      : this.aprovadas.length + this.pendentesOuReprovadas.length;
-  }
-
-  alunoId(i: InscricaoLike): number {
+  private alunoId(i: InscricaoLike): number {
     const anyI = i as any;
     return (
       anyI?.id_aluno ??
@@ -222,7 +125,12 @@ export class ListagemAlunosComponent implements OnInit {
     );
   }
 
-  alunoNome(i: InscricaoLike): string {
+  private inscricaoId(i: InscricaoLike): number {
+    const anyI = i as any;
+    return anyI?.id_inscricao ?? anyI?.id ?? 0;
+  }
+
+  private alunoNome(i: InscricaoLike): string {
     const anyI = i as any;
     const raw =
       anyI?.aluno?.nome ||
@@ -233,58 +141,348 @@ export class ListagemAlunosComponent implements OnInit {
     return toTitleCase(raw);
   }
 
-  alunoRa(i: InscricaoLike): string {
+  private alunoRa(i: InscricaoLike): string {
     const anyI = i as any;
     return anyI?.aluno?.matricula || anyI?.matricula || '—';
   }
 
-  alunoEmail(i: InscricaoLike): string {
+  private alunoEmail(i: InscricaoLike): string {
     const anyI = i as any;
     return (anyI?.aluno?.email || anyI?.email || '—').trim();
   }
 
-  disabledCheckbox(i: InscricaoLike): boolean {
-    if (this.modo === 'ORIENTADOR' && this.bloqueado) {
-      return true;
-    }
-
-    const id = this.alunoId(i);
-    if (this.selecionados.has(id)) return false;
-    return this.selecionados.size >= this.limite;
+  private alunoStatus(i: InscricaoLike): string {
+    const anyI = i as any;
+    const st = (anyI?.status || anyI?.situacao || 'PENDENTE')
+      .toString()
+      .toUpperCase()
+      .trim();
+    return st || 'PENDENTE';
   }
 
-  toggleSelecionado(i: InscricaoLike, checked: boolean) {
-    if (this.modo === 'ORIENTADOR' && this.bloqueado) return;
-
-    const id = this.alunoId(i);
-    if (!id) return;
-    if (checked) {
-      if (this.selecionados.size >= this.limite) return;
-      this.selecionados.add(id);
-    } else {
-      this.selecionados.delete(id);
-    }
+  private possuiRemunerado(i: InscricaoLike): boolean {
+    const anyI = i as any;
+    return anyI?.possuiTrabalhoRemunerado ?? !!anyI?.possui_trabalho_remunerado;
   }
 
-  onSelecionadoChange(event: Event, inscricao: InscricaoLike) {
-    if (this.modo === 'ORIENTADOR' && this.bloqueado) {
-      const target = event.target as HTMLInputElement | null;
-      if (target) {
-        target.checked = this.selecionados.has(this.alunoId(inscricao));
-      }
+  private notasUrl(i: InscricaoLike): string | null {
+    const anyI = i as any;
+    return anyI?.documentoNotasUrl ?? anyI?.documento_notas_url ?? null;
+  }
+
+  private toVM(i: InscricaoLike, overrideStatus?: string): InscricaoVM {
+    const st = (overrideStatus || this.alunoStatus(i)).toUpperCase().trim();
+    return {
+      inscricaoId: this.inscricaoId(i),
+      alunoId: this.alunoId(i),
+      nome: this.alunoNome(i),
+      matricula: this.alunoRa(i),
+      email: this.alunoEmail(i),
+      status: st,
+      possuiTrabalhoRemunerado: this.possuiRemunerado(i),
+      documentoNotasUrl: this.notasUrl(i),
+      raw: i,
+    };
+  }
+
+  private filtrarCadFinalForaDoProjeto(
+    lista: InscricaoLike[],
+    allowedFinalIds: Set<number> | null,
+  ): InscricaoLike[] {
+    const allowed = allowedFinalIds ?? new Set<number>();
+
+    return (lista || []).filter((i) => {
+      const st = this.alunoStatus(i);
+      if (st !== 'CADASTRADO_FINAL') return true;
+
+      const id = this.alunoId(i);
+      return allowed.has(id);
+    });
+  }
+
+  private uniqByAlunoId(list: InscricaoLike[]): InscricaoLike[] {
+    const seen = new Set<number>();
+    const out: InscricaoLike[] = [];
+    for (const item of list || []) {
+      const id = this.alunoId(item);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push(item);
+    }
+    return out;
+  }
+
+  private carregar() {
+    this.loadingFlag = true;
+
+    if (this.modo === 'ORIENTADOR') {
+      this.carregarOrientador();
       return;
     }
 
-    const target = event.target as HTMLInputElement | null;
-    this.toggleSelecionado(inscricao, !!target?.checked);
+    this.carregarSecretaria();
   }
 
-  salvarSelecao() {
+  private carregarSecretaria() {
+    this.temSelecaoFinal = false;
+    this.secretariaSelecionados = [];
+    this.secretariaDisponiveis = [];
+    this.secretariaListaNormal = [];
+
+    this.projetoService
+      .listarAlunosDoProjeto(this.projetoId)
+      .pipe(
+        switchMap((alunosVinculados) => {
+          const temVinculados = !!(alunosVinculados && alunosVinculados.length);
+
+          if (temVinculados) {
+            this.bloqueado = true;
+            this.temSelecaoFinal = true;
+
+            const vinculadosAsLike: InscricaoLike[] = (
+              alunosVinculados || []
+            ).map(
+              (a: any) =>
+                ({
+                  id_aluno: a.id_aluno,
+                  nome_completo: a.nome_completo,
+                  email: a.email,
+                  possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
+                  status: 'CADASTRADO_FINAL',
+                }) as any,
+            );
+
+            const vinculadosUniq = this.uniqByAlunoId(vinculadosAsLike);
+            this.secretariaSelecionados = vinculadosUniq.map((i) =>
+              this.toVM(i, 'CADASTRADO_FINAL'),
+            );
+
+            return this.inscricoesService.listarPorProjeto(this.projetoId).pipe(
+              map((inscricoes) => {
+                const lista = Array.isArray(inscricoes) ? inscricoes : [];
+                const selectedIds = new Set<number>(
+                  vinculadosUniq.map((i) => this.alunoId(i)),
+                );
+                return { inscricoes: lista, selectedIds };
+              }),
+            );
+          }
+
+          this.bloqueado = false;
+
+          return this.inscricoesService.listarPorProjeto(this.projetoId).pipe(
+            map((inscricoes) => ({
+              inscricoes: Array.isArray(inscricoes) ? inscricoes : [],
+              selectedIds: null as Set<number> | null,
+            })),
+          );
+        }),
+        finalize(() => {
+          this.loadingFlag = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: ({ inscricoes, selectedIds }) => {
+          const baseUniq = this.uniqByAlunoId(inscricoes ?? []);
+          const allowedFinalIds = selectedIds ?? new Set<number>();
+
+          // >>> FILTRO: remove CADASTRADO_FINAL que NÃO está vinculado ao projeto
+          const listaUi = this.filtrarCadFinalForaDoProjeto(
+            baseUniq,
+            allowedFinalIds,
+          );
+
+          if (!this.temSelecaoFinal) {
+            this._inscricoes = listaUi; // ok aqui, secretaria não usa _inscricoes pra deletar
+            this.secretariaListaNormal = listaUi.map((i) => this.toVM(i));
+            return;
+          }
+
+          const idsSel = allowedFinalIds;
+          const disponiveis = listaUi.filter(
+            (i) => !idsSel.has(this.alunoId(i)),
+          );
+
+          this.secretariaDisponiveis = disponiveis.map((i) => this.toVM(i));
+          this.secretariaListaNormal = [];
+        },
+
+        error: () => {
+          this._inscricoes = [];
+          this.secretariaSelecionados = [];
+          this.secretariaDisponiveis = [];
+          this.secretariaListaNormal = [];
+        },
+      });
+  }
+
+  private carregarOrientador() {
+    this.loadingFlag = true;
+
+    this.projetoService
+      .listarAlunosDoProjeto(this.projetoId)
+      .pipe(
+        switchMap((alunosVinculados) => {
+          const finalizados = (alunosVinculados || []).map((a: any) => ({
+            id_aluno: a.id_aluno,
+            nome_completo: a.nome_completo,
+            email: a.email,
+            possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
+            status: 'CADASTRADO_FINAL',
+          })) as any[];
+
+          this.bloqueado = finalizados.length > 0;
+          this.selecionados = new Set<number>(
+            finalizados.map((i: any) => this.alunoId(i)),
+          );
+
+          return this.projetoService
+            .listarInscricoesPorProjeto(this.projetoId)
+            .pipe(
+              map((inscricoes) => ({
+                inscricoes: (inscricoes ?? []) as InscricaoLike[],
+                finalizados,
+              })),
+            );
+        }),
+        finalize(() => {
+          this.loadingFlag = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: ({ inscricoes, finalizados }) => {
+          this._inscricoes = this.uniqByAlunoId(inscricoes ?? []); // mantém para exclusão batch
+
+          const finalIds = new Set<number>(
+            (finalizados ?? []).map((i: any) => this.alunoId(i)),
+          );
+
+          // >>> FILTRO PARA UI
+          const inscricoesUi = this.filtrarCadFinalForaDoProjeto(
+            this._inscricoes,
+            finalIds,
+          );
+
+          const aprovadasApi = inscricoesUi.filter((i) => {
+            const st = this.alunoStatus(i);
+            return st === 'VALIDADO' || st === 'APROVADO';
+          });
+
+          const finalizadosApi = inscricoesUi.filter(
+            (i) => this.alunoStatus(i) === 'CADASTRADO_FINAL',
+          );
+
+          const finalMerge = this.uniqByAlunoId([
+            ...(finalizados as any[]),
+            ...(finalizadosApi as any[]),
+          ]);
+
+          for (const i of finalMerge) {
+            const id = this.alunoId(i);
+            if (id) this.selecionados.add(id);
+          }
+          if (finalMerge.length) this.bloqueado = true;
+
+          const aprovadasLike = this.uniqByAlunoId([
+            ...(finalMerge as any[]),
+            ...(aprovadasApi as any[]),
+          ]);
+
+          this.aprovadasVm = aprovadasLike.map((i) => this.toVM(i));
+
+          const pendentes = inscricoesUi.filter((i) => {
+            const st = this.alunoStatus(i);
+            return (
+              st !== 'VALIDADO' &&
+              st !== 'APROVADO' &&
+              st !== 'CADASTRADO_FINAL'
+            );
+          });
+
+          this.pendentesOuReprovadasVm = pendentes.map((i) => this.toVM(i));
+
+          this.recomputeOrientadorLists();
+        },
+        error: () => {
+          this._inscricoes = [];
+          this.aprovadasVm = [];
+          this.pendentesOuReprovadasVm = [];
+          this.orientadorSelecionados = [];
+          this.orientadorDisponiveis = [];
+        },
+      });
+  }
+
+  private recomputeOrientadorLists() {
+    this.orientadorSelecionados = (this.aprovadasVm || []).filter((v) =>
+      this.selecionados.has(v.alunoId),
+    );
+    this.orientadorDisponiveis = (this.aprovadasVm || []).filter(
+      (v) => !this.selecionados.has(v.alunoId),
+    );
+  }
+
+  disabledCheckboxByAlunoId(alunoId: number): boolean {
+    if (this.selecionados.has(alunoId)) return false;
+    return this.selecionados.size >= this.limite;
+  }
+
+  onSelecionadoChange(event: Event, alunoId: number) {
+    const target = event.target as HTMLInputElement | null;
+    const checked = !!target?.checked;
+
+    if (!alunoId) return;
+
+    if (checked) {
+      if (this.selecionados.size >= this.limite) return;
+      this.selecionados.add(alunoId);
+    } else {
+      this.selecionados.delete(alunoId);
+    }
+
+    this.recomputeOrientadorLists();
+    this.cdr.markForCheck();
+  }
+
+  async salvarSelecao() {
     this.sucessoSelecao = '';
     this.erroSalvarSelecao = '';
-    this.salvandoSelecao = true;
 
     const ids = Array.from(this.selecionados);
+
+    if (this.modo === 'ORIENTADOR') {
+      if (ids.length === 0) {
+        await this.dialogService.alert(
+          'Selecione pelo menos 1 aluno antes de salvar.',
+          'Atenção',
+        );
+        return;
+      }
+
+      const selecionadosTexto = this.orientadorSelecionados
+        .map((v) => `• ${v.nome} (RA: ${v.matricula})`)
+        .join('\n');
+
+      const msg =
+        `Você selecionou ${ids.length}${
+          this.limite ? ` de ${this.limite}` : ''
+        } aluno(s).\n\n` +
+        `${selecionadosTexto || '—'}\n\n` +
+        `Ao confirmar, sua seleção será registrada.\n\n` +
+        `Deseja confirmar?`;
+
+      const confirmou = await this.dialogService.confirm(
+        msg,
+        'Confirmar seleção',
+      );
+      if (!confirmou) return;
+    }
+
+    this.salvandoSelecao = true;
 
     if (this.modo === 'ORIENTADOR') {
       this.projetoService
@@ -294,18 +492,16 @@ export class ListagemAlunosComponent implements OnInit {
             ids_alunos_aprovados: ids,
           },
           this._inscricoes.map((i) => ({
-            id_inscricao: (i as any).id_inscricao ?? 0,
+            id_inscricao: (i as any).id_inscricao ?? (i as any).id ?? 0,
             id_aluno: this.alunoId(i),
-          }))
+          })),
         )
         .subscribe({
           next: (res) => {
             this.salvandoSelecao = false;
             this.sucessoSelecao =
-              (res as any)?.mensagem ||
-              'Seleção salva e inscrições restantes excluídas.';
+              (res as any)?.mensagem || 'Seleção salva com sucesso.';
             this.selecionados = new Set<number>(ids);
-
             this.carregar();
           },
           error: (e: unknown) => {
@@ -314,10 +510,10 @@ export class ListagemAlunosComponent implements OnInit {
               typeof e === 'object' && e && 'message' in e
                 ? String((e as { message: unknown }).message)
                 : null;
-            this.erroSalvarSelecao =
-              message || 'Falha ao salvar seleção/apagar inscrições.';
+            this.erroSalvarSelecao = message || 'Falha ao salvar seleção.';
           },
         });
+
       return;
     }
 
@@ -344,76 +540,6 @@ export class ListagemAlunosComponent implements OnInit {
       });
   }
 
-  toggleBolsa(i: InscricaoLike, checked: boolean) {
-    if (!this.bloqueado) return;
-    const id = this.alunoId(i);
-    if (!id) return;
-
-    if (checked) this.bolsaMarcada.add(id);
-    else this.bolsaMarcada.delete(id);
-  }
-
-  temBolsa(i: InscricaoLike) {
-    const id = this.alunoId(i);
-    return this.bolsaMarcada.has(id);
-  }
-
-  trackByAlunoSecretaria = (_: number, aluno: AlunoSecretariaView) =>
-    aluno.idInscricao;
-  trackByInscricao = (_: number, inscricao: InscricaoLike) =>
-    this.alunoId(inscricao);
+  trackByVM = (_: number, v: InscricaoVM) => v.alunoId || v.inscricaoId;
   trackByIndex = (index: number) => index;
-
-  private mapAlunoSecretaria(inscricao: InscricaoLike): AlunoSecretariaView {
-    const anyI = inscricao as any;
-    const idAluno = this.alunoId(inscricao);
-    const idInscricao = anyI?.id_inscricao ?? anyI?.id ?? 0;
-
-    const nomeRaw =
-      anyI?.aluno?.nome ||
-      anyI?.nome_completo ||
-      anyI?.nome_aluno ||
-      anyI?.nome ||
-      `Aluno #${idAluno || idInscricao}`;
-
-    return {
-      idInscricao,
-      idAluno,
-      nome: toTitleCase(nomeRaw),
-      matricula: anyI?.aluno?.matricula || anyI?.matricula || '—',
-      email: (anyI?.aluno?.email || anyI?.email || '—').trim(),
-      status: anyI?.status || anyI?.situacao || 'PENDENTE',
-      possuiTrabalhoRemunerado:
-        anyI?.possuiTrabalhoRemunerado ?? !!anyI?.possui_trabalho_remunerado,
-      documentoNotasUrl: anyI?.documentoNotasUrl ?? undefined,
-    };
-  }
-
-  private debugDuplicatas(contexto: string, lista: InscricaoLike[]) {
-    const seen = new Set<string>();
-    const dups: { key: string; idInscricao: number; idAluno: number }[] = [];
-
-    for (const i of lista || []) {
-      const anyI = i as any;
-      const idInscricao = anyI.id_inscricao ?? anyI.id ?? 0;
-      const idAluno = this.alunoId(i);
-      const key = `${idInscricao}|${idAluno}`;
-
-      if (seen.has(key)) {
-        dups.push({ key, idInscricao, idAluno });
-      } else {
-        seen.add(key);
-      }
-    }
-
-    console.log(
-      `%c[DEBUG][${contexto}] inscricoes`,
-      'color:#8e24aa;font-weight:bold',
-      {
-        total: lista?.length || 0,
-        duplicadas: dups.length,
-        detalhes: dups,
-      }
-    );
-  }
 }

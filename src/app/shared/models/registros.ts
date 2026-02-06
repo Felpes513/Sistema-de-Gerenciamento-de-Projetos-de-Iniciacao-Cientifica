@@ -15,10 +15,11 @@ export interface RegisterOrientadorData {
   cpf: string;
 }
 
-export interface RegisterSecretariaData {
-  nomeCompleto: string;
+export interface RegisterSecretariaData{
+  id: number;
+  nome_completo: string;
   email: string;
-  senha: string;
+  cpf: string;
 }
 
 export interface RegisterResponse {

@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UploadService } from '@services/upload.service';
-
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ConfirmDialogComponent } from '@shared/ui/confirm-dialog/confirm-dialog.component';
-import { RelatorioService } from '@services/relatorio.service';
+import { CertificadoService } from '@core/data-access/certificados.service';
 
 @Component({
   selector: 'app-upload-certificados',
@@ -20,12 +18,14 @@ export class UploadCertificadosComponent {
   file: File | null = null;
   loading = false;
 
-  // opcional, mas ajuda a evitar clique duplo
+  // flags para evitar clique duplo
   baixandoModelo = false;
+  baixandoRelatorioAlunos = false;
+  baixandoWorkshop = false;
+  baixandoCertificados = false;
 
   constructor(
-    private uploadService: UploadService,
-    private relatorioService: RelatorioService,
+    private certificadoService: CertificadoService,
     private dialog: MatDialog
   ) {}
 
@@ -61,10 +61,7 @@ export class UploadCertificadosComponent {
     });
   }
 
-  private extrairFilename(
-    contentDisposition: string,
-    fallback: string
-  ): string {
+  private extrairFilename(contentDisposition: string, fallback: string): string {
     const cd = contentDisposition || '';
     const m = /filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i.exec(cd);
     const raw = m?.[1] || m?.[2];
@@ -83,27 +80,60 @@ export class UploadCertificadosComponent {
     return b.length >= 2 && b[0] === 0x50 && b[1] === 0x4b;
   }
 
-  // ✅ mantém o <a>, mas baixa pelo HttpClient (interceptor/token) e valida XLSX
-  baixarModeloExcel(ev: MouseEvent) {
-    ev.preventDefault(); // impede abrir nova aba
-    if (this.baixandoModelo) return;
+  private baixarXlsx(
+    ev: MouseEvent,
+    busyKey: 'modelo' | 'alunos' | 'workshop' | 'certificados'
+  ) {
+    ev.preventDefault();
 
-    this.baixandoModelo = true;
+    const setBusy = (v: boolean) => {
+      if (busyKey === 'modelo') this.baixandoModelo = v;
+      if (busyKey === 'alunos') this.baixandoRelatorioAlunos = v;
+      if (busyKey === 'workshop') this.baixandoWorkshop = v;
+      if (busyKey === 'certificados') this.baixandoCertificados = v;
+    };
 
-    this.relatorioService.baixarModeloExcelImportacaoAlunos().subscribe({
+    const isBusy =
+      (busyKey === 'modelo' && this.baixandoModelo) ||
+      (busyKey === 'alunos' && this.baixandoRelatorioAlunos) ||
+      (busyKey === 'workshop' && this.baixandoWorkshop) ||
+      (busyKey === 'certificados' && this.baixandoCertificados);
+
+    if (isBusy) return;
+
+    setBusy(true);
+
+    const req =
+      busyKey === 'modelo'
+        ? this.certificadoService.baixarModeloExcelImportacaoAlunos()
+        : busyKey === 'alunos'
+        ? this.certificadoService.baixarRelatorioAlunos()
+        : busyKey === 'workshop'
+        ? this.certificadoService.baixarRelatorioWorkshop()
+        : this.certificadoService.baixarCertificadosFinais();
+
+    const fallbackName =
+      busyKey === 'modelo'
+        ? 'exemplo_importacao.xlsx'
+        : busyKey === 'alunos'
+        ? 'relatorio_alunos.xlsx'
+        : busyKey === 'workshop'
+        ? 'relatorio_workshop.xlsx'
+        : 'certificados_finais.xlsx';
+
+    req.subscribe({
       next: (res) => {
         const buf = res.body;
 
         if (!buf || buf.byteLength === 0) {
-          this.baixandoModelo = false;
-          this.abrirAlerta('Erro', 'O modelo retornou vazio.');
+          setBusy(false);
+          this.abrirAlerta('Erro', 'O arquivo retornou vazio.');
           return;
         }
 
         const contentType = res.headers.get('Content-Type') || '';
         const cd = res.headers.get('Content-Disposition') || '';
 
-        // validação REAL do XLSX
         if (!this.isXlsxZip(buf)) {
           const preview = new TextDecoder('utf-8').decode(
             new Uint8Array(buf).slice(0, 350)
@@ -114,7 +144,7 @@ export class UploadCertificadosComponent {
           console.error('Content-Disposition:', cd);
           console.error('Preview (início):', preview);
 
-          this.baixandoModelo = false;
+          setBusy(false);
           this.abrirAlerta(
             'Erro',
             'O servidor não retornou um Excel válido. Verifique rota/autenticação.'
@@ -122,7 +152,7 @@ export class UploadCertificadosComponent {
           return;
         }
 
-        const filename = this.extrairFilename(cd, 'exemplo_importacao.xlsx');
+        const filename = this.extrairFilename(cd, fallbackName);
 
         const blob = new Blob([buf], {
           type:
@@ -137,36 +167,47 @@ export class UploadCertificadosComponent {
         a.click();
 
         setTimeout(() => window.URL.revokeObjectURL(url), 250);
-        this.baixandoModelo = false;
+        setBusy(false);
       },
       error: (err) => {
         console.error(err);
-        this.baixandoModelo = false;
-        this.abrirAlerta(
-          'Erro',
-          'Não foi possível baixar o modelo de importação.'
-        );
+        setBusy(false);
+        this.abrirAlerta('Erro', 'Não foi possível baixar o arquivo.');
       },
     });
   }
 
+  // ====== Downloads (chamam a função genérica) ======
+  baixarModeloExcel(ev: MouseEvent) {
+    this.baixarXlsx(ev, 'modelo');
+  }
+
+  baixarRelatorioAlunos(ev: MouseEvent) {
+    this.baixarXlsx(ev, 'alunos');
+  }
+
+  baixarRelatorioWorkshop(ev: MouseEvent) {
+    this.baixarXlsx(ev, 'workshop');
+  }
+
+  baixarCertificadosFinais(ev: MouseEvent) {
+    this.baixarXlsx(ev, 'certificados');
+  }
+
+  // ====== Upload / envio ======
   onSubmit() {
     if (!this.file) {
-      this.abrirAlerta(
-        'Arquivo obrigatório',
-        'Selecione um arquivo para enviar.'
-      );
+      this.abrirAlerta('Arquivo obrigatório', 'Selecione um arquivo para enviar.');
       return;
     }
 
     this.loading = true;
 
-    this.uploadService.enviarArquivo(this.file).subscribe({
+    this.certificadoService.enviarArquivo(this.file).subscribe({
       next: (res) => {
         const qtd = res?.data?.quantidade_enviada ?? 0;
         const msg =
-          res?.message ||
-          `E-mails enviados com sucesso. Quantidade enviada: ${qtd}.`;
+          res?.message || `E-mails enviados com sucesso. Quantidade enviada: ${qtd}.`;
 
         this.abrirAlerta('Sucesso', msg);
         this.file = null;

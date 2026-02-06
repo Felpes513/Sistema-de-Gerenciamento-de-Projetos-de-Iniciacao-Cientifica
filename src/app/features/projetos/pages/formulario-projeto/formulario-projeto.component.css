@@ -1,37 +1,56 @@
 .editor-grid {
   display: flex;
   gap: var(--spacing-xl);
-  align-items: stretch;
+  align-items: flex-start;
   width: 100%;
   max-width: 100%;
   padding: var(--spacing-md);
   margin: 0 auto;
   box-sizing: border-box;
   overflow-x: hidden;
+  min-height: 0;
 }
 
 .col-form {
-  flex: 1 / min-content;
+  flex: 1 1 auto;
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
+  min-height: 0;
 }
 
 .col-inscritos {
-  flex-shrink: 0;
+  flex: 0 0 350px;
   width: 350px;
+  min-width: 320px;
+
   position: sticky;
-  top: var(--spacing-xl);
+  top: var(--spacing-lg);
+  align-self: flex-start;
+
+  /* altura estável do sidebar */
+  height: calc(100vh - 2 * var(--spacing-lg));
+  max-height: calc(100vh - 2 * var(--spacing-lg));
+
+  /* melhora em navegadores modernos (zoom/mobile bars) */
+  height: calc(100dvh - 2 * var(--spacing-lg));
+  max-height: calc(100dvh - 2 * var(--spacing-lg));
+
+  overflow: hidden;
   box-sizing: border-box;
   display: flex;
+  min-height: 0;
 }
 
+/* MUITO IMPORTANTE: o host do componente precisa poder encolher */
 .col-inscritos app-listagem-alunos {
+  display: block;
   flex: 1 1 auto;
   height: 100%;
+  min-height: 0;
 }
 
 h2 {
@@ -381,7 +400,7 @@ button i {
   color: var(--gray-700);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-full);
-  background-color: #ecfdf5; 
+  background-color: #ecfdf5;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -450,13 +469,12 @@ button i {
 
   .col-inscritos {
     width: 100%;
+    min-width: 0;
     position: static;
     top: auto;
+    height: auto;
     max-height: none;
-  }
-
-  .notas-grid {
-    grid-template-columns: 1fr;
+    overflow: visible;
   }
 }
 

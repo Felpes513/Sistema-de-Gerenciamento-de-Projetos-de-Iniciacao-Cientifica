@@ -29,6 +29,7 @@ export class RelatorioFormComponent implements OnInit {
   relatorioEnviadoDoMes = signal<RelatorioMensal | null>(null);
 
   readOnly = false;
+  private readonly TZ = 'America/Sao_Paulo';
 
   form = this.fb.group({
     referenciaMes: ['', [Validators.required]],
@@ -42,8 +43,63 @@ export class RelatorioFormComponent implements OnInit {
 
   dataBr(iso?: string): string {
     if (!iso) return '—';
-    const d = new Date(iso);
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+
+    console.log('📅 ISO recebido:', iso);
+
+    // Parse manual para tratar como UTC
+    const match = String(iso).match(
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
+    );
+
+    let d: Date;
+    if (match) {
+      const [, year, month, day, hour, minute, second] = match;
+      console.log('📊 Valores parseados:', {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+      });
+
+      // Cria a data assumindo que veio em UTC e converte para local
+      d = new Date(
+        Date.UTC(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day),
+          parseInt(hour),
+          parseInt(minute),
+          parseInt(second),
+        ),
+      );
+
+      console.log('⏰ Date criado:', d);
+    } else {
+      console.log('⚠️ Regex não deu match');
+      d = new Date(iso);
+    }
+
+    if (Number.isNaN(d.getTime())) {
+      console.log('❌ Data inválida');
+      return '—';
+    }
+
+    const s = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: this.TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(d);
+
+    console.log('✅ String formatada:', s);
+
+    return s.replace(',', '');
   }
 
   ngOnInit(): void {
@@ -88,7 +144,7 @@ export class RelatorioFormComponent implements OnInit {
           horas: null,
           ok: true,
         },
-        { emitEvent: false }
+        { emitEvent: false },
       );
       return;
     }
@@ -103,7 +159,7 @@ export class RelatorioFormComponent implements OnInit {
         proximosPassos: parsed.proximosPassos ?? '',
         horas: parsed.horas ?? null,
       },
-      { emitEvent: false }
+      { emitEvent: false },
     );
   }
 
@@ -121,16 +177,16 @@ export class RelatorioFormComponent implements OnInit {
     };
 
     out.resumo = get(
-      /Resumo:\s*([\s\S]*?)(?=\n(?:Atividades:|Bloqueios:|Próximos passos:|Horas no mês:)|$)/i
+      /Resumo:\s*([\s\S]*?)(?=\n(?:Atividades:|Bloqueios:|Próximos passos:|Horas no mês:)|$)/i,
     );
     out.atividades = get(
-      /Atividades:\s*([\s\S]*?)(?=\n(?:Resumo:|Bloqueios:|Próximos passos:|Horas no mês:)|$)/i
+      /Atividades:\s*([\s\S]*?)(?=\n(?:Resumo:|Bloqueios:|Próximos passos:|Horas no mês:)|$)/i,
     );
     out.bloqueios = get(
-      /Bloqueios:\s*([\s\S]*?)(?=\n(?:Resumo:|Atividades:|Próximos passos:|Horas no mês:)|$)/i
+      /Bloqueios:\s*([\s\S]*?)(?=\n(?:Resumo:|Atividades:|Próximos passos:|Horas no mês:)|$)/i,
     );
     out.proximosPassos = get(
-      /Próximos passos:\s*([\s\S]*?)(?=\n(?:Resumo:|Atividades:|Bloqueios:|Horas no mês:)|$)/i
+      /Próximos passos:\s*([\s\S]*?)(?=\n(?:Resumo:|Atividades:|Bloqueios:|Horas no mês:)|$)/i,
     );
 
     const horasStr = get(/Horas no mês:\s*([0-9]+)/i);

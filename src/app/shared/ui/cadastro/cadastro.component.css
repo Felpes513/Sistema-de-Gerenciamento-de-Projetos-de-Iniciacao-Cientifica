@@ -88,8 +88,7 @@
   margin-bottom: 12px;
 }
 
-.form-row input,
-.form-row select {
+.form-row input {
   width: 100%;
   border: 1px solid var(--gray-300);
   border-radius: var(--radius-md);
@@ -98,12 +97,11 @@
   outline: 0;
   background: var(--white);
   transition: border-color var(--transition-fast),
-  box-shadow var(--transition-fast);
+    box-shadow var(--transition-fast);
   box-sizing: border-box;
 }
 
-.form-row input:focus,
-.form-row select:focus {
+.form-row input:focus {
   border-color: var(--uscs-blue);
   box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
 }

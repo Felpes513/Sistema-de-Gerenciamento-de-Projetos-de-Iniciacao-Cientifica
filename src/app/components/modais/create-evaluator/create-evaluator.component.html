@@ -1,0 +1,135 @@
+<div
+  class="modal-backdrop"
+  (click)="fechar(false)"
+  data-testid="avaliador-modal-backdrop"
+></div>
+
+<div
+  class="modal-card"
+  role="dialog"
+  aria-modal="true"
+  data-testid="avaliador-modal"
+>
+  <header class="modal-header">
+    <h3>{{ isEdicao ? "Editar Avaliador" : "Novo Avaliador" }}</h3>
+
+    <button
+      class="icon-btn"
+      type="button"
+      (click)="fechar(false)"
+      aria-label="Fechar"
+    >
+      ✕
+    </button>
+  </header>
+
+  <section class="modal-body">
+    <div *ngIf="erro" class="alert error" data-testid="avaliador-modal-erro">
+      {{ erro }}
+    </div>
+
+    <div class="field">
+      <label>Identificador *</label>
+
+      <mat-form-field
+        appearance="outline"
+        class="sgpic-field"
+        [class.is-invalid]="submitted && invalid.identificador"
+      >
+        <mat-select
+          [(ngModel)]="form.identificador"
+          name="identificador"
+          required
+          panelClass="sgpic-select-panel"
+          data-testid="select-identificador"
+        >
+          <mat-option [value]="''" disabled>Selecione...</mat-option>
+          <mat-option [value]="'INTERNO'">Interno</mat-option>
+          <mat-option [value]="'EXTERNO'">Externo</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="field">
+        <label>Nome *</label>
+        <input
+          type="text"
+          [(ngModel)]="form.nome"
+          [class.invalid]="submitted && invalid.nome"
+          placeholder="Nome do avaliador"
+          data-testid="input-nome"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label>E-mail *</label>
+        <input
+          type="email"
+          [(ngModel)]="form.email"
+          [class.invalid]="submitted && invalid.email"
+          placeholder="email@exemplo.com"
+          data-testid="input-email"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label>Especialidade *</label>
+        <input
+          type="text"
+          [(ngModel)]="form.especialidade"
+          [class.invalid]="submitted && invalid.especialidade"
+          placeholder="Ex: Computação"
+          data-testid="input-especialidade"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label>Subespecialidade</label>
+        <input
+          type="text"
+          [(ngModel)]="form.subespecialidade"
+          [class.invalid]="submitted && invalid.subespecialidade"
+          placeholder="Ex: IA, Redes, Banco de Dados..."
+          data-testid="input-subespecialidade"
+        />
+      </div>
+
+      <div class="field">
+        <label>Link Lattes</label>
+        <input
+          type="url"
+          [(ngModel)]="form.link_lattes"
+          [class.invalid]="submitted && invalid.link_lattes"
+          placeholder="https://lattes.cnpq.br/..."
+          data-testid="input-lattes"
+        />
+      </div>
+    </div>
+  </section>
+
+  <footer class="modal-footer">
+    <button
+      class="btn"
+      type="button"
+      (click)="fechar(false)"
+      [disabled]="carregando"
+    >
+      Cancelar
+    </button>
+
+    <button
+      class="btn btn-primary"
+      type="button"
+      (click)="salvar()"
+      [disabled]="carregando"
+      data-testid="btn-salvar-avaliador"
+    >
+      <span *ngIf="carregando">Salvando...</span>
+      <span *ngIf="!carregando">{{
+        isEdicao ? "Salvar alterações" : "Cadastrar"
+      }}</span>
+    </button>
+  </footer>
+</div>
