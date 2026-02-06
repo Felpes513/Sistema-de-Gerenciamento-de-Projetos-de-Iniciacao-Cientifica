@@ -10,11 +10,19 @@ import { BolsaListItem } from '@shared/models/configuracao';
 import { PasswordService } from '@services/password.service';
 import { RegisterSecretariaData } from '@shared/models/registros';
 import { AlunoConfigView } from '@shared/models/aluno';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatTabsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatTabsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+  ],
   templateUrl: './configuracoes.component.html',
   styleUrls: ['./configuracoes.component.css'],
 })

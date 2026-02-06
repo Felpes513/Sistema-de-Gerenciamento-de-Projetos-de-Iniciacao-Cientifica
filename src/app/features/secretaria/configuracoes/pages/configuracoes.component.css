@@ -240,7 +240,7 @@ button.danger:disabled {
   margin: 4px 0 12px;
 }
 
-.modal select {
+.modal .sgpic-field {
   width: 100%;
   max-width: 420px;
 }

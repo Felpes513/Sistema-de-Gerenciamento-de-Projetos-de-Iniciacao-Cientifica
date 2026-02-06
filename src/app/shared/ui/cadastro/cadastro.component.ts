@@ -3,6 +3,9 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+
 import { RegisterService } from '@services/cadastro.service';
 import { ConfigService } from '@services/config.service';
 import { Campus, Curso } from '@shared/models/configuracao';
@@ -10,7 +13,13 @@ import { Campus, Curso } from '@shared/models/configuracao';
 @Component({
   selector: 'app-cadastro',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatSelectModule,
+  ],
   templateUrl: './cadastro.component.html',
   styleUrls: ['./cadastro.component.css'],
 })
@@ -34,17 +43,17 @@ export class RegisterComponent implements OnInit {
     email: '',
     senha: '',
     confirmar: '',
-    idCurso: '' as any,
-    idCampus: '' as any,
+    idCurso: null as number | null,
+    idCampus: null as number | null,
     possuiTrabalhoRemunerado: false,
   };
+
   showPassAlu = false;
   acceptTermsAlu = false;
 
   pdfFile: File | null = null;
   pdfName = '';
 
-  // ✅ Flags para só pintar/vermelho após o usuário tocar no campo
   cpfOriTouched = false;
   senhaOriTouched = false;
   confirmarOriTouched = false;
@@ -79,12 +88,22 @@ export class RegisterComponent implements OnInit {
     this.sucesso = null;
     this.step = 1;
 
-    // reset “touched”
-    this.cpfOriTouched = this.senhaOriTouched = this.confirmarOriTouched = false;
-    this.cpfAluTouched = this.senhaAluTouched = this.confirmarAluTouched = false;
+    this.cpfOriTouched =
+      this.senhaOriTouched =
+      this.confirmarOriTouched =
+        false;
+    this.cpfAluTouched =
+      this.senhaAluTouched =
+      this.confirmarAluTouched =
+        false;
     this.pdfTouched = false;
+
     this.pdfFile = null;
     this.pdfName = '';
+
+    // reset selects
+    this.alu.idCurso = null;
+    this.alu.idCampus = null;
   }
 
   goStep(n: number) {
@@ -122,7 +141,6 @@ export class RegisterComponent implements OnInit {
     else this.alu.cpf = masked;
   }
 
-  // ✅ CPF válido (dígitos verificadores)
   isCpfValido(cpf: string): boolean {
     const digits = (cpf || '').replace(/\D/g, '');
     if (digits.length !== 11) return false;
@@ -185,7 +203,6 @@ export class RegisterComponent implements OnInit {
     this.erro = null;
     this.sucesso = null;
 
-    // marca touched pra pintar quando tentar enviar
     this.cpfOriTouched = true;
     this.senhaOriTouched = true;
     this.confirmarOriTouched = true;
@@ -194,27 +211,22 @@ export class RegisterComponent implements OnInit {
       this.erro = 'Preencha o nome completo.';
       return;
     }
-
     if (!this.isCpfValido(this.ori.cpf)) {
       this.erro = 'CPF inválido.';
       return;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.ori.email)) {
       this.erro = 'E-mail inválido.';
       return;
     }
-
     if (this.ori.senha.length < 6) {
       this.erro = 'A senha deve ter no mínimo 6 caracteres.';
       return;
     }
-
     if (this.ori.senha !== this.ori.confirmar) {
       this.erro = 'Senha diferente da confirmação.';
       return;
     }
-
     if (!this.acceptTermsOri) {
       this.erro = 'Você deve aceitar os termos.';
       return;
@@ -253,7 +265,6 @@ export class RegisterComponent implements OnInit {
     this.erro = null;
     this.sucesso = null;
 
-    // marca touched pra pintar quando tentar enviar
     this.cpfAluTouched = true;
     this.senhaAluTouched = true;
     this.confirmarAluTouched = true;
@@ -266,7 +277,7 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
-    if (!this.alu.idCurso) {
+    if (this.alu.idCurso == null) {
       this.erro = 'Selecione um curso.';
       this.goStep(2);
       return;
@@ -289,7 +300,7 @@ export class RegisterComponent implements OnInit {
         cpf: this.alu.cpf,
         email: this.alu.email,
         senha: this.alu.senha,
-        idCurso: Number(this.alu.idCurso),
+        idCurso: this.alu.idCurso,
         pdf: this.pdfFile,
         possuiTrabalhoRemunerado: this.alu.possuiTrabalhoRemunerado,
       })

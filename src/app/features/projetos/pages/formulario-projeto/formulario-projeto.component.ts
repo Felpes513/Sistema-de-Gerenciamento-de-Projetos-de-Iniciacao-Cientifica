@@ -2,7 +2,6 @@ import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs';
 
 import { ProjetoService } from '@services/projeto.service';
 import { ConfigService } from '@services/config.service';
@@ -20,6 +19,9 @@ import type {
   DocumentoHistorico,
 } from '@shared/models/projeto';
 
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+
 type ProjetoCadastroExt = ProjetoCadastro & {
   tipo_bolsa?: string | null;
   cod_projeto?: string;
@@ -36,7 +38,14 @@ type UploadResultado = {
 @Component({
   selector: 'app-formulario-projeto',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ListagemAlunosComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    ListagemAlunosComponent,
+    MatFormFieldModule,
+    MatSelectModule,
+  ],
   templateUrl: './formulario-projeto.component.html',
   styleUrls: ['./formulario-projeto.component.css'],
 })
@@ -162,17 +171,10 @@ export class FormularioProjetoComponent implements OnInit {
     this.carregando = true;
     this.erro = null;
 
-    forkJoin({
-      projetos: this.projetoService.listarProjetosRaw(),
-      orientadores: this.projetoService.listarOrientadores(),
-      campusRes: this.configService.listarCampus(),
-    }).subscribe({
-      next: ({ projetos, orientadores, campusRes }) => {
-        const campus = Array.isArray(campusRes?.campus) ? campusRes.campus : [];
-
+    this.projetoService.listarProjetosRaw().subscribe({
+      next: (projetos) => {
         const p = (projetos || []).find(
-          (x: any) =>
-            Number(x.id_projeto) === Number(id) || Number(x.id) === Number(id)
+          (x: any) => Number(x.id_projeto ?? x.id) === Number(id)
         );
 
         if (!p) {
@@ -181,36 +183,29 @@ export class FormularioProjetoComponent implements OnInit {
           return;
         }
 
-        this.projeto.titulo_projeto = p.titulo_projeto || p.nomeProjeto || '';
-        this.projeto.resumo = p.resumo || '';
-        this.projeto.cod_projeto = p.cod_projeto || '';
+        // ✅ Preenche tudo DIRETO do /projetos/
+        this.projeto.titulo_projeto = p.titulo_projeto ?? p.nomeProjeto ?? '';
+        this.projeto.resumo = p.resumo ?? '';
+        this.projeto.cod_projeto = p.cod_projeto ?? p.codProjeto ?? '';
 
-        const o = (orientadores || []).find(
-          (x: any) =>
-            (x.nome_completo || '').trim().toLowerCase() ===
-            (p.orientador || p.nomeOrientador || '').trim().toLowerCase()
-        );
-
-        this.orientadorSelecionadoId = o?.id || 0;
-
-        const nomeOrientadorRaw =
-          p.orientador || p.nomeOrientador || o?.nome_completo || '';
-
+        // orientador
+        this.orientadorSelecionadoId = Number(p.id_orientador ?? 0);
+        const nomeOrientadorRaw = p.orientador ?? p.nomeOrientador ?? '';
         this.projeto.orientador_nome =
           this.formatarNomeCompleto(nomeOrientadorRaw);
 
-        this.emailOrientador = o?.email || '';
+        this.emailOrientador = String(p.orientador_email ?? '');
         this.projeto.orientador_email = this.emailOrientador;
 
-        const c = (campus || []).find(
-          (x: any) =>
-            (x.campus || '').trim().toLowerCase() ===
-            (p.campus || '').trim().toLowerCase()
-        );
-
-        this.campusSelecionadoId = c?.id_campus || 0;
+        // campus
+        this.campusSelecionadoId = Number(p.id_campus ?? 0);
         this.projeto.id_campus = this.campusSelecionadoId;
 
+        // (opcional) mantém o select preenchido visualmente no read-only
+        // se você quiser usar isso no template
+        // this.campusNomeProjeto = String(p.campus ?? '');
+
+        // ✅ Histórico baseado nos flags do /projetos/
         const hasIdeiaPdf = !!p.has_ideia_inicial_pdf;
         const hasParcialPdf = !!p.has_mon_parcial_pdf;
         const hasFinalPdf = !!p.has_mon_final_pdf;
@@ -245,15 +240,16 @@ export class FormularioProjetoComponent implements OnInit {
           },
         ];
 
-        if (hasFinalPdf) {
-          this.currentEtapaUpload = 'FINAL';
-        } else if (hasParcialPdf) {
-          this.currentEtapaUpload = 'FINAL';
-        } else {
-          this.currentEtapaUpload = 'PARCIAL';
-        }
+        // etapa atual
+        if (hasFinalPdf) this.currentEtapaUpload = 'FINAL';
+        else if (hasParcialPdf) this.currentEtapaUpload = 'FINAL';
+        else this.currentEtapaUpload = 'PARCIAL';
 
         this.podeAvancar = false;
+
+        // deixa “Buscar orientador” com o nome (mesmo read-only)
+        this.buscaOrientador = this.projeto.orientador_nome || '';
+
         this.carregando = false;
       },
       error: () => {
@@ -296,11 +292,16 @@ export class FormularioProjetoComponent implements OnInit {
     );
   }
 
-  selecionarOrientador(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
+  selecionarOrientador(eventOrValue: Event | number): void {
+    const id =
+      typeof eventOrValue === 'number'
+        ? Number(eventOrValue)
+        : Number((eventOrValue.target as HTMLSelectElement).value);
+
     if (!id || isNaN(id)) return;
 
     this.orientadorSelecionadoId = id;
+
     const orientador = this.orientadores.find((o) => o.id === id);
     if (orientador) {
       this.projeto.orientador_nome = this.formatarNomeCompleto(
@@ -311,8 +312,14 @@ export class FormularioProjetoComponent implements OnInit {
     }
   }
 
-  selecionarCampus(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
+  selecionarCampus(eventOrValue: Event | number): void {
+    const id =
+      typeof eventOrValue === 'number'
+        ? Number(eventOrValue)
+        : Number((eventOrValue.target as HTMLSelectElement).value);
+
+    if (!id || isNaN(id)) return;
+
     const campus = this.campusList.find((c) => c.id_campus === id);
     if (campus) {
       this.projeto.id_campus = campus.id_campus;

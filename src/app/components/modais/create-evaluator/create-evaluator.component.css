@@ -84,9 +84,7 @@
   font-size: 0.9rem;
 }
 
-/* ✅ garante MESMO tamanho visual (principalmente o select) */
-.field input,
-.field select {
+.field input {
   width: 100%;
   box-sizing: border-box;
   min-height: 44px;
@@ -99,11 +97,9 @@
   background: #fff;
 }
 
-/* foco padrão */
-.field input:focus,
-.field select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+.field input:focus {
+  border-color: var(--uscs-blue);
+  box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
 }
 
 /* ✅ inválido (igual “fluxo de login”: vermelho) */
@@ -155,4 +151,32 @@
   .grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Evita espaçamento extra do mat-form-field no grid */
+.mat-mdc-form-field.sgpic-field,
+.mat-form-field.sgpic-field {
+  margin-bottom: 0;
+}
+
+/* Estado inválido (mesmo visual do seu .invalid) */
+.mat-mdc-form-field.sgpic-field.is-invalid .mdc-notched-outline__leading,
+.mat-mdc-form-field.sgpic-field.is-invalid .mdc-notched-outline__notch,
+.mat-mdc-form-field.sgpic-field.is-invalid .mdc-notched-outline__trailing {
+  border-color: #ef4444 !important;
+}
+
+.mat-mdc-form-field.sgpic-field.is-invalid .mat-mdc-text-field-wrapper {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+}
+
+/* Fallback para Angular Material legacy (sem MDC) */
+.mat-form-field.sgpic-field.is-invalid.mat-form-field-appearance-outline
+  .mat-form-field-outline {
+  color: #ef4444;
+}
+
+.mat-form-field.sgpic-field.is-invalid .mat-form-field-flex {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+  border-radius: 12px;
 }

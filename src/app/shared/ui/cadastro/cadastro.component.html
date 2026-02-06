@@ -20,6 +20,7 @@
       </button>
     </div>
 
+    <!-- ORIENTADOR -->
     <form
       *ngIf="perfilSelecionado === 'orientador'"
       (ngSubmit)="onSubmitOrientador()"
@@ -46,7 +47,10 @@
           required
           [class.invalid]="cpfOriTouched && !isCpfValido(ori.cpf)"
         />
-        <small class="field-error" *ngIf="cpfOriTouched && !isCpfValido(ori.cpf)">
+        <small
+          class="field-error"
+          *ngIf="cpfOriTouched && !isCpfValido(ori.cpf)"
+        >
           CPF inválido
         </small>
       </div>
@@ -128,11 +132,13 @@
       <div class="msg sucesso" *ngIf="sucesso">{{ sucesso }}</div>
     </form>
 
+    <!-- ALUNO -->
     <form
       *ngIf="perfilSelecionado === 'aluno'"
       (ngSubmit)="onSubmitAluno()"
       class="form"
     >
+      <!-- STEP 1 -->
       <ng-container *ngIf="step === 1">
         <div class="form-row">
           <input
@@ -154,7 +160,10 @@
             required
             [class.invalid]="cpfAluTouched && !isCpfValido(alu.cpf)"
           />
-          <small class="field-error" *ngIf="cpfAluTouched && !isCpfValido(alu.cpf)">
+          <small
+            class="field-error"
+            *ngIf="cpfAluTouched && !isCpfValido(alu.cpf)"
+          >
             CPF inválido
           </small>
         </div>
@@ -178,7 +187,9 @@
             placeholder="Senha"
             minlength="6"
             required
-            [class.invalid]="senhaAluTouched && alu.senha && alu.senha.length < 6"
+            [class.invalid]="
+              senhaAluTouched && alu.senha && alu.senha.length < 6
+            "
           />
           <small
             class="field-error"
@@ -226,23 +237,37 @@
         </div>
       </ng-container>
 
+      <!-- STEP 2 -->
       <ng-container *ngIf="step === 2">
         <div class="form-row">
-          <select name="alu_curso" [(ngModel)]="alu.idCurso" required>
-            <option value="" disabled selected>Selecione o curso</option>
-            <option *ngFor="let c of cursos" [value]="c.id_curso">
-              {{ c.nome }}
-            </option>
-          </select>
+          <mat-form-field appearance="outline" class="sgpic-field">
+            <mat-label>Curso</mat-label>
+            <mat-select
+              name="alu_curso"
+              [(ngModel)]="alu.idCurso"
+              required
+              panelClass="sgpic-select-panel"
+            >
+              <mat-option *ngFor="let c of cursos" [value]="c.id_curso">
+                {{ c.nome }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <div class="form-row">
-          <select name="alu_campus" [(ngModel)]="alu.idCampus">
-            <option value="" disabled selected>Selecione o campus</option>
-            <option *ngFor="let c of campus" [value]="c.id_campus">
-              {{ c.campus }}
-            </option>
-          </select>
+          <mat-form-field appearance="outline" class="sgpic-field">
+            <mat-label>Campus</mat-label>
+            <mat-select
+              name="alu_campus"
+              [(ngModel)]="alu.idCampus"
+              panelClass="sgpic-select-panel"
+            >
+              <mat-option *ngFor="let c of campus" [value]="c.id_campus">
+                {{ c.campus }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <div class="form-actions">
@@ -253,13 +278,14 @@
             type="button"
             class="cta"
             (click)="goStep(3)"
-            [disabled]="!alu.idCurso"
+            [disabled]="alu.idCurso == null"
           >
             Próximo
           </button>
         </div>
       </ng-container>
 
+      <!-- STEP 3 -->
       <ng-container *ngIf="step === 3">
         <div class="upload">
           <label class="file" [class.invalid]="pdfTouched && !pdfFile">
@@ -271,8 +297,8 @@
             <span>
               {{
                 pdfName
-                  ? ('Arquivo selecionado: ' + pdfName)
-                  : 'Enviar notas em PDF'
+                  ? "Arquivo selecionado: " + pdfName
+                  : "Enviar notas em PDF"
               }}
             </span>
           </label>

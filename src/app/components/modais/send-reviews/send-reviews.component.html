@@ -17,16 +17,20 @@
     <ng-container *ngIf="!carregando && !erro">
       <div class="row">
         <label>Projeto (somente com PDF disponível)</label>
-        <select
-          [(ngModel)]="projetoSelecionadoId"
-          name="projetoSelecionadoId"
-          required
-        >
-          <option [ngValue]="null">-- Selecione --</option>
-          <option *ngFor="let p of projetos" [ngValue]="p.id">
-            {{ p.titulo }}
-          </option>
-        </select>
+        <mat-form-field appearance="outline" class="sgpic-field">
+          <mat-select
+            [(ngModel)]="projetoSelecionadoId"
+            name="projetoSelecionadoId"
+            required
+            panelClass="sgpic-select-panel"
+          >
+            <mat-option [value]="null">-- Selecione --</mat-option>
+
+            <mat-option *ngFor="let p of projetos" [value]="p.id">
+              {{ p.titulo }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
 
       <div class="row" *ngIf="projetoSelecionadoId">

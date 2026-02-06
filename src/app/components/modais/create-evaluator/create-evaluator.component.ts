@@ -4,12 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { AvaliadorExterno } from '@shared/models/avaliador_externo';
 import { AvaliadoresExternosService } from '@services/avaliadores_externos.service';
 
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+
 type TipoAvaliador = 'INTERNO' | 'EXTERNO';
 
 @Component({
   selector: 'app-avaliador-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatSelectModule],
   templateUrl: './create-evaluator.component.html',
   styleUrls: ['./create-evaluator.component.css'],
 })
@@ -55,7 +58,10 @@ export class CreateEvaluatorModalComponent implements OnInit {
         (this.avaliador as any).codigo ??
         '';
 
-      this.form.identificador = (String(tipo || '').toUpperCase().trim() as any) || '';
+      this.form.identificador =
+        (String(tipo || '')
+          .toUpperCase()
+          .trim() as any) || '';
 
       this.form.nome = this.avaliador.nome ?? '';
       this.form.email = this.avaliador.email ?? '';
@@ -102,7 +108,9 @@ export class CreateEvaluatorModalComponent implements OnInit {
   private validar(): string | null {
     this.resetInvalid();
 
-    const identificador = String(this.form.identificador || '').trim().toUpperCase();
+    const identificador = String(this.form.identificador || '')
+      .trim()
+      .toUpperCase();
     const nome = String(this.form.nome || '').trim();
     const email = String(this.form.email || '').trim();
     const especialidade = String(this.form.especialidade || '').trim();
@@ -167,12 +175,12 @@ export class CreateEvaluatorModalComponent implements OnInit {
       svc.updateAvaliador ?? svc.atualizarAvaliador ?? svc.putAvaliador;
 
     const req$ = this.isEdicao
-      ? (typeof fnUpdate === 'function'
-          ? fnUpdate.call(this.service, (this.avaliador as any).id, payload)
-          : null)
-      : (typeof fnCreate === 'function'
-          ? fnCreate.call(this.service, payload)
-          : null);
+      ? typeof fnUpdate === 'function'
+        ? fnUpdate.call(this.service, (this.avaliador as any).id, payload)
+        : null
+      : typeof fnCreate === 'function'
+      ? fnCreate.call(this.service, payload)
+      : null;
 
     if (!req$) {
       this.carregando = false;

@@ -52,25 +52,33 @@
           [disabled]="isReadOnly"
         />
 
-        <label for="selectOrientador"
-          ><i class="fas fa-user-tie"></i> Selecionar Orientador</label
+        <label for="selectOrientador">
+          <i class="fas fa-user-tie"></i> Selecionar Orientador
+        </label>
+
+        <mat-form-field
+          appearance="outline"
+          class="sgpic-field"
+          floatLabel="auto"
         >
-        <select
-          id="selectOrientador"
-          [(ngModel)]="orientadorSelecionadoId"
-          (change)="selecionarOrientador($event)"
-          required
-          name="orientadorSelecionadoId"
-          [disabled]="isReadOnly"
-        >
-          <option value="">-- Selecione --</option>
-          <option
-            *ngFor="let orientador of orientadoresFiltrados"
-            [value]="orientador.id"
+          <mat-select
+            [(ngModel)]="orientadorSelecionadoId"
+            (selectionChange)="selecionarOrientador($event.value)"
+            required
+            name="orientadorSelecionadoId"
+            [disabled]="isReadOnly"
+            panelClass="sgpic-select-panel"
           >
-            {{ formatarNomeCompleto(orientador.nome_completo) }}
-          </option>
-        </select>
+            <mat-option [value]="0" disabled>-- Selecione --</mat-option>
+
+            <mat-option
+              *ngFor="let orientador of orientadoresFiltrados"
+              [value]="orientador.id"
+            >
+              {{ formatarNomeCompleto(orientador.nome_completo) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
         <label for="email_orientador"
           ><i class="fas fa-envelope"></i> E-mail do Orientador</label
@@ -83,23 +91,33 @@
           readonly
         />
 
-        <label for="selectCampus"><i class="fas fa-building"></i> Campus</label>
-        <select
-          id="selectCampus"
-          [(ngModel)]="campusSelecionadoId"
-          (change)="selecionarCampus($event)"
-          required
-          name="campusSelecionadoId"
-          [disabled]="isReadOnly"
+        <label for="selectCampus">
+          <i class="fas fa-building"></i> Campus
+        </label>
+
+        <mat-form-field
+          appearance="outline"
+          class="sgpic-field"
+          floatLabel="auto"
         >
-          <option value="">-- Selecione --</option>
-          <option
-            *ngFor="let campus of campusFiltrados"
-            [value]="campus.id_campus"
+          <mat-select
+            [(ngModel)]="campusSelecionadoId"
+            (selectionChange)="selecionarCampus($event.value)"
+            required
+            name="campusSelecionadoId"
+            [disabled]="isReadOnly"
+            panelClass="sgpic-select-panel"
           >
-            {{ campus.campus }}
-          </option>
-        </select>
+            <mat-option [value]="0" disabled>-- Selecione --</mat-option>
+
+            <mat-option
+              *ngFor="let campus of campusFiltrados"
+              [value]="campus.id_campus"
+            >
+              {{ campus.campus }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
         <!-- DOCX inicial (apenas no cadastro / não aparece em read-only) -->
         <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">

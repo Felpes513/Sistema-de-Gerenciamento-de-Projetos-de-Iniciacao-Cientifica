@@ -28,20 +28,26 @@
       {{ erro }}
     </div>
 
-    <div class="grid">
-      <div class="field">
-        <label>Identificador *</label>
-        <select
+    <div class="field">
+      <label>Identificador *</label>
+
+      <mat-form-field
+        appearance="outline"
+        class="sgpic-field"
+        [class.is-invalid]="submitted && invalid.identificador"
+      >
+        <mat-select
           [(ngModel)]="form.identificador"
-          [class.invalid]="submitted && invalid.identificador"
-          data-testid="select-identificador"
+          name="identificador"
           required
+          panelClass="sgpic-select-panel"
+          data-testid="select-identificador"
         >
-          <option value="" disabled>Selecione...</option>
-          <option value="INTERNO">Interno</option>
-          <option value="EXTERNO">Externo</option>
-        </select>
-      </div>
+          <mat-option [value]="''" disabled>Selecione...</mat-option>
+          <mat-option [value]="'INTERNO'">Interno</mat-option>
+          <mat-option [value]="'EXTERNO'">Externo</mat-option>
+        </mat-select>
+      </mat-form-field>
 
       <div class="field">
         <label>Nome *</label>

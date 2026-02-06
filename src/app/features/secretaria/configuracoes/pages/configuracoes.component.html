@@ -162,12 +162,24 @@
             <strong>{{ toTitleCase(alunoSelecionado?.nome_completo) }}</strong>
           </p>
 
-          <select [(ngModel)]="bolsaSelecionada" name="tiposBolsaSelect">
-            <option [ngValue]="null" disabled>Selecione o tipo de bolsa</option>
-            <option *ngFor="let t of tiposBolsa" [ngValue]="t.id_tipo_bolsa">
-              {{ t.tipo_bolsa }}
-            </option>
-          </select>
+          <mat-form-field appearance="outline" class="sgpic-field">
+            <mat-select
+              [(ngModel)]="bolsaSelecionada"
+              name="tiposBolsaSelect"
+              panelClass="sgpic-select-panel"
+            >
+              <mat-option [value]="null" disabled
+                >Selecione o tipo de bolsa</mat-option
+              >
+
+              <mat-option
+                *ngFor="let t of tiposBolsa"
+                [value]="t.id_tipo_bolsa"
+              >
+                {{ t.tipo_bolsa }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
           <div class="modal-actions">
             <button type="button" (click)="confirmarVinculo()">Salvar</button>
