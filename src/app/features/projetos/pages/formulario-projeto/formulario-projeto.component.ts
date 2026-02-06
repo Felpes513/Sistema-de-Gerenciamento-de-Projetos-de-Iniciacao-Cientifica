@@ -380,13 +380,45 @@ export class FormularioProjetoComponent implements OnInit {
   }
 
   async salvarProjeto(): Promise<void> {
-    if (this.isReadOnly) return;
-    if (!(await this.validarFormulario())) return;
+    // aluno não faz nada aqui
+    if (this.viewMode === 'ALUNO') return;
+
+    const isSecretaria = this.viewMode === 'SECRETARIA';
+    const isOrientador = this.viewMode === 'ORIENTADOR';
+
+    // Secretaria valida campos do formulário (orientador não edita dados do projeto)
+    if (isSecretaria) {
+      if (!(await this.validarFormulario())) return;
+    } else {
+      // ORIENTADOR: não pode cadastrar projeto, apenas enviar DOCX em projeto existente
+      if (!this.modoEdicao || !this.projetoId) {
+        await this.dialog.alert(
+          'Apenas a secretaria pode cadastrar projetos. O orientador pode apenas enviar DOCX em um projeto existente.',
+          'Atenção'
+        );
+        return;
+      }
+    }
 
     this.carregando = true;
     this.erro = null;
 
+    // ====== MODO EDIÇÃO (projeto existente) ======
     if (this.modoEdicao) {
+      // ORIENTADOR: só DOCX (ignora PDF)
+      if (isOrientador) {
+        this.arquivoPdf = undefined;
+
+        if (!this.arquivoDocx) {
+          this.carregando = false;
+          await this.dialog.alert(
+            'Selecione um arquivo .docx para enviar.',
+            'Arquivo obrigatório'
+          );
+          return;
+        }
+      }
+
       const temArquivos = !!this.arquivoDocx || !!this.arquivoPdf;
 
       if (temArquivos) {
@@ -430,16 +462,21 @@ export class FormularioProjetoComponent implements OnInit {
               this.arquivoPdf
             );
 
-            const histAtual = this.historico.find(
-              (h) => h.etapa === this.currentEtapaUpload
-            );
-            const temPdfAtual = !!histAtual?.arquivos?.pdf;
+            // só a secretaria usa avanço por PDF
+            if (isSecretaria) {
+              const histAtual = this.historico.find(
+                (h) => h.etapa === this.currentEtapaUpload
+              );
+              const temPdfAtual = !!histAtual?.arquivos?.pdf;
 
-            this.podeAvancar =
-              this.currentEtapaUpload === 'PARCIAL' && temPdfAtual;
+              this.podeAvancar =
+                this.currentEtapaUpload === 'PARCIAL' && temPdfAtual;
+            }
 
             await this.dialog.alert(
-              'Documentos enviados com sucesso!\n\nSe você também alterou dados do projeto (título/resumo/orientador/campus), clique em "Atualizar Projeto" sem arquivos selecionados.',
+              isOrientador
+                ? 'Documento DOCX enviado com sucesso!'
+                : 'Documentos enviados com sucesso!\n\nSe você também alterou dados do projeto (título/resumo/orientador/campus), clique em "Atualizar Projeto" sem arquivos selecionados.',
               'Sucesso'
             );
 
@@ -458,8 +495,25 @@ export class FormularioProjetoComponent implements OnInit {
 
         return;
       }
+
+      // ORIENTADOR: se clicou sem arquivo, não continua para update do projeto
+      if (isOrientador) {
+        this.carregando = false;
+        await this.dialog.alert(
+          'Selecione um arquivo .docx para enviar.',
+          'Arquivo obrigatório'
+        );
+        return;
+      }
     }
 
+    // ORIENTADOR não atualiza dados do projeto (apenas upload acima)
+    if (isOrientador) {
+      this.carregando = false;
+      return;
+    }
+
+    // ====== CADASTRO (apenas secretaria) ======
     if (!this.modoEdicao) {
       if (!this.arquivoDocx || !this.arquivoPdf) {
         await this.dialog.alert(
@@ -686,27 +740,35 @@ export class FormularioProjetoComponent implements OnInit {
     etapa: EtapaDocumento,
     docx?: File,
     pdf?: File
-  ) {
+  ): void {
     const idx = this.historico.findIndex((h) => h.etapa === etapa);
 
-    const novo: DocumentoHistorico =
+    const atual: DocumentoHistorico =
       idx >= 0
         ? { ...this.historico[idx] }
-        : { etapa, status: 'NAO_ENVIADO' as StatusEnvio, arquivos: {} };
+        : ({
+            etapa,
+            status: 'NAO_ENVIADO' as StatusEnvio,
+            arquivos: {},
+          } as any);
 
-    novo.arquivos = novo.arquivos ?? {};
+    atual.arquivos = { ...(atual.arquivos ?? {}) };
 
-    if (docx) novo.arquivos.docx = { nome: docx.name };
-    if (pdf) novo.arquivos.pdf = { nome: pdf.name };
+    if (docx) atual.arquivos.docx = { nome: docx.name };
+    if (pdf) atual.arquivos.pdf = { nome: pdf.name };
 
-    const temPdf = !!novo.arquivos.pdf;
-    novo.status = (temPdf ? 'ENVIADO' : 'NAO_ENVIADO') as StatusEnvio;
+    const temDocx = !!atual.arquivos.docx;
+    const temPdf = !!atual.arquivos.pdf;
 
-    if (temPdf) novo.dataEnvio = new Date();
-    else delete novo.dataEnvio;
+    atual.status = (
+      temDocx || temPdf ? 'ENVIADO' : 'NAO_ENVIADO'
+    ) as StatusEnvio;
 
-    if (idx >= 0) this.historico[idx] = novo;
-    else this.historico.push(novo);
+    if (temDocx || temPdf) atual.dataEnvio = new Date();
+    else delete (atual as any).dataEnvio;
+
+    if (idx >= 0) this.historico[idx] = atual;
+    else this.historico.push(atual);
   }
 
   private limparInputsUpload() {

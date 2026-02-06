@@ -475,7 +475,6 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   concluirProjeto(id: number): void {
-    console.log('✅ concluirProjeto clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
@@ -520,7 +519,6 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   ativarProjeto(id: number): void {
-    console.log('✅ ativarProjeto clicado', id);
     if (!this.isSecretaria) return;
 
     if (!this.isIdValido(id)) {
@@ -566,7 +564,6 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   cancelarProjeto(id: number): void {
-    console.log('✅ cancelarProjeto clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
@@ -611,7 +608,6 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   tornarAlunosInadimplentes(id: number): void {
-    console.log('✅ tornarAlunosInadimplentes clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
@@ -658,7 +654,6 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   tornarOrientadorInadimplente(id: number): void {
-    console.log('✅ tornarOrientadorInadimplente clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
@@ -705,7 +700,6 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   tornarTodosInadimplentes(id: number): void {
-    console.log('✅ tornarTodosInadimplentes clicado', id);
     if (!this.isSecretaria) return;
     if (!this.isIdValido(id)) {
       this.snackBar.open('ID inválido.', 'Fechar', { duration: 2500 });
@@ -1000,24 +994,8 @@ export class ListagemProjetosComponent implements OnInit {
   }
 
   debugProjeto(projeto: Projeto): void {
-    console.log('🔍 Debug do projeto:', {
-      id: (projeto as any).id,
-      nome: (projeto as any).nomeProjeto,
-      escolhidos: this.getQuantidadeAlunos(projeto as any),
-      alunosIds: (projeto as any).alunosIds,
-      podeVerRelatorio: this.podeVerRelatorio(projeto as any),
-    });
   }
 
   debugListaProjetos(): void {
-    console.log('🔍 Debug da lista completa:', {
-      totalProjetos: this.projetos.length,
-      projetos: this.projetos.map((p: any) => ({
-        id: p.id,
-        nome: p.nomeProjeto,
-        escolhidos: this.getQuantidadeAlunos(p),
-        alunosIds: p.alunosIds,
-      })),
-    });
   }
 }

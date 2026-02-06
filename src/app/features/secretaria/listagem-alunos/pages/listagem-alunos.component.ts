@@ -85,7 +85,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
     private projetoService: ProjetoService,
     private inscricoesService: InscricoesService,
     private cdr: ChangeDetectorRef,
-    private dialogService: DialogService,
+    private dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -110,6 +110,24 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
     }
 
     return this.aprovadasVm.length + this.pendentesOuReprovadasVm.length;
+  }
+
+  private isAlunoVinculadoEmOutroProjetoErro(
+    msg: string,
+    status?: number
+  ): boolean {
+    const t = (msg || '').toLowerCase();
+
+    // FastAPI normalmente devolve 400/409 com detail
+    const statusMatch = status === 400 || status === 409 || status === 422;
+
+    // texto típico: "aluno já está vinculado a outro projeto"
+    const textMatch =
+      (t.includes('vincul') || t.includes('matricul')) &&
+      t.includes('projeto') &&
+      (t.includes('outro') || t.includes('outros'));
+
+    return textMatch || (statusMatch && textMatch);
   }
 
   private alunoId(i: InscricaoLike): number {
@@ -187,7 +205,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
   private filtrarCadFinalForaDoProjeto(
     lista: InscricaoLike[],
-    allowedFinalIds: Set<number> | null,
+    allowedFinalIds: Set<number> | null
   ): InscricaoLike[] {
     const allowed = allowedFinalIds ?? new Set<number>();
 
@@ -249,22 +267,22 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
                   email: a.email,
                   possuiTrabalhoRemunerado: a.possuiTrabalhoRemunerado,
                   status: 'CADASTRADO_FINAL',
-                }) as any,
+                } as any)
             );
 
             const vinculadosUniq = this.uniqByAlunoId(vinculadosAsLike);
             this.secretariaSelecionados = vinculadosUniq.map((i) =>
-              this.toVM(i, 'CADASTRADO_FINAL'),
+              this.toVM(i, 'CADASTRADO_FINAL')
             );
 
             return this.inscricoesService.listarPorProjeto(this.projetoId).pipe(
               map((inscricoes) => {
                 const lista = Array.isArray(inscricoes) ? inscricoes : [];
                 const selectedIds = new Set<number>(
-                  vinculadosUniq.map((i) => this.alunoId(i)),
+                  vinculadosUniq.map((i) => this.alunoId(i))
                 );
                 return { inscricoes: lista, selectedIds };
-              }),
+              })
             );
           }
 
@@ -274,14 +292,14 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
             map((inscricoes) => ({
               inscricoes: Array.isArray(inscricoes) ? inscricoes : [],
               selectedIds: null as Set<number> | null,
-            })),
+            }))
           );
         }),
         finalize(() => {
           this.loadingFlag = false;
           this.cdr.markForCheck();
         }),
-        takeUntil(this.destroy$),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: ({ inscricoes, selectedIds }) => {
@@ -291,7 +309,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
           // >>> FILTRO: remove CADASTRADO_FINAL que NÃO está vinculado ao projeto
           const listaUi = this.filtrarCadFinalForaDoProjeto(
             baseUniq,
-            allowedFinalIds,
+            allowedFinalIds
           );
 
           if (!this.temSelecaoFinal) {
@@ -302,7 +320,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
           const idsSel = allowedFinalIds;
           const disponiveis = listaUi.filter(
-            (i) => !idsSel.has(this.alunoId(i)),
+            (i) => !idsSel.has(this.alunoId(i))
           );
 
           this.secretariaDisponiveis = disponiveis.map((i) => this.toVM(i));
@@ -335,7 +353,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
           this.bloqueado = finalizados.length > 0;
           this.selecionados = new Set<number>(
-            finalizados.map((i: any) => this.alunoId(i)),
+            finalizados.map((i: any) => this.alunoId(i))
           );
 
           return this.projetoService
@@ -344,27 +362,27 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
               map((inscricoes) => ({
                 inscricoes: (inscricoes ?? []) as InscricaoLike[],
                 finalizados,
-              })),
+              }))
             );
         }),
         finalize(() => {
           this.loadingFlag = false;
           this.cdr.markForCheck();
         }),
-        takeUntil(this.destroy$),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: ({ inscricoes, finalizados }) => {
           this._inscricoes = this.uniqByAlunoId(inscricoes ?? []); // mantém para exclusão batch
 
           const finalIds = new Set<number>(
-            (finalizados ?? []).map((i: any) => this.alunoId(i)),
+            (finalizados ?? []).map((i: any) => this.alunoId(i))
           );
 
           // >>> FILTRO PARA UI
           const inscricoesUi = this.filtrarCadFinalForaDoProjeto(
             this._inscricoes,
-            finalIds,
+            finalIds
           );
 
           const aprovadasApi = inscricoesUi.filter((i) => {
@@ -373,7 +391,7 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
           });
 
           const finalizadosApi = inscricoesUi.filter(
-            (i) => this.alunoStatus(i) === 'CADASTRADO_FINAL',
+            (i) => this.alunoStatus(i) === 'CADASTRADO_FINAL'
           );
 
           const finalMerge = this.uniqByAlunoId([
@@ -419,10 +437,10 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
 
   private recomputeOrientadorLists() {
     this.orientadorSelecionados = (this.aprovadasVm || []).filter((v) =>
-      this.selecionados.has(v.alunoId),
+      this.selecionados.has(v.alunoId)
     );
     this.orientadorDisponiveis = (this.aprovadasVm || []).filter(
-      (v) => !this.selecionados.has(v.alunoId),
+      (v) => !this.selecionados.has(v.alunoId)
     );
   }
 
@@ -452,70 +470,96 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
     this.sucessoSelecao = '';
     this.erroSalvarSelecao = '';
 
+    // ✅ Somente ORIENTADOR pode salvar seleção
+    if (this.modo !== 'ORIENTADOR') {
+      await this.dialogService.alert(
+        'Apenas o orientador pode salvar a seleção de alunos.',
+        'Ação não permitida'
+      );
+      return;
+    }
+
     const ids = Array.from(this.selecionados);
 
-    if (this.modo === 'ORIENTADOR') {
-      if (ids.length === 0) {
-        await this.dialogService.alert(
-          'Selecione pelo menos 1 aluno antes de salvar.',
-          'Atenção',
-        );
-        return;
-      }
-
-      const selecionadosTexto = this.orientadorSelecionados
-        .map((v) => `• ${v.nome} (RA: ${v.matricula})`)
-        .join('\n');
-
-      const msg =
-        `Você selecionou ${ids.length}${
-          this.limite ? ` de ${this.limite}` : ''
-        } aluno(s).\n\n` +
-        `${selecionadosTexto || '—'}\n\n` +
-        `Ao confirmar, sua seleção será registrada.\n\n` +
-        `Deseja confirmar?`;
-
-      const confirmou = await this.dialogService.confirm(
-        msg,
-        'Confirmar seleção',
+    if (ids.length === 0) {
+      await this.dialogService.alert(
+        'Selecione pelo menos 1 aluno antes de salvar.',
+        'Atenção'
       );
-      if (!confirmou) return;
+      return;
     }
+
+    // ✅ Modal de confirmação ao clicar em "Salvar seleção"
+    const selecionadosTexto = this.orientadorSelecionados
+      .map((v) => `• ${v.nome} (RA: ${v.matricula})`)
+      .join('\n');
+
+    const msg =
+      `Você selecionou ${ids.length}${
+        this.limite ? ` de ${this.limite}` : ''
+      } aluno(s).\n\n` +
+      `${selecionadosTexto || '—'}\n\n` +
+      `Ao confirmar, sua seleção será registrada.\n\n` +
+      `Deseja confirmar?`;
+
+    const confirmou = await this.dialogService.confirm(
+      msg,
+      'Confirmar seleção'
+    );
+    if (!confirmou) return;
 
     this.salvandoSelecao = true;
 
-    if (this.modo === 'ORIENTADOR') {
-      this.projetoService
-        .atualizarAprovadosEExcluirRejeitados(
-          {
-            id_projeto: this.projetoId,
-            ids_alunos_aprovados: ids,
-          },
-          this._inscricoes.map((i) => ({
-            id_inscricao: (i as any).id_inscricao ?? (i as any).id ?? 0,
-            id_aluno: this.alunoId(i),
-          })),
-        )
-        .subscribe({
-          next: (res) => {
-            this.salvandoSelecao = false;
-            this.sucessoSelecao =
-              (res as any)?.mensagem || 'Seleção salva com sucesso.';
-            this.selecionados = new Set<number>(ids);
-            this.carregar();
-          },
-          error: (e: unknown) => {
-            this.salvandoSelecao = false;
-            const message =
-              typeof e === 'object' && e && 'message' in e
-                ? String((e as { message: unknown }).message)
-                : null;
-            this.erroSalvarSelecao = message || 'Falha ao salvar seleção.';
-          },
-        });
+    this.projetoService
+      .atualizarAprovadosEExcluirRejeitados(
+        {
+          id_projeto: this.projetoId,
+          ids_alunos_aprovados: ids,
+        },
+        this._inscricoes.map((i) => ({
+          id_inscricao: (i as any).id_inscricao ?? (i as any).id ?? 0,
+          id_aluno: this.alunoId(i),
+        }))
+      )
+      .subscribe({
+        next: (res) => {
+          this.salvandoSelecao = false;
+          this.sucessoSelecao =
+            (res as any)?.mensagem || 'Seleção salva com sucesso.';
+          this.selecionados = new Set<number>(ids);
+          this.carregar();
+          this.cdr.markForCheck();
+        },
+        error: async (e: any) => {
+          this.salvandoSelecao = false;
 
-      return;
-    }
+          const rawMsg =
+            e?.error?.detail ||
+            e?.error?.message ||
+            e?.message ||
+            'Falha ao salvar seleção.';
+
+          const lower = String(rawMsg).toLowerCase();
+          const isAlunoVinculado =
+            lower.includes('vincul') ||
+            lower.includes('outro projeto') ||
+            lower.includes('já está') ||
+            lower.includes('ja esta');
+
+          const msgFinal = isAlunoVinculado
+            ? 'Um dos alunos selecionados já está vinculado a outro projeto.'
+            : String(rawMsg);
+
+          this.erroSalvarSelecao = msgFinal;
+
+          await this.dialogService.alert(
+            msgFinal,
+            isAlunoVinculado ? 'Aluno já vinculado' : 'Erro ao salvar seleção'
+          );
+
+          this.cdr.markForCheck();
+        },
+      });
 
     this.projetoService
       .updateAlunosProjeto({
@@ -529,13 +573,25 @@ export class ListagemAlunosComponent implements OnInit, OnDestroy {
           this.selecionados = new Set<number>(ids);
           this.carregar();
         },
-        error: (e: unknown) => {
+        error: (e: any) => {
           this.salvandoSelecao = false;
+
           const message =
-            typeof e === 'object' && e && 'message' in e
-              ? String((e as { message: unknown }).message)
-              : null;
-          this.erroSalvarSelecao = message || 'Falha ao salvar seleção.';
+            e?.message ||
+            e?.error?.detail ||
+            e?.error?.message ||
+            'Falha ao salvar seleção.';
+
+          this.erroSalvarSelecao = message;
+
+          if (this.isAlunoVinculadoEmOutroProjetoErro(message, e?.status)) {
+            void this.dialogService.alert(
+              message,
+              'Aluno já vinculado a outro projeto'
+            );
+          }
+
+          this.cdr.markForCheck();
         },
       });
   }

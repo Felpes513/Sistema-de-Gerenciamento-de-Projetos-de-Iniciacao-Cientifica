@@ -152,20 +152,14 @@ export class NotificacoesComponent implements OnInit, OnDestroy {
       .getNotificacoesPaginado(this.destinatario, p, this.size)
       .subscribe({
         next: (res: any) => {
-          console.log('📥 Resposta da API:', res);
-
           const itemsRaw = Array.isArray(res?.items)
             ? res.items
             : Array.isArray(res)
               ? res
               : [];
 
-          console.log('📋 Items raw:', itemsRaw);
-
           this.notificacoes = itemsRaw.map((x: any) => {
-            const mapped = this.mapItem(x);
-            console.log('🔄 Item mapeado:', mapped);
-            return mapped;
+            return this.mapItem(x);
           });
 
           this.page = res?.page ?? p;

@@ -1,8 +1,10 @@
-/* garante cadeia de altura dentro do sidebar */
 :host {
   display: block;
   height: 100%;
   min-height: 0;
+
+  width: 100%;
+  max-width: 100%;
 }
 
 .painel {
@@ -11,11 +13,12 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
-
   height: 100%;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
-
   display: flex;
   flex-direction: column;
 }
@@ -60,7 +63,6 @@
   gap: var(--spacing-sm);
 }
 
-/* base da lista (SEM overflow aqui) */
 .lista {
   list-style: none;
   padding: 0;
@@ -70,13 +72,12 @@
   gap: var(--spacing-sm);
 }
 
-/* quando a lista for o conteúdo principal (modo lista normal) ela rola */
 .painel > ul.lista {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding-right: 6px;
-  scrollbar-gutter: stable;
+  padding-inline: 6px;
+  scrollbar-gutter: stable both-edges;
 }
 
 .split-root {
@@ -86,7 +87,6 @@
   min-height: 0;
 }
 
-/* 2 seções (Selecionados / Disponíveis) — primeira auto, segunda ocupa o restante */
 .split-container {
   flex: 1 1 auto;
   min-height: 0;
@@ -99,6 +99,14 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  padding: var(--spacing-sm);
+  width: 100%;
+  max-width: calc(100% - var(--spacing-md) - var(--spacing-md));
+  margin-inline: auto;
+  box-sizing: border-box;
 }
 
 .split-pane > h4 {
@@ -108,28 +116,46 @@
   flex: 0 0 auto;
 }
 
-/* listas dentro das seções SEMPRE com scroll, mas sem mexer no header/ações */
 .split-pane .lista {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding-right: 6px;
-  scrollbar-gutter: stable;
+  padding-inline: 6px;
+  scrollbar-gutter: stable both-edges;
+  align-items: stretch;
 }
 
-/* Se por algum motivo "Selecionados" crescer demais, limita e rola */
 .split-container > .split-pane:first-child .lista {
   flex: 0 1 auto;
   max-height: min(360px, 40vh);
 }
 
 .split-pane .muted {
-  margin: 0;
+  margin: 0 auto;
   padding: var(--spacing-md);
+  width: calc(100% - 16px);
+  max-width: 280px;
+  text-align: center;
 }
 
 .item {
   margin: 0;
+  width: 100%;
+  display: block;
+}
+
+.item .linha,
+.item .aluno-card {
+  width: 100%;
+  max-width: 280px;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.linha,
+.linha,
+.aluno-card {
+  padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .aluno-header {
@@ -158,12 +184,10 @@
 .aluno-card {
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: #f9fafb;
-  transition:
-    border-color var(--transition-fast),
-    background var(--transition-fast),
-    box-shadow var(--transition-fast),
+  transition: border-color var(--transition-fast),
+    background var(--transition-fast), box-shadow var(--transition-fast),
     transform var(--transition-fast);
 }
 
@@ -176,11 +200,11 @@
 
 .linha {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   align-items: flex-start;
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--white);
   transition: all var(--transition-base);
   cursor: pointer;
@@ -200,7 +224,6 @@
   accent-color: var(--uscs-blue);
 }
 
-/* Bloco de dados do aluno */
 .dados {
   display: flex;
   flex-direction: column;
@@ -235,7 +258,6 @@
   white-space: nowrap;
 }
 
-/* Badge (remunerado) */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -259,7 +281,6 @@
   height: 16px;
 }
 
-/* Detalhes do aluno */
 .mini {
   color: var(--gray-600);
   font-size: var(--font-size-xs);
@@ -274,7 +295,6 @@
   color: var(--gray-700);
 }
 
-/* Link de notas */
 .links {
   margin-top: var(--spacing-xs);
 }
@@ -301,7 +321,6 @@
   height: 18px;
 }
 
-/* ====== Ações (Salvar seleção etc.) ====== */
 .form-actions {
   flex: 0 0 auto;
   display: flex;
@@ -354,7 +373,6 @@
   font-style: italic;
 }
 
-/* Estado vazio */
 .vazio {
   text-align: center;
   padding: var(--spacing-xl);
@@ -373,7 +391,6 @@
   margin: 0;
 }
 
-/* Skeleton de loading */
 .skeleton {
   display: flex;
   flex-direction: column;
@@ -402,7 +419,6 @@
   }
 }
 
-/* Responsivo */
 @media (max-width: 768px) {
   .painel {
     padding: var(--spacing-md);
@@ -417,5 +433,10 @@
   .linha {
     flex-direction: column;
     gap: var(--spacing-sm);
+  }
+
+  .item .linha,
+  .item .aluno-card {
+    max-width: 100%;
   }
 }

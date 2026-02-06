@@ -54,6 +54,17 @@
   background-color: var(--uscs-blue) !important;
 }
 
+:host ::ng-deep .modal .sgpic-field .mat-mdc-form-field-infix {
+  padding-top: 6px !important;
+  padding-bottom: 10px !important;
+  display: flex;
+  align-items: center;
+}
+
+:host ::ng-deep .modal .sgpic-field .mat-mdc-select-trigger {
+  align-items: center;
+}
+
 .form-section {
   padding: 25px 10px;
   text-align: center;

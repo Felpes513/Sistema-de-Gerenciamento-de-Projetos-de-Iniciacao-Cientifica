@@ -44,9 +44,6 @@ export class RelatorioFormComponent implements OnInit {
   dataBr(iso?: string): string {
     if (!iso) return '—';
 
-    console.log('📅 ISO recebido:', iso);
-
-    // Parse manual para tratar como UTC
     const match = String(iso).match(
       /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
     );
@@ -54,16 +51,7 @@ export class RelatorioFormComponent implements OnInit {
     let d: Date;
     if (match) {
       const [, year, month, day, hour, minute, second] = match;
-      console.log('📊 Valores parseados:', {
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        second,
-      });
 
-      // Cria a data assumindo que veio em UTC e converte para local
       d = new Date(
         Date.UTC(
           parseInt(year),
@@ -74,15 +62,11 @@ export class RelatorioFormComponent implements OnInit {
           parseInt(second),
         ),
       );
-
-      console.log('⏰ Date criado:', d);
     } else {
-      console.log('⚠️ Regex não deu match');
       d = new Date(iso);
     }
 
     if (Number.isNaN(d.getTime())) {
-      console.log('❌ Data inválida');
       return '—';
     }
 
@@ -96,8 +80,6 @@ export class RelatorioFormComponent implements OnInit {
       second: '2-digit',
       hour12: false,
     }).format(d);
-
-    console.log('✅ String formatada:', s);
 
     return s.replace(',', '');
   }

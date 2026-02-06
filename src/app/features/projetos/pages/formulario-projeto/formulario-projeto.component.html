@@ -119,8 +119,10 @@
           </mat-select>
         </mat-form-field>
 
-        <!-- DOCX inicial (apenas no cadastro / não aparece em read-only) -->
-        <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">
+        <div
+          class="upload-row"
+          *ngIf="!modoEdicao && viewMode === 'SECRETARIA'"
+        >
           <label for="docxIdeia">
             <i class="fas fa-file-word"></i> Documento inicial (.docx) - Ideia
             do Projeto
@@ -141,8 +143,10 @@
           </small>
         </div>
 
-        <!-- PDF inicial (apenas no cadastro / não aparece em read-only) -->
-        <div class="upload-row" *ngIf="!modoEdicao && !isReadOnly">
+        <div
+          class="upload-row"
+          *ngIf="!modoEdicao && viewMode === 'SECRETARIA'"
+        >
           <label for="pdfIdeia">
             <i class="fas fa-file-pdf"></i> Documento inicial (.pdf) - Ideia do
             Projeto
@@ -163,8 +167,13 @@
           </small>
         </div>
 
-        <!-- Upload pós-cadastro (PARCIAL / FINAL) - oculto em read-only -->
-        <div class="upload-section" *ngIf="!isReadOnly && projetoId > 0">
+        <div
+          class="upload-section"
+          *ngIf="
+            projetoId > 0 &&
+            (viewMode === 'SECRETARIA' || viewMode === 'ORIENTADOR')
+          "
+        >
           <div
             class="card-header"
             style="
@@ -172,6 +181,8 @@
               justify-content: space-between;
               align-items: center;
               margin-bottom: var(--spacing-lg);
+              gap: var(--spacing-md);
+              flex-wrap: wrap;
             "
           >
             <div>
@@ -184,13 +195,16 @@
               </small>
               <div>
                 <small class="hint">
-                  Selecione os arquivos e clique em
-                  <strong>Atualizar Projeto</strong> para enviar.
+                  Selecione os arquivos e envie.
+                  <ng-container *ngIf="viewMode === 'SECRETARIA'">
+                    Para avançar de etapa, é necessário enviar o PDF da fase.
+                  </ng-container>
                 </small>
               </div>
             </div>
 
             <button
+              *ngIf="viewMode === 'SECRETARIA'"
               type="button"
               class="btn btn-warning"
               [disabled]="!podeAvancar"
@@ -198,6 +212,17 @@
               (click)="avancarEtapa()"
             >
               <i class="fas fa-forward"></i> {{ labelBotaoAvancar }}
+            </button>
+
+            <button
+              *ngIf="viewMode === 'ORIENTADOR'"
+              type="button"
+              class="btn btn-upload"
+              [disabled]="!arquivoDocx"
+              title="Enviar DOCX da etapa atual"
+              (click)="salvarProjeto()"
+            >
+              <i class="fas fa-upload"></i> Enviar DOCX
             </button>
           </div>
 
@@ -216,12 +241,18 @@
               />
             </div>
             <small class="hint" *ngIf="!arquivoDocx">
-              Selecione um arquivo .docx (o envio acontece ao clicar em
-              Atualizar Projeto).
+              Selecione um arquivo .docx.
+              <ng-container *ngIf="viewMode === 'SECRETARIA'">
+                (o envio acontece ao clicar em
+                <strong>Atualizar Projeto</strong>).
+              </ng-container>
+              <ng-container *ngIf="viewMode === 'ORIENTADOR'">
+                (o envio acontece ao clicar em <strong>Enviar DOCX</strong>).
+              </ng-container>
             </small>
           </div>
 
-          <div class="upload-row">
+          <div class="upload-row" *ngIf="viewMode === 'SECRETARIA'">
             <label for="pdfFile">
               <i class="fas fa-file-pdf"></i> {{ tituloUploadAtual }} (.pdf)
             </label>
@@ -236,12 +267,12 @@
               />
             </div>
             <small class="hint" *ngIf="!arquivoPdf">
-              Selecione um arquivo .pdf (o envio acontece ao clicar em Atualizar
-              Projeto).
+              Selecione um arquivo .pdf (o envio acontece ao clicar em
+              <strong>Atualizar Projeto</strong>).
             </small>
           </div>
 
-          <small class="hint" *ngIf="!podeAvancar">
+          <small class="hint" *ngIf="viewMode === 'SECRETARIA' && !podeAvancar">
             Para avançar de etapa, envie o PDF desta fase (selecione e clique em
             Atualizar Projeto).
           </small>
@@ -260,19 +291,32 @@
                 </div>
               </div>
 
-              <div
-                class="status"
-                [class.nao-enviado]="h.status === 'NAO_ENVIADO'"
-              >
-                <ng-container *ngIf="h.status === 'ENVIADO'; else naoEnviado">
-                  {{
-                    h.dataEnvio
-                      ? "Enviado em " +
-                        (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
-                      : "Enviado"
-                  }}
-                </ng-container>
-                <ng-template #naoEnviado> Não enviado </ng-template>
+              <div class="status">
+                <div class="status-line" [class.ok]="!!h.arquivos?.pdf">
+                  <strong>PDF:</strong>
+                  <ng-container *ngIf="h.arquivos?.pdf; else pdfNaoEnviado">
+                    {{
+                      h.dataEnvio
+                        ? "Enviado em " +
+                          (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
+                        : "Enviado"
+                    }}
+                  </ng-container>
+                  <ng-template #pdfNaoEnviado>Não enviado</ng-template>
+                </div>
+
+                <div class="status-line" [class.ok]="!!h.arquivos?.docx">
+                  <strong>DOCX:</strong>
+                  <ng-container *ngIf="h.arquivos?.docx; else docxNaoEnviado">
+                    {{
+                      h.dataEnvio
+                        ? "Enviado em " +
+                          (h.dataEnvio | date : "dd/MM/yyyy HH:mm")
+                        : "Enviado"
+                    }}
+                  </ng-container>
+                  <ng-template #docxNaoEnviado>Não enviado</ng-template>
+                </div>
               </div>
 
               <div class="actions">
@@ -284,6 +328,7 @@
                 >
                   <i class="fas fa-file-pdf"></i> PDF
                 </button>
+
                 <button
                   type="button"
                   class="btn ghost"
@@ -297,8 +342,7 @@
           </div>
         </div>
 
-        <!-- Ações (oculta para ALUNO/ORIENTADOR) -->
-        <div class="form-actions" *ngIf="!isReadOnly">
+        <div class="form-actions" *ngIf="viewMode === 'SECRETARIA'">
           <button type="submit">
             <i class="fas fa-save"></i> {{ textoBotao }}
           </button>
@@ -307,8 +351,7 @@
           </button>
         </div>
 
-        <!-- Apenas botão Voltar para ALUNO/ORIENTADOR -->
-        <div class="form-actions" *ngIf="isReadOnly">
+        <div class="form-actions" *ngIf="viewMode !== 'SECRETARIA'">
           <button type="button" class="btn-cancel" (click)="voltar()">
             <i class="fas fa-arrow-left"></i> Voltar
           </button>
@@ -316,7 +359,6 @@
       </form>
     </div>
 
-    <!-- Lista de alunos não aparece para ALUNO -->
     <div class="col-inscritos" *ngIf="projetoId > 0 && viewMode !== 'ALUNO'">
       <app-listagem-alunos
         [projetoId]="projetoId"

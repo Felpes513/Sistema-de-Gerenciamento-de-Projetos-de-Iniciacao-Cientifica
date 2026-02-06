@@ -1,7 +1,7 @@
 .editor-grid {
   display: flex;
   gap: var(--spacing-xl);
-  align-items: flex-start;
+  align-items: stretch;
   width: 100%;
   max-width: 100%;
   padding: var(--spacing-md);
@@ -26,18 +26,7 @@
   flex: 0 0 350px;
   width: 350px;
   min-width: 320px;
-
-  position: sticky;
-  top: var(--spacing-lg);
-  align-self: flex-start;
-
-  /* altura estável do sidebar */
-  height: calc(100vh - 2 * var(--spacing-lg));
-  max-height: calc(100vh - 2 * var(--spacing-lg));
-
-  /* melhora em navegadores modernos (zoom/mobile bars) */
-  height: calc(100dvh - 2 * var(--spacing-lg));
-  max-height: calc(100dvh - 2 * var(--spacing-lg));
+  align-self: stretch;
 
   overflow: hidden;
   box-sizing: border-box;
@@ -45,7 +34,6 @@
   min-height: 0;
 }
 
-/* MUITO IMPORTANTE: o host do componente precisa poder encolher */
 .col-inscritos app-listagem-alunos {
   display: block;
   flex: 1 1 auto;
@@ -71,6 +59,9 @@ h2 {
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 label {
@@ -395,32 +386,56 @@ button i {
   color: var(--gray-500);
 }
 
+/* Status em 2 linhas (PDF/DOCX) */
 .history-card .status {
-  font-size: var(--font-size-xs);
-  color: var(--gray-700);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-full);
-  background-color: #ecfdf5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+}
+
+/* Remove a bolinha antiga do container */
+.history-card .status::before {
+  content: none;
+}
+
+/* Cada linha vira uma "pílula" */
+.history-card .status-line {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+
+  border: 1px solid var(--gray-200);
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
-.history-card .status::before {
+.history-card .status-line::before {
   content: "";
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background-color: #16a34a;
+  background: #ef4444;
 }
 
-.history-card .status.nao-enviado {
-  background-color: #fef2f2;
-  color: #b91c1c;
+/* Linha "ok" (quando tem arquivo) */
+.history-card .status-line.ok {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #166534;
 }
 
-.history-card .status.nao-enviado::before {
-  background-color: #ef4444;
+.history-card .status-line.ok::before {
+  background: #16a34a;
+}
+
+.history-card .status-line strong {
+  font-weight: 700;
 }
 
 .history-card .actions {
