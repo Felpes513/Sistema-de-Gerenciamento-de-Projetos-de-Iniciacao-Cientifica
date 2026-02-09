@@ -119,7 +119,7 @@ export class FormularioProjetoComponent implements OnInit {
     private configService: ConfigService,
     private router: Router,
     private route: ActivatedRoute,
-    private dialog: DialogService
+    private dialog: DialogService,
   ) {}
 
   ngOnInit(): void {
@@ -130,6 +130,68 @@ export class FormularioProjetoComponent implements OnInit {
     this.carregarOrientadores();
     this.verificarModoEdicao();
     this.carregarCampus();
+  }
+
+  private montarHistoricoPorFlags(p: any): DocumentoHistorico[] {
+    const mk = (
+      etapa: EtapaDocumento,
+      hasDocx: boolean,
+      hasPdf: boolean,
+      docxNome: string,
+      pdfNome: string,
+    ): DocumentoHistorico => {
+      const arquivos: { docx?: { nome: string }; pdf?: { nome: string } } = {};
+
+      if (hasDocx) arquivos.docx = { nome: docxNome };
+      if (hasPdf) arquivos.pdf = { nome: pdfNome };
+
+      return {
+        etapa,
+        status: (hasDocx || hasPdf ? 'ENVIADO' : 'NAO_ENVIADO') as StatusEnvio,
+        arquivos: Object.keys(arquivos).length ? arquivos : undefined,
+        // dataEnvio não vem no JSON, então deixa undefined (no HTML cai em "Enviado")
+      };
+    };
+
+    return [
+      mk(
+        'IDEIA',
+        !!p.has_ideia_inicial, // <- DOCX da ideia
+        !!p.has_ideia_inicial_pdf, // <- PDF da ideia
+        'ideia_inicial.docx',
+        'ideia_inicial.pdf',
+      ),
+      mk(
+        'PARCIAL',
+        !!p.has_mon_parcial_docx,
+        !!p.has_mon_parcial_pdf,
+        'monografia_parcial.docx',
+        'monografia_parcial.pdf',
+      ),
+      mk(
+        'FINAL',
+        !!p.has_mon_final_docx,
+        !!p.has_mon_final_pdf,
+        'monografia_final.docx',
+        'monografia_final.pdf',
+      ),
+    ];
+  }
+
+  get histEtapaAtual(): DocumentoHistorico | undefined {
+    return this.historico.find((h) => h.etapa === this.currentEtapaUpload);
+  }
+  get docxJaEnviadoEtapaAtual(): boolean {
+    return !!this.histEtapaAtual?.arquivos?.docx;
+  }
+  get nomeDocxEtapaAtual(): string {
+    return this.histEtapaAtual?.arquivos?.docx?.nome || '';
+  }
+  get pdfJaEnviadoEtapaAtual(): boolean {
+    return !!this.histEtapaAtual?.arquivos?.pdf;
+  }
+  get nomePdfEtapaAtual(): string {
+    return this.histEtapaAtual?.arquivos?.pdf?.nome || '';
   }
 
   formatarNomeCompleto(nome?: string | null): string {
@@ -147,7 +209,7 @@ export class FormularioProjetoComponent implements OnInit {
 
         return lower.replace(
           /(^|[-'’])([a-zà-ü])/g,
-          (_, sep, ch) => sep + ch.toUpperCase()
+          (_, sep, ch) => sep + ch.toUpperCase(),
         );
       })
       .join(' ');
@@ -174,7 +236,7 @@ export class FormularioProjetoComponent implements OnInit {
     this.projetoService.listarProjetosRaw().subscribe({
       next: (projetos) => {
         const p = (projetos || []).find(
-          (x: any) => Number(x.id_projeto ?? x.id) === Number(id)
+          (x: any) => Number(x.id_projeto ?? x.id) === Number(id),
         );
 
         if (!p) {
@@ -183,12 +245,12 @@ export class FormularioProjetoComponent implements OnInit {
           return;
         }
 
-        // ✅ Preenche tudo DIRETO do /projetos/
+        // ✅ Preenche dados do projeto DIRETO do /projetos/
         this.projeto.titulo_projeto = p.titulo_projeto ?? p.nomeProjeto ?? '';
         this.projeto.resumo = p.resumo ?? '';
         this.projeto.cod_projeto = p.cod_projeto ?? p.codProjeto ?? '';
 
-        // orientador
+        // ✅ Orientador
         this.orientadorSelecionadoId = Number(p.id_orientador ?? 0);
         const nomeOrientadorRaw = p.orientador ?? p.nomeOrientador ?? '';
         this.projeto.orientador_nome =
@@ -197,57 +259,85 @@ export class FormularioProjetoComponent implements OnInit {
         this.emailOrientador = String(p.orientador_email ?? '');
         this.projeto.orientador_email = this.emailOrientador;
 
-        // campus
+        // ✅ Campus
         this.campusSelecionadoId = Number(p.id_campus ?? 0);
         this.projeto.id_campus = this.campusSelecionadoId;
 
-        // (opcional) mantém o select preenchido visualmente no read-only
-        // se você quiser usar isso no template
-        // this.campusNomeProjeto = String(p.campus ?? '');
-
-        // ✅ Histórico baseado nos flags do /projetos/
+        // ✅ FLAGS do /projetos/ (docx e pdf separados)
+        const hasIdeiaDocx = !!p.has_ideia_inicial;
         const hasIdeiaPdf = !!p.has_ideia_inicial_pdf;
+
+        const hasParcialDocx = !!p.has_mon_parcial_docx;
         const hasParcialPdf = !!p.has_mon_parcial_pdf;
+
+        const hasFinalDocx = !!p.has_mon_final_docx;
         const hasFinalPdf = !!p.has_mon_final_pdf;
 
+        const buildHistorico = (
+          etapa: EtapaDocumento,
+          hasDocx: boolean,
+          hasPdf: boolean,
+          docxNome: string,
+          pdfNome: string,
+        ): DocumentoHistorico => {
+          const arquivos: { docx?: { nome: string }; pdf?: { nome: string } } =
+            {};
+
+          if (hasDocx) arquivos.docx = { nome: docxNome };
+          if (hasPdf) arquivos.pdf = { nome: pdfNome };
+
+          return {
+            etapa,
+            status: (hasDocx || hasPdf
+              ? 'ENVIADO'
+              : 'NAO_ENVIADO') as StatusEnvio,
+            arquivos: Object.keys(arquivos).length ? arquivos : undefined,
+            // dataEnvio não vem no JSON do /projetos/, então deixamos vazio
+          };
+        };
+
+        // ✅ Histórico CORRETO (cada arquivo reflete seu próprio flag)
         this.historico = [
-          {
-            etapa: 'IDEIA',
-            status: hasIdeiaPdf ? 'ENVIADO' : 'NAO_ENVIADO',
-            arquivos: hasIdeiaPdf
-              ? { pdf: { nome: 'ideia.pdf' }, docx: { nome: 'ideia.docx' } }
-              : undefined,
-          },
-          {
-            etapa: 'PARCIAL',
-            status: hasParcialPdf ? 'ENVIADO' : 'NAO_ENVIADO',
-            arquivos: hasParcialPdf
-              ? {
-                  pdf: { nome: 'monografia_parcial.pdf' },
-                  docx: { nome: 'monografia_parcial.docx' },
-                }
-              : undefined,
-          },
-          {
-            etapa: 'FINAL',
-            status: hasFinalPdf ? 'ENVIADO' : 'NAO_ENVIADO',
-            arquivos: hasFinalPdf
-              ? {
-                  pdf: { nome: 'monografia_final.pdf' },
-                  docx: { nome: 'monografia_final.docx' },
-                }
-              : undefined,
-          },
+          buildHistorico(
+            'IDEIA',
+            hasIdeiaDocx,
+            hasIdeiaPdf,
+            'ideia_inicial.docx',
+            'ideia_inicial.pdf',
+          ),
+          buildHistorico(
+            'PARCIAL',
+            hasParcialDocx,
+            hasParcialPdf,
+            'monografia_parcial.docx',
+            'monografia_parcial.pdf',
+          ),
+          buildHistorico(
+            'FINAL',
+            hasFinalDocx,
+            hasFinalPdf,
+            'monografia_final.docx',
+            'monografia_final.pdf',
+          ),
         ];
 
-        // etapa atual
-        if (hasFinalPdf) this.currentEtapaUpload = 'FINAL';
-        else if (hasParcialPdf) this.currentEtapaUpload = 'FINAL';
-        else this.currentEtapaUpload = 'PARCIAL';
+        // ✅ Etapa atual baseada no avanço por PDF (regra da secretaria)
+        // - Se já existe PDF PARCIAL, a etapa atual é FINAL
+        // - Caso contrário, fica em PARCIAL
+        // (Se já existe algo do FINAL, mantém FINAL)
+        if (hasFinalPdf || hasFinalDocx || hasParcialPdf) {
+          this.currentEtapaUpload = 'FINAL';
+        } else {
+          this.currentEtapaUpload = 'PARCIAL';
+        }
 
-        this.podeAvancar = false;
+        // ✅ Pode avançar apenas se for secretaria + estiver em PARCIAL + PDF parcial enviado
+        this.podeAvancar =
+          this.viewMode === 'SECRETARIA' &&
+          this.currentEtapaUpload === 'PARCIAL' &&
+          hasParcialPdf;
 
-        // deixa “Buscar orientador” com o nome (mesmo read-only)
+        // mantém o campo de busca preenchido (mesmo read-only)
         this.buscaOrientador = this.projeto.orientador_nome || '';
 
         this.carregando = false;
@@ -288,7 +378,7 @@ export class FormularioProjetoComponent implements OnInit {
   filtrarOrientadores(): void {
     const filtro = this.buscaOrientador.toLowerCase().trim();
     this.orientadoresFiltrados = this.orientadores.filter((o) =>
-      (o.nome_completo || '').toLowerCase().includes(filtro)
+      (o.nome_completo || '').toLowerCase().includes(filtro),
     );
   }
 
@@ -305,7 +395,7 @@ export class FormularioProjetoComponent implements OnInit {
     const orientador = this.orientadores.find((o) => o.id === id);
     if (orientador) {
       this.projeto.orientador_nome = this.formatarNomeCompleto(
-        orientador.nome_completo
+        orientador.nome_completo,
       );
       this.projeto.orientador_email = orientador.email || '';
       this.emailOrientador = orientador.email || '';
@@ -340,14 +430,14 @@ export class FormularioProjetoComponent implements OnInit {
     if (!this.projeto.titulo_projeto?.trim()) {
       await this.dialog.alert(
         'Por favor, informe o título do projeto',
-        'Campos obrigatórios'
+        'Campos obrigatórios',
       );
       return false;
     }
     if (!this.projeto.resumo?.trim()) {
       await this.dialog.alert(
         'Por favor, preencha o resumo do projeto',
-        'Campos obrigatórios'
+        'Campos obrigatórios',
       );
       return false;
     }
@@ -357,14 +447,14 @@ export class FormularioProjetoComponent implements OnInit {
     ) {
       await this.dialog.alert(
         'Por favor, selecione um orientador',
-        'Campos obrigatórios'
+        'Campos obrigatórios',
       );
       return false;
     }
     if (!this.projeto.id_campus || this.projeto.id_campus <= 0) {
       await this.dialog.alert(
         'Por favor, selecione um campus',
-        'Campos obrigatórios'
+        'Campos obrigatórios',
       );
       return false;
     }
@@ -375,7 +465,7 @@ export class FormularioProjetoComponent implements OnInit {
     return this.projetoService.uploadDocumentosMonografia(
       this.projetoId,
       this.currentEtapaUpload as 'PARCIAL' | 'FINAL',
-      { docx: this.arquivoDocx, pdf: this.arquivoPdf }
+      { docx: this.arquivoDocx, pdf: this.arquivoPdf },
     );
   }
 
@@ -394,7 +484,7 @@ export class FormularioProjetoComponent implements OnInit {
       if (!this.modoEdicao || !this.projetoId) {
         await this.dialog.alert(
           'Apenas a secretaria pode cadastrar projetos. O orientador pode apenas enviar DOCX em um projeto existente.',
-          'Atenção'
+          'Atenção',
         );
         return;
       }
@@ -413,7 +503,7 @@ export class FormularioProjetoComponent implements OnInit {
           this.carregando = false;
           await this.dialog.alert(
             'Selecione um arquivo .docx para enviar.',
-            'Arquivo obrigatório'
+            'Arquivo obrigatório',
           );
           return;
         }
@@ -444,13 +534,13 @@ export class FormularioProjetoComponent implements OnInit {
             if (falhas.length) {
               const detalhe = falhas
                 .map(
-                  (f) => `${f.tipo.toUpperCase()}: ${f.mensagem || 'falhou'}`
+                  (f) => `${f.tipo.toUpperCase()}: ${f.mensagem || 'falhou'}`,
                 )
                 .join('\n');
 
               await this.dialog.alert(
                 `Falha no envio:\n\n${detalhe}`,
-                'Erro no upload'
+                'Erro no upload',
               );
               this.carregando = false;
               return;
@@ -459,13 +549,13 @@ export class FormularioProjetoComponent implements OnInit {
             this.atualizarHistoricoParaEtapa(
               this.currentEtapaUpload,
               this.arquivoDocx,
-              this.arquivoPdf
+              this.arquivoPdf,
             );
 
             // só a secretaria usa avanço por PDF
             if (isSecretaria) {
               const histAtual = this.historico.find(
-                (h) => h.etapa === this.currentEtapaUpload
+                (h) => h.etapa === this.currentEtapaUpload,
               );
               const temPdfAtual = !!histAtual?.arquivos?.pdf;
 
@@ -477,7 +567,7 @@ export class FormularioProjetoComponent implements OnInit {
               isOrientador
                 ? 'Documento DOCX enviado com sucesso!'
                 : 'Documentos enviados com sucesso!\n\nSe você também alterou dados do projeto (título/resumo/orientador/campus), clique em "Atualizar Projeto" sem arquivos selecionados.',
-              'Sucesso'
+              'Sucesso',
             );
 
             this.limparInputsUpload();
@@ -487,7 +577,7 @@ export class FormularioProjetoComponent implements OnInit {
           error: async (err: any) => {
             await this.dialog.alert(
               `Falha ao enviar documentos: ${err?.message || err}`,
-              'Erro no upload'
+              'Erro no upload',
             );
             this.carregando = false;
           },
@@ -501,7 +591,7 @@ export class FormularioProjetoComponent implements OnInit {
         this.carregando = false;
         await this.dialog.alert(
           'Selecione um arquivo .docx para enviar.',
-          'Arquivo obrigatório'
+          'Arquivo obrigatório',
         );
         return;
       }
@@ -518,7 +608,7 @@ export class FormularioProjetoComponent implements OnInit {
       if (!this.arquivoDocx || !this.arquivoPdf) {
         await this.dialog.alert(
           'Selecione o Documento inicial (.docx) e o PDF para cadastrar o projeto.',
-          'Arquivos obrigatórios'
+          'Arquivos obrigatórios',
         );
         this.carregando = false;
         return;
@@ -526,10 +616,10 @@ export class FormularioProjetoComponent implements OnInit {
 
       try {
         this.projeto.ideia_inicial_b64 = await this.readFileAsBase64(
-          this.arquivoDocx
+          this.arquivoDocx,
         );
         this.projeto.ideia_inicial_pdf_b64 = await this.readFileAsBase64(
-          this.arquivoPdf
+          this.arquivoPdf,
         );
       } catch {
         this.projeto.ideia_inicial_b64 = '';
@@ -537,7 +627,7 @@ export class FormularioProjetoComponent implements OnInit {
         this.carregando = false;
         await this.dialog.alert(
           'Falha ao ler os arquivos iniciais. Tente selecionar os arquivos novamente.',
-          'Erro ao ler arquivos'
+          'Erro ao ler arquivos',
         );
         return;
       }
@@ -546,7 +636,7 @@ export class FormularioProjetoComponent implements OnInit {
     const operacao = this.modoEdicao
       ? this.projetoService.atualizarProjeto(
           this.projetoId,
-          this.projeto as any
+          this.projeto as any,
         )
       : this.projetoService.cadastrarProjetoCompleto(
           {
@@ -555,7 +645,7 @@ export class FormularioProjetoComponent implements OnInit {
             ideia_inicial_b64: this.projeto.ideia_inicial_b64 || '',
             ideia_inicial_pdf_b64: this.projeto.ideia_inicial_pdf_b64 || '',
           },
-          this.orientadorSelecionadoId
+          this.orientadorSelecionadoId,
         );
 
     operacao.subscribe({
@@ -576,7 +666,7 @@ export class FormularioProjetoComponent implements OnInit {
         this.carregando = false;
         await this.dialog.alert(
           this.erro || 'Erro ao salvar projeto',
-          'Erro ao salvar projeto'
+          'Erro ao salvar projeto',
         );
       },
     });
@@ -603,7 +693,7 @@ export class FormularioProjetoComponent implements OnInit {
 
     await this.dialog.alert(
       `Formato inválido. Envie um arquivo ${tipo.toUpperCase()}.`,
-      'Formato inválido'
+      'Formato inválido',
     );
   }
 
@@ -611,8 +701,8 @@ export class FormularioProjetoComponent implements OnInit {
     return this.currentEtapaUpload === 'PARCIAL'
       ? 'Monografia Parcial'
       : this.currentEtapaUpload === 'FINAL'
-      ? 'Monografia Final'
-      : 'Documento do Projeto';
+        ? 'Monografia Final'
+        : 'Documento do Projeto';
   }
 
   get labelBotaoAvancar(): string {
@@ -625,7 +715,7 @@ export class FormularioProjetoComponent implements OnInit {
 
   async baixarArquivo(
     tipo: 'docx' | 'pdf',
-    etapa?: EtapaDocumento
+    etapa?: EtapaDocumento,
   ): Promise<void> {
     if (!this.projetoId) {
       await this.dialog.alert('Projeto não identificado.', 'Aviso');
@@ -662,8 +752,8 @@ export class FormularioProjetoComponent implements OnInit {
           etapaAlvo === 'PARCIAL'
             ? 'monografia_parcial'
             : etapaAlvo === 'FINAL'
-            ? 'monografia_final'
-            : 'projeto';
+              ? 'monografia_final'
+              : 'projeto';
 
         a.download = `${nomeBase}_${this.projetoId}.${tipo}`;
         a.click();
@@ -672,7 +762,7 @@ export class FormularioProjetoComponent implements OnInit {
       error: async (err: any) => {
         await this.dialog.alert(
           `Erro ao baixar ${tipo.toUpperCase()}: ${err.message}`,
-          'Erro no download'
+          'Erro no download',
         );
       },
     });
@@ -692,7 +782,7 @@ export class FormularioProjetoComponent implements OnInit {
     if (this.currentEtapaUpload === 'FINAL') {
       await this.dialog.alert(
         'Todas as etapas já foram concluídas.',
-        'Etapas concluídas'
+        'Etapas concluídas',
       );
       return;
     }
@@ -700,20 +790,20 @@ export class FormularioProjetoComponent implements OnInit {
     if (!this.projetoId) {
       await this.dialog.alert(
         'Salve o projeto antes de avançar etapa.',
-        'Projeto não salvo'
+        'Projeto não salvo',
       );
       return;
     }
 
     const histAtual = this.historico.find(
-      (h) => h.etapa === this.currentEtapaUpload
+      (h) => h.etapa === this.currentEtapaUpload,
     );
     const temPdf = !!histAtual?.arquivos?.pdf;
 
     if (!temPdf) {
       await this.dialog.alert(
         'Envie o PDF desta etapa antes de avançar.',
-        'Envio obrigatório'
+        'Envio obrigatório',
       );
       return;
     }
@@ -722,7 +812,7 @@ export class FormularioProjetoComponent implements OnInit {
 
     const ok = await this.dialog.confirm(
       `Você deseja avançar para "${this.tituloEtapa(proxima)}"?`,
-      'Avançar etapa'
+      'Avançar etapa',
     );
     if (!ok) return;
 
@@ -732,14 +822,14 @@ export class FormularioProjetoComponent implements OnInit {
 
     await this.dialog.alert(
       `Avançou para "${this.tituloEtapa(proxima)}".`,
-      'Etapa atualizada'
+      'Etapa atualizada',
     );
   }
 
   private atualizarHistoricoParaEtapa(
     etapa: EtapaDocumento,
     docx?: File,
-    pdf?: File
+    pdf?: File,
   ): void {
     const idx = this.historico.findIndex((h) => h.etapa === etapa);
 
@@ -782,22 +872,22 @@ export class FormularioProjetoComponent implements OnInit {
     return e === 'IDEIA'
       ? 'Submissão do Projeto (Ideia)'
       : e === 'PARCIAL'
-      ? 'Monografia Parcial'
-      : 'Monografia Final';
+        ? 'Monografia Parcial'
+        : 'Monografia Final';
   }
   subtituloEtapa(e: EtapaDocumento): string {
     return e === 'IDEIA'
       ? 'Primeiro envio'
       : e === 'PARCIAL'
-      ? 'Segundo envio'
-      : 'Envio final';
+        ? 'Segundo envio'
+        : 'Envio final';
   }
   iconeEtapa(e: EtapaDocumento): string {
     return e === 'IDEIA'
       ? 'fas fa-lightbulb'
       : e === 'PARCIAL'
-      ? 'fas fa-list'
-      : 'fas fa-graduation-cap';
+        ? 'fas fa-list'
+        : 'fas fa-graduation-cap';
   }
 
   voltar(): void {
@@ -805,8 +895,8 @@ export class FormularioProjetoComponent implements OnInit {
       this.viewMode === 'ALUNO'
         ? '/aluno/projetos'
         : this.viewMode === 'ORIENTADOR'
-        ? '/orientador/projetos'
-        : '/secretaria/projetos';
+          ? '/orientador/projetos'
+          : '/secretaria/projetos';
     this.router.navigate([base]);
   }
 
