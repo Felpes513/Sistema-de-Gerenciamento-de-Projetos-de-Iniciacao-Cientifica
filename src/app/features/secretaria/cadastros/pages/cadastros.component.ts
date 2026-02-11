@@ -29,9 +29,20 @@ export class CadastrosComponent implements OnInit {
   alunosInad: any[] = [];
   orientadoresInad: any[] = [];
 
-  private readonly lowerWords = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di']);
+  private readonly lowerWords = new Set([
+    'de',
+    'da',
+    'do',
+    'das',
+    'dos',
+    'e',
+    'di',
+  ]);
 
-  constructor(private api: RegisterService, private dialog: DialogService) {}
+  constructor(
+    private api: RegisterService,
+    private dialog: DialogService,
+  ) {}
 
   ngOnInit() {
     this.load();
@@ -95,7 +106,7 @@ export class CadastrosComponent implements OnInit {
       next: ({ alunos, orientadores }) => {
         this.alunosInad = (alunos || []).map((r: any) => this.transformRow(r));
         this.orientadoresInad = (orientadores || []).map((r: any) =>
-          this.transformRow(r)
+          this.transformRow(r),
         );
         this.carregando = false;
       },
@@ -165,7 +176,7 @@ export class CadastrosComponent implements OnInit {
   async reprovar(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar reprovação? O usuário ficará inadimplente por 2 anos.',
-      'Confirmação'
+      'Confirmação',
     );
     if (!confirmado) return;
 
@@ -183,7 +194,7 @@ export class CadastrosComponent implements OnInit {
   async inadimplentar(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar inadimplência? O usuário ficará inadimplente por 2 anos.',
-      'Confirmação'
+      'Confirmação',
     );
     if (!confirmado) return;
 
@@ -201,7 +212,7 @@ export class CadastrosComponent implements OnInit {
   async adimplentar(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar adimplência? O usuário voltará a ficar adimplente.',
-      'Confirmação'
+      'Confirmação',
     );
     if (!confirmado) return;
 
@@ -219,7 +230,7 @@ export class CadastrosComponent implements OnInit {
   async adimplentarAluno(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar adimplência? O aluno voltará a ficar adimplente.',
-      'Confirmação'
+      'Confirmação',
     );
     if (!confirmado) return;
 
@@ -229,10 +240,38 @@ export class CadastrosComponent implements OnInit {
     });
   }
 
+  baixarPdfAluno(row: any) {
+    const id = this.rowId(row);
+    if (!id) return;
+
+    this.api.downloadPdfAluno(id).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        const nome = (row?.nomeFmt || row?.nome_completo || 'aluno')
+          .toString()
+          .replace(/\s+/g, '_');
+
+        a.download = `documento_${nome}_${id}.pdf`;
+        a.click();
+
+        window.URL.revokeObjectURL(url);
+      },
+      error: async (err: any) => {
+        await this.dialog.alert(
+          `Erro ao baixar PDF: ${err?.message || err}`,
+          'Erro',
+        );
+      },
+    });
+  }
+
   async adimplentarOrientador(id: number) {
     const confirmado = await this.dialog.confirm(
       'Confirmar adimplência? O orientador voltará a ficar adimplente.',
-      'Confirmação'
+      'Confirmação',
     );
     if (!confirmado) return;
 
@@ -260,7 +299,7 @@ export class CadastrosComponent implements OnInit {
       .map((w, i) =>
         i > 0 && this.lowerWords.has(w)
           ? w
-          : w.charAt(0).toUpperCase() + w.slice(1)
+          : w.charAt(0).toUpperCase() + w.slice(1),
       )
       .join(' ');
   }

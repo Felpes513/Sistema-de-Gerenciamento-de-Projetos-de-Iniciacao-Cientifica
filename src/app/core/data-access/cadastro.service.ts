@@ -18,7 +18,7 @@ export class RegisterService {
   constructor(private http: HttpClient) {}
 
   registerAluno(
-    data: RegisterAlunoData & { idCurso: number; pdf: File }
+    data: RegisterAlunoData & { idCurso: number; pdf: File },
   ): Observable<RegisterResponse> {
     const fd = new FormData();
     fd.append('nome_completo', data.nomeCompleto);
@@ -28,13 +28,15 @@ export class RegisterService {
     fd.append('senha', data.senha);
     fd.append(
       'possui_trabalho_remunerado',
-      String(data.possuiTrabalhoRemunerado)
+      String(data.possuiTrabalhoRemunerado),
     );
     fd.append('pdf', data.pdf, data.pdf.name);
     return this.http.post<RegisterResponse>(`${this.baseUrl}/alunos/`, fd);
   }
 
-  registerOrientador(data: RegisterOrientadorData): Observable<RegisterResponse> {
+  registerOrientador(
+    data: RegisterOrientadorData,
+  ): Observable<RegisterResponse> {
     const payload = {
       nome_completo: data.nomeCompleto,
       email: data.email,
@@ -42,7 +44,10 @@ export class RegisterService {
       senha: data.senha,
     };
 
-    return this.http.post<RegisterResponse>(`${this.baseUrl}/orientadores/`, payload);
+    return this.http.post<RegisterResponse>(
+      `${this.baseUrl}/orientadores/`,
+      payload,
+    );
   }
 
   listarAlunos(): Observable<any[]> {
@@ -65,7 +70,7 @@ export class RegisterService {
     return this.http.put(
       `${this.baseUrl}/alunos/${id}/status`,
       {},
-      { params: { novo_status: novoStatus } }
+      { params: { novo_status: novoStatus } },
     );
   }
 
@@ -73,7 +78,7 @@ export class RegisterService {
     return this.http.put(
       `${this.baseUrl}/orientadores/${id}/status`,
       {},
-      { params: { novo_status: novoStatus } }
+      { params: { novo_status: novoStatus } },
     );
   }
 
@@ -83,15 +88,23 @@ export class RegisterService {
       .pipe(map((r) => r.alunos || []));
   }
 
+  downloadPdfAluno(id: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/alunos/${id}/pdf`, {
+      responseType: 'blob',
+    });
+  }
+
   listarOrientadoresInadimplentes() {
     return this.http
-      .get<{ orientadores: any[] }>(`${this.baseUrl}/orientadores/inadimplentes`)
+      .get<{
+        orientadores: any[];
+      }>(`${this.baseUrl}/orientadores/inadimplentes`)
       .pipe(map((r) => r.orientadores || []));
   }
 
   checkEmailExists(
     email: string,
-    perfil: 'orientador' | 'secretaria' | 'aluno'
+    perfil: 'orientador' | 'secretaria' | 'aluno',
   ): Observable<{ exists: boolean }> {
     return this.http.get<{ exists: boolean }>(`${this.baseUrl}/check-email`, {
       params: { perfil, email },
@@ -100,7 +113,7 @@ export class RegisterService {
 
   checkCPFExists(cpf: string): Observable<{ exists: boolean }> {
     return this.http.get<{ exists: boolean }>(
-      `${this.baseUrl}/check-cpf/${this.cleanCPF(cpf)}`
+      `${this.baseUrl}/check-cpf/${this.cleanCPF(cpf)}`,
     );
   }
 

@@ -129,15 +129,14 @@
             Inadimplentar
           </button>
 
-          <!-- PDF (sempre que existir) -->
-          <a
+          <button
             *ngIf="a.has_pdf"
+            type="button"
             class="btn"
-            [href]="'/api/alunos/' + rowId(a) + '/pdf'"
-            target="_blank"
+            (click)="baixarPdfAluno(a)"
           >
             PDF
-          </a>
+          </button>
         </td>
       </tr>
     </tbody>
@@ -243,22 +242,25 @@
           <td data-label="Email">{{ a.email }}</td>
           <td data-label="CPF">{{ a.cpfFmt || a.cpf }}</td>
           <td data-label="Inadimplente até">
-            {{ a.inadimplente_ate | date : "shortDate" }}
+            {{ a.inadimplente_ate | date: "shortDate" }}
           </td>
           <td data-label="Ações">
-            <button class="btn btn-approve" (click)="adimplentarAluno(rowId(a))">
+            <button
+              class="btn btn-approve"
+              (click)="adimplentarAluno(rowId(a))"
+            >
               Adimplentar
             </button>
 
-            <a
+            <button
               *ngIf="a.has_pdf"
+              type="button"
               class="btn"
-              [href]="'/api/alunos/' + rowId(a) + '/pdf'"
-              target="_blank"
+              (click)="baixarPdfAluno(a)"
               style="margin-left: 8px"
             >
               PDF
-            </a>
+            </button>
           </td>
         </tr>
       </tbody>
@@ -281,7 +283,7 @@
           <td data-label="Email">{{ o.email }}</td>
           <td data-label="CPF">{{ o.cpfFmt || o.cpf }}</td>
           <td data-label="Inadimplente até">
-            {{ o.inadimplente_ate | date : "shortDate" }}
+            {{ o.inadimplente_ate | date: "shortDate" }}
           </td>
           <td data-label="Ações">
             <button
